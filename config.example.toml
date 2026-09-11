@@ -1,0 +1,72 @@
+# Copy to config.toml. Paths are relative to this file; history starts empty.
+model = "qwen3:4b"
+endpoint = "http://localhost:11434"
+allow_remote = false
+data_dir = "data"
+source_root = "."
+max_input_chars = 10000
+max_output_tokens = 600
+max_output_bytes = 3000
+num_ctx = 8192
+timeout_seconds = 180
+consensus_roles = ["coding", "reasoning"]
+
+[roles]
+general = "qwen3:4b"
+coding = "qwen3:4b"
+reasoning = "qwen3:4b"
+
+[routes]
+find_relevant_context = "general"
+summarize_context = "general"
+analyze_code = "coding"
+analyze_test_output = "coding"
+review_diff = "coding"
+triage_task = "reasoning"
+second_opinion = "reasoning"
+
+[delegation]
+local_first = true
+min_context_chars = 1500
+min_file_count = 3
+max_files_for_local_analysis = 8
+min_confidence = "medium"
+min_compression = 0.25
+max_failed_local_attempts = 2
+
+[search]
+exclude = ["data/", "benchmarks/", "release-staging/", ".*test*/", "tests/fixtures/", "*.lock*", "requirements.lock.txt"]
+
+[monitor]
+poll_seconds = 2
+discover_seconds = 30
+collapse_seconds = 10
+stale_seconds = 300
+# Loopback OTLP log receiver only. Use 0 to disable it.
+otel_port = 4318
+
+[adaptive]
+enabled = true
+default_cap = "Medium"
+max_attempts = 2
+# GiB of combined model allocation, not VRAM. Adjust after measurement.
+memory_budget_gb = 6
+runtime_reserve_gb = 2
+min_reviewed_cases = 3
+min_accepted_rate = 0.25
+max_rejected_rate = 0.5
+
+# Examples, not universal quality endorsements. Substitute exact installed tags,
+# role defaults and registry metadata together. No code edits are required.
+[[model_registry]]
+name = "qwen3:4b"
+display_name = "Qwen 3 4B"
+architecture = "dense"
+total_parameters_b = 4.0
+weight_gb = 2.33
+quantization = "Q4_K_M"
+roles = ["general", "coding", "reasoning"]
+capabilities = ["general", "reasoning"]
+min_tier = "Light"
+strength = 1
+enabled = true

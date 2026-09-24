@@ -10,12 +10,11 @@ readme = "README.md"
 requires-python = ">=3.11"
 license = "MIT"
 license-files = ["LICENSE"]
-dependencies = ["mcp>=1.20,<2", "httpx>=0.28,<1", "opentelemetry-proto>=1.30,<2", "pathspec>=0.12,<2"]
+dependencies = ["mcp>=1.20,<2", "httpx>=0.28,<1", "opentelemetry-proto>=1.30,<2", "pathspec>=0.12,<2", "psutil>=7,<8", "pywin32>=311; sys_platform == 'win32'"]
 
 [project.optional-dependencies]
 tray = ["pystray>=0.19,<1", "Pillow>=11,<13"]
 dev = ["pytest>=8,<10", "ruff>=0.12,<1"]
-benchmark = ["psutil>=7,<8"]
 
 [project.scripts]
 localagentbridge = "localagentbridge.__main__:main"

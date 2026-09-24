@@ -65,6 +65,8 @@ class Config:
     max_output_bytes: int = 3000
     num_ctx: int = 8192
     timeout_seconds: float = 180
+    no_inference_deadline: bool = False
+    thinking: bool | str = False
     data_dir: Path = field(default_factory=lambda: Path(os.getenv("LOCALAPPDATA", str(Path.home()))) / "LocalAgentBridge")
     poll_seconds: float = 2
     discover_seconds: float = 30
@@ -84,6 +86,10 @@ class Config:
     agentic: AgenticConfig = field(default_factory=AgenticConfig)
 
     def __post_init__(self):
+        if type(self.no_inference_deadline) is not bool:
+            raise ValueError('no_inference_deadline must be boolean')
+        if type(self.thinking) is not bool and self.thinking not in ('low', 'medium', 'high'):
+            raise ValueError('thinking must be boolean or low/medium/high')
         if isinstance(self.agentic, dict):
             self.agentic = AgenticConfig.model_validate(self.agentic)
         if isinstance(self.adaptive, dict):

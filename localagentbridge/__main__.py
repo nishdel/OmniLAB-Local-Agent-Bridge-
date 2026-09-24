@@ -26,10 +26,15 @@ def main():
     workflow_parser = commands.add_parser('workflow', help='Opt-in bounded role/workflow operations')
     workflow_parser.add_argument('action', choices=['catalog','plan','start','step','checkpoint','status'])
     workflow_parser.add_argument('--request', help='JSON object with the operation arguments; no commands are executed')
+    from .companion_cli import add_parser
+    add_parser(commands)
     args = parser.parse_args()
     config = load_config(args.config)
     configure_logging(config)
-    if args.command == 'workflow':
+    if args.command == 'companion':
+        from .companion_cli import run
+        run(args, config)
+    elif args.command == 'workflow':
         import asyncio
         from pathlib import Path
         from .service import Service

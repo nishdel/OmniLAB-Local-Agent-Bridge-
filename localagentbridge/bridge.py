@@ -56,7 +56,7 @@ class Bridge:
             payload_budget = budget - 300 if with_metadata else budget
             schema = SCHEMAS[tool].model_json_schema()
             profile = next((p for p in cfg.model_registry if p.name == model), None)
-            body = {"model": model, "stream": True, "think": profile.thinking if profile else False,
+            body = {"model": model, "stream": True, "think": profile.thinking if profile else cfg.thinking,
                     "format": schema, "keep_alive": 0 if cfg.roles else "2m",
                     "options": {"temperature": 0, "num_predict": cfg.max_output_tokens, "num_ctx": cfg.num_ctx},
                     "messages": [
@@ -75,7 +75,8 @@ class Bridge:
                         raise BridgeError('Workflow calls cannot use benchmark request overrides.')
                     body['messages'][0]['content'] += '\n' + _execution.instructions
                     _execution.admit(record.id, body, input_chars)
-                async with asyncio.timeout(cfg.timeout_seconds):
+                deadline = None if cfg.no_inference_deadline else cfg.timeout_seconds
+                async with asyncio.timeout(deadline):
                     if cfg.roles:
                         installed = await inventory(cfg, self.transport)
                         info = installed.get(canonical(model))
@@ -84,7 +85,7 @@ class Bridge:
                         if info.get("remote_host") or info.get("remote_model"):
                             raise BridgeError("The configured Ollama model is remote; only local weights are allowed.")
                     async with httpx.AsyncClient(trust_env=False, follow_redirects=False,
-                                                 timeout=httpx.Timeout(cfg.timeout_seconds, connect=5),
+                                                 timeout=httpx.Timeout(deadline, connect=5),
                                                  transport=self.transport) as client:
                         async with client.stream("POST", cfg.endpoint + "/api/chat", json=body) as response:
                             if response.status_code == 404:

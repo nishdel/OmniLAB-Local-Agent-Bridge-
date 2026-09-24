@@ -1,0 +1,6 @@
+{
+  "task_key": "inclusive-limit-review",
+  "tool": "analyze_code",
+  "objective": "Review the boundary and suggest one regression assertion; do not execute code.",
+  "content": "The contract permits input equal to max_input_chars. Proposed code: if input_chars >= max_input_chars: raise ValueError('too large')."
+}

@@ -38,7 +38,7 @@ RUNTIME = ROOT/'data/qwen38-eval-runtime/ollama-v0.34.3/ollama.exe'
 ENDPOINT = 'http://127.0.0.1:11435'
 TERMINAL = {'completed', 'failed', 'cancelled', 'safety-stopped', 'interrupted'}
 RUNNER_VERSION = '2-job-membership-continuation'
-RUNNER_FILES = ['scripts/qwen_benchmark.py', 'scripts/qwen_benchmark_io.py',
+RUNNER_FILES = ['scripts/qwen_benchmark.py', 'scripts/qwen_benchmark_io.py', 'localagentbridge/process_control.py', 'scripts/qwen_fixture.py',
                 'scripts/qwen_benchmark_guard.py', 'scripts/qwen_benchmark_notify.py',
                 'tests/test_qwen_benchmark.py', 'tests/test_qwen_continuation.py']
 NOTIFIER = None
@@ -165,7 +165,14 @@ def start_runtime(job, config):
         raise
 
 
+def freeze_fixture(fixture_review=False):
+    from qwen_fixture import freeze_fixture as synthetic
+    return synthetic(sys.modules[__name__], fixture_review)
+
+
 def freeze(fixture=False, fixture_review=False):
+    if fixture:
+        return freeze_fixture(fixture_review)
     job_id = ('fixture-' if fixture else 'qwen-') + time.strftime('%Y%m%d-%H%M%S') + '-' + uuid.uuid4().hex[:6]
     job = OUT/'jobs'/job_id
     job.mkdir(parents=True)
@@ -320,7 +327,10 @@ def continue_job(parent, notification_config=None):
         shutil.copytree(parent/'prior',job/'prior')
         for name in ('prior-requests.json','v05-cases.json'):
             shutil.copy2(parent/name,job/name)
-        shutil.copy2(ROOT/'docs/model-evaluations/qwen3.8-27b-no-deadline/BENCHMARK-VALIDITY.md',job/'benchmark-validity.md')
+        if prior['fixture']:
+            (job/'benchmark-validity.md').write_text('Synthetic lifecycle fixture; no model quality measurement.',encoding='utf-8')
+        else:
+            shutil.copy2(ROOT/'docs/model-evaluations/qwen3.8-27b-no-deadline/BENCHMARK-VALIDITY.md',job/'benchmark-validity.md')
         # Preserve exact generation and input identity, independent of changed controller code.
         import hashlib
         canonical_hash = lambda value: hashlib.sha256(json.dumps(value,sort_keys=True).encode()).hexdigest()

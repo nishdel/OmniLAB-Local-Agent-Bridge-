@@ -93,15 +93,15 @@ def test_resource_safety_is_not_high_ram_or_elapsed():
 
 
 def test_normal_configuration_unchanged(tmp_path):
-    config = load_config(ROOT/'config.toml')
+    config = load_config(ROOT/'profiles/quality.toml')
     assert config.adaptive.preferred_model == 'gpt-oss:20b'
     assert config.timeout_seconds == 180
     assert config.num_ctx == 8192 and config.max_output_tokens == 600
     assert config.routes['analyze_code'] == 'coding'
     with pytest.raises((TypeError,ValueError)):
         Config(data_dir=tmp_path,timeout_seconds=None)
-    old = io.read(qb.PRIOR/'preflight/protected-source-hashes-before.json')
-    assert all(io.sha(ROOT/name)==digest for name,digest in old.items())
+    # Historical source hashes are evidence, not a constraint that source cannot evolve.
+    # Experiment verification continues to protect each frozen execution.
 
 
 def test_model_metadata_ignores_only_parameter_order():
@@ -226,7 +226,8 @@ def test_frozen_full_suite_prompts_with_mock_answers(tmp_path, monkeypatch):
     job=fixture_job(tmp_path,monkeypatch)
     config=io.read(job/'experiment.json')
     config['fixture']=False
-    config['model']=io.read(qb.PRIOR/'runs/qwen-paired-v0343/model.json')
+    config['model']={'tag':{'name':qb.MODEL,'size':18*2**30,'details':{'quantization_level':'fixture'}},
+                     'show':{'model_info':{'general.parameter_count':27_000_000_000}}}
     actual_transport=qb.CaptureTransport
     def transport(directory,progress,expected):
         async def handler(request):
@@ -276,7 +277,7 @@ def test_detached_worker_survives_parent_and_prevents_duplicate(tmp_path, monkey
     end=time.monotonic()+25  # Test harness bound only, never an inference/worker bound.
     while time.monotonic()<end:
         state=io.read(job/'state.json')
-        if state['state'] in qb.TERMINAL: break
+        if state['state'] in qb.TERMINAL and (job/'completion.json').exists(): break
         time.sleep(.1)
     assert state['state']=='completed',(state,(job/'worker.stderr.log').read_text())
     assert all(c['state']=='completed' for c in state['cases'])

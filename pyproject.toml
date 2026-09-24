@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "localagentbridge"
-version = "0.4.1"
+version = "0.5.0.dev0"
 description = "Small local Ollama MCP bridge and Windows usage monitor"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -30,6 +30,9 @@ localagentbridge-tray = "localagentbridge.widget:main"
 
 [tool.setuptools.packages.find]
 include = ["localagentbridge*"]
+
+[tool.setuptools.package-data]
+localagentbridge = ["definitions/*/*.toml"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

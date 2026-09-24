@@ -29,7 +29,7 @@ class Bridge:
 
     async def analyze(self, tool, content, objective="", *, role=None, with_metadata=False,
                       projection=None, max_bytes=None, group_id=None, _held=False,
-                      routing=None, _chosen_model=None, _route=None):
+                      routing=None, _chosen_model=None, _route=None, _execution=None):
         cfg = self.config
         if not content.strip():
             raise BridgeError("Supply non-empty analysis content.")
@@ -40,11 +40,11 @@ class Bridge:
             async with self.exclusive():
                 return await self.analyze(tool, content, objective, role=role, with_metadata=with_metadata,
                                           projection=projection, max_bytes=max_bytes, group_id=group_id, _held=True,
-                                          routing=routing,_chosen_model=_chosen_model,_route=_route)
+                                          routing=routing,_chosen_model=_chosen_model,_route=_route,_execution=_execution)
         if cfg.adaptive.enabled and _chosen_model is None:
             from .adaptive import AdaptiveRouter
             return await AdaptiveRouter(cfg,self.store).run(self,tool,content,objective,hints=routing,role=role,
-                projection=projection,max_bytes=max_bytes,group_id=group_id)
+                projection=projection,max_bytes=max_bytes,group_id=group_id,_execution=_execution)
         if _held:
             chosen_role, model = cfg.resolve_model(tool, role)
             model = _chosen_model or model
@@ -70,6 +70,11 @@ class Bridge:
                 import copy
                 body = copy.deepcopy(self.request_template) | {'model':model}
             try:
+                if _execution:
+                    if self.request_template is not None:
+                        raise BridgeError('Workflow calls cannot use benchmark request overrides.')
+                    body['messages'][0]['content'] += '\n' + _execution.instructions
+                    _execution.admit(record.id, body, input_chars)
                 async with asyncio.timeout(cfg.timeout_seconds):
                     if cfg.roles:
                         installed = await inventory(cfg, self.transport)
@@ -152,3 +157,5 @@ class Bridge:
                 raise
             finally:
                 record.finish(final, output_bytes, status)
+                if _execution:
+                    _execution.finished(record.id, final, status, output_bytes)

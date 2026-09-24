@@ -1,0 +1,6 @@
+schema_version = 1
+id = "performance-reviewer"
+description = "performance reviewer"
+category = "coding"
+skills = ["performance-review","resource-review"]
+instruction = "Distinguish response-time goals from retained/background resource cost. Report measurable risks and uncertainty."

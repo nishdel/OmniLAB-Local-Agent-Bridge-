@@ -1,0 +1,6 @@
+schema_version = 1
+id = "performance-review"
+description = "performance review"
+adapter = "analyze_code"
+input = "context"
+instruction = "Review user-visible latency, responsiveness, contention and representative scale. Ask whether bounds preserve correctness. Recommend measurable checks; do not invent timing or universal thresholds."

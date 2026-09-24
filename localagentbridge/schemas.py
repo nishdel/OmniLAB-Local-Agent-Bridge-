@@ -68,6 +68,14 @@ class Opinion(Strict):
     confidence: Confidence
 
 
+class ImplementationPlan(Strict):
+    contract: Short
+    steps: Items
+    validation: Items
+    uncertainties: Items
+    confidence: Confidence
+
+
 class Feedback(Strict):
     request_id: Annotated[str, Field(pattern=r"^[a-f0-9-]{36}$")]
     outcome: Literal["accepted", "corrected", "rejected"]
@@ -83,7 +91,9 @@ class RoutingHints(Strict):
 
 SCHEMAS = {"summarize_context": Summary, "analyze_test_output": TestAnalysis, "review_diff": DiffReview}
 SCHEMAS.update(find_relevant_context=ContextSelection, analyze_code=CodeAnalysis, triage_task=Triage, second_opinion=Opinion)
+SCHEMAS['implementation_plan'] = ImplementationPlan
 OBJECTIVES = {
+    "implementation_plan": "Propose a bounded implementation plan grounded in the supplied evidence. State the observable contract, minimal steps, validation and uncertainty. Codex resolves decisions and applies changes.",
     "summarize_context": "Cover each topic in the objective using supplied evidence. Preserve method/file references and concrete limits. State uncertainty only for missing evidence.",
     "analyze_test_output": "Identify actual failures, likely root causes and specific next investigations.",
     "review_diff": "First-pass review against intended behavior. Find bugs, regressions, suspicious logic and tests preserving the stated contract. Avoid style advice.",

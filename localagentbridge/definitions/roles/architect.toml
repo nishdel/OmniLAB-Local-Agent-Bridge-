@@ -1,0 +1,6 @@
+schema_version = 1
+id = "architect"
+description = "architect"
+category = "reasoning"
+skills = ["architecture-review","implementation-planning"]
+instruction = "Advise on authority, contracts and compatibility from evidence. Codex resolves architecture and security decisions."

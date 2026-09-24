@@ -8,11 +8,20 @@ class AdaptiveRouter:
     def __init__(self, config, store):
         self.config, self.store = config, store
 
-    def candidates(self, role, tool, cap, minimum=1, excluded=()):
+    def candidates(self, role, tool, cap, minimum=1, excluded=(), requirements=None, allowed_models=None):
         eligible, blocked = [], []
         cfg = self.config
+        if requirements and cfg.num_ctx < requirements.min_context:
+            return [], ['role_context_requirement']
         for profile in cfg.model_registry:
             if not profile.enabled or role not in profile.roles or profile.name in excluded or profile.strength < minimum:
+                continue
+            if requirements and (profile.strength < requirements.min_strength or
+                    not set(requirements.capabilities) <= set(profile.capabilities)):
+                blocked.append('role_capability_requirement')
+                continue
+            if allowed_models is not None and profile.name not in allowed_models:
+                blocked.append('project_model_allowlist')
                 continue
             metrics = self.store.model_metrics(profile.name, tool)
             allowed, reason = task_eligibility(profile, cfg.adaptive, cap, metrics, tool)
@@ -47,11 +56,14 @@ class AdaptiveRouter:
     async def run(self, bridge, tool, content, objective, *, hints=None, role=None, **kwargs):
         from .bridge import BridgeError
         cfg, store = self.config, self.store
+        execution = kwargs.get('_execution')
         hints = hints.model_dump() if hasattr(hints, 'model_dump') else (hints or {})
         role = role or cfg.routes[tool]
         cfg.resolve_model(tool, role)  # validate explicit role before selecting candidates
         cap = store.compute_cap(cfg.adaptive.default_cap)
         logical, previous, count = str(uuid.uuid4()), None, 0
+        if execution:
+            logical = execution.logical_id
         minimum = 2 if hints.get('complexity') == 'moderate' else 1
         reason = 'task_complexity' if minimum > 1 else 'smallest_capable'
         if cfg.adaptive.preferred_model and minimum == 1:
@@ -95,7 +107,9 @@ class AdaptiveRouter:
         for _ in range(max(0, cfg.adaptive.max_attempts-count)):
             # Re-read persisted cap between attempts, including another process's edits.
             cap = store.compute_cap(cfg.adaptive.default_cap)
-            choices, blocked = self.candidates(role, tool, cap, minimum, [a['model'] for a in attempts])
+            choices, blocked = self.candidates(role, tool, cap, minimum, [a['model'] for a in attempts],
+                requirements=execution.requirements if execution else None,
+                allowed_models=execution.allowed_models if execution else None)
             choices, selection = self.selection(choices, tool, cap, len(content)+len(objective), hints, bool(previous))
             if not choices:
                 why = '; '.join(dict.fromkeys(blocked)) if blocked else 'no_enabled_capable_model'
@@ -110,6 +124,8 @@ class AdaptiveRouter:
             facts = f"Role: {role}; complexity: {hints.get('complexity', 'simple')}; cap: {cap}; {reason}; {selection} ({selected.strength}); {quality_fact}."
             store.route_event(logical, previous, selected.name, reason, cap, tool=tool, role=role, selection_reason=facts)
             try:
+                if execution:
+                    execution.retry = bool(attempts)
                 result = await bridge.analyze(tool, content, objective, role=role, with_metadata=True,
                     _held=True, _chosen_model=selected.name, _route=dict(logical_id=logical,
                     escalated_from=previous, escalation_reason=reason if previous or reason!='smallest_capable' else None,

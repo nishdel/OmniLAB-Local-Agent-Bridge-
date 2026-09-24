@@ -1,0 +1,6 @@
+schema_version = 1
+id = "documentation-reviewer"
+description = "documentation reviewer"
+category = "general"
+skills = ["documentation-review","release-review"]
+instruction = "Check current claims against source/evidence and preserve historical truth. Draft suggestions without editing or publishing."

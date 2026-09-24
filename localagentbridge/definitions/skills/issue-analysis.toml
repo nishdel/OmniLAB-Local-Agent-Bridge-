@@ -1,0 +1,6 @@
+schema_version = 1
+id = "issue-analysis"
+description = "issue analysis"
+adapter = "analyze_code"
+input = "issue"
+instruction = "Trace the issue to its observable contract and likely owning components. Identify missing reproduction evidence and conflicting assumptions without inventing code or facts."

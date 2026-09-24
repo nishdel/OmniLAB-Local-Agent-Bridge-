@@ -1,0 +1,6 @@
+schema_version = 1
+id = "ui-ux-review"
+description = "ui ux review"
+adapter = "analyze_code"
+input = "context"
+instruction = "Review user intent, action-result parity, visible/failure states, keyboard/focus/accessibility and recovery. Source/headless evidence does not prove native visual or assistive-technology acceptance."

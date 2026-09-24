@@ -14,6 +14,10 @@ class Service:
     def __init__(self, config, transport=None):
         self.config = config
         self.bridge = Bridge(config, transport)
+        self.workflows = None
+        if config.agentic.enabled:
+            from .workflow import WorkflowEngine
+            self.workflows = WorkflowEngine(self)
 
     def content(self, text="", files=None, file_paths=None):
         parts = [text]

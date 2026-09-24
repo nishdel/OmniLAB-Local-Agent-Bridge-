@@ -1,4 +1,17 @@
-# LocalAgentBridge v0.4.1
+# LocalAgentBridge — v0.5 development
+
+This checkout is **0.5.0.dev0**, unreleased. It adds opt-in skills, advisory roles
+and controlled workflows over the existing router. Start with the
+[workflow guide](docs/WORKFLOWS.md), [minimal configuration](examples/v0.5/minimal.toml)
+and [implementation/validation report](docs/v0.5/IMPLEMENTATION.md).
+The published v0.4.1 starter and release instructions below remain the stable path.
+Workflow support is off unless explicitly enabled; personal configuration is unchanged.
+
+Adaptive delegation is now available through the
+[adaptive guide](docs/ADAPTIVE-DELEGATION.md) and
+[4B-only auto configuration](examples/v0.5/adaptive.toml). Auto prefers direct
+analysis and adds advisory roles only for a positive specialization case or a
+required project review. Existing explicit workflow callers remain compatible.
 
 A small local MCP offloading layer for Codex. Codex remains the primary agent;
 Ollama models can handle repository discovery, context compression, summaries,

@@ -1,0 +1,6 @@
+schema_version = 1
+id = "implementation-planning"
+description = "implementation planning"
+adapter = "implementation_plan"
+input = "issue"
+instruction = "Propose a bounded implementation plan: observable contract, existing owners, minimal steps, focused validation and uncertainty. Architecture and security decisions and all edits remain with Codex."

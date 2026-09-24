@@ -1,0 +1,5 @@
+schema_version = 1
+id = "generic"
+description = "Generic software project; no product-specific authority assumptions."
+workflows = ["implement_issue", "review_change"]
+instruction = "Use only supplied evidence. Codex owns implementation, execution and final verification."

@@ -1,0 +1,6 @@
+schema_version = 1
+id = "documentation-review"
+description = "documentation review"
+adapter = "summarize_context"
+input = "context"
+instruction = "Compare current documentation and terminology to supplied source and tests. Identify stale claims, missing intent and diagram/validation gaps; preserve historical reports as historical evidence."

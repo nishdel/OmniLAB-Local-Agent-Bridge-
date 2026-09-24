@@ -1,0 +1,6 @@
+schema_version = 1
+id = "implementation-proposal"
+description = "implementation proposal"
+adapter = "analyze_code"
+input = "issue"
+instruction = "Suggest only a small change within the resolved objective and existing owners. Include focused tests and uncertainty. Do not edit, execute, commit or introduce a parallel architecture."

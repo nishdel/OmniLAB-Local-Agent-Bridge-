@@ -1,3 +1,3 @@
 """LocalAgentBridge: analysis only, no shell or autonomous agents."""
 
-__version__ = "0.4.1"
+__version__ = "0.5.0.dev0"

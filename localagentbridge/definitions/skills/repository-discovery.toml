@@ -1,0 +1,6 @@
+schema_version = 1
+id = "repository-discovery"
+description = "repository discovery"
+adapter = "repository_search"
+input = "search"
+instruction = "Locate actual repository evidence with bounded lexical search; report coverage limits and never claim missing matches prove absence."

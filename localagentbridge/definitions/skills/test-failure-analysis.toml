@@ -1,0 +1,6 @@
+schema_version = 1
+id = "test-failure-analysis"
+description = "test failure analysis"
+adapter = "analyze_test_output"
+input = "test_output"
+instruction = "Analyze actual test output, likely causes and focused investigation. Proposed tests are not executed tests; a lack of logs is not a passing result."

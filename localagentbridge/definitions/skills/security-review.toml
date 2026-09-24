@@ -1,0 +1,6 @@
+schema_version = 1
+id = "security-review"
+description = "security review"
+adapter = "analyze_code"
+input = "context"
+instruction = "Review trust boundaries, untrusted inputs, path/scope authorization, secrets, deserialization, supply-chain exposure and cleanup. Give concrete negative scenarios. Do not certify security or authorize actions."

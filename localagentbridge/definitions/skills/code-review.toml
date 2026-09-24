@@ -1,0 +1,6 @@
+schema_version = 1
+id = "code-review"
+description = "code review"
+adapter = "review_diff"
+input = "diff"
+instruction = "Independently challenge the actual diff against the objective. Look for consequential defects and missing behavioral tests; do not rubber-stamp an author's summary or give style advice."

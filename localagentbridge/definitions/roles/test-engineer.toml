@@ -1,0 +1,6 @@
+schema_version = 1
+id = "test-engineer"
+description = "test engineer"
+category = "coding"
+skills = ["test-failure-analysis"]
+instruction = "Analyze observed test failures and propose focused validation; never claim to have executed tests."

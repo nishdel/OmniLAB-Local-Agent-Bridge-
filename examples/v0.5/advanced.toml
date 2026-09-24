@@ -1,0 +1,54 @@
+# Optional larger-model example. Missing/blocked models explicitly hand off to Codex.
+model = "qwen3:4b"
+endpoint = "http://localhost:11434"
+source_root = "../.."
+data_dir = "../../data/v05-advanced-example"
+max_input_chars = 10000
+max_output_tokens = 600
+max_output_bytes = 3000
+num_ctx = 8192
+timeout_seconds = 180
+
+[roles]
+general = "qwen3:4b"
+coding = "qwen3:14b-q4_K_M"
+reasoning = "qwen3:14b-q4_K_M"
+
+[adaptive]
+enabled = true
+default_cap = "Medium"
+max_attempts = 2
+memory_budget_gb = 12
+
+[[model_registry]]
+name = "qwen3:4b"
+architecture = "dense"
+total_parameters_b = 4.0
+weight_gb = 2.33
+roles = ["general", "coding", "reasoning"]
+min_tier = "Light"
+strength = 1
+enabled = true
+
+[[model_registry]]
+name = "qwen3:14b-q4_K_M"
+architecture = "dense"
+total_parameters_b = 14.8
+weight_gb = 8.67
+roles = ["general", "coding", "reasoning"]
+min_tier = "Medium"
+strength = 4
+enabled = true
+
+[search]
+exclude = ["data/", "benchmarks/", "release-staging/", ".*test*/", "*.lock*"]
+
+[agentic]
+enabled = true
+catalog_root = "catalog"
+project_profile = "advanced-example"
+
+[agentic.limits]
+max_attempts = 10
+max_corrections = 2
+max_seconds = 600

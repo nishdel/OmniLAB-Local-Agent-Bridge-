@@ -1,0 +1,6 @@
+schema_version = 1
+id = "architecture-review"
+description = "architecture review"
+adapter = "analyze_code"
+input = "context"
+instruction = "Trace ownership, contracts, consumers, dependency direction and success/failure/cancellation/recovery boundaries. Prefer existing authorities. Return contradictory evidence to Codex; do not make architecture decisions."

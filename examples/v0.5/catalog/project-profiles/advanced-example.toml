@@ -1,0 +1,37 @@
+schema_version = 1
+id = "advanced-example"
+description = "Require security advice, reduce exploration cost, and constrain reviewer candidates."
+workflows = ["review_change", "implement_issue"]
+disabled_roles = ["implementation-advisor"]
+instruction = "Preserve supported interfaces and verify non-success paths before acceptance."
+require_security = true
+
+[limits]
+max_attempts = 8
+max_corrections = 1
+max_seconds = 480
+
+[[role_overrides]]
+role = "code-reviewer"
+instruction = "Pay particular attention to cancellation and rollback behavior."
+allowed_models = ["qwen3:14b-q4_K_M"]
+[role_overrides.requirements]
+min_strength = 2
+timeout_seconds = 120
+
+[[stage_overrides]]
+workflow = "review_change"
+stage = "explore"
+[stage_overrides.replacement]
+id = "explore"
+role = "repository-explorer"
+skills = ["repository-discovery"]
+
+[[stage_overrides]]
+workflow = "implement_issue"
+stage = "review"
+[stage_overrides.replacement]
+id = "review"
+role = "code-reviewer"
+skills = ["code-review", "security-review"]
+inputs_from = ["test"]

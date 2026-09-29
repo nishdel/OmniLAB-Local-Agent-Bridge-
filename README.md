@@ -4,9 +4,13 @@ Local Ollama models propose bounded code, tests and documentation; Codex reviews
 integrates and validates. The bridge keeps local work and results alive between
 Codex turns. A compact Windows Tk dock shows local jobs, review state and usage.
 
-**0.5.0.dev0 is unreleased.** The public v0.4.1 release is unchanged. See
-[release readiness](docs/RELEASE-READINESS.md) for implemented, tested, simulated
-and blocked gates. No release publication is part of this work.
+**0.5.0.dev0 is a development snapshot, not release-qualified.** The public
+v0.4.1 release is unchanged. See [source and package provenance](docs/DEVELOPMENT-SNAPSHOT.md),
+[release readiness](docs/RELEASE-READINESS.md) and the latest
+[Windows qualification addendum](docs/WINDOWS-QUALIFICATION.md) for evidence
+and open gates. [Manual test definitions](docs/MANUAL-RELEASE-TESTING.md) and the
+[unpublished issue draft](docs/release-testing/0.5.0.dev0-issue-draft.md) prepare
+owner testing; they do not record completed acceptance or authorize publication.
 
 ## Start here
 

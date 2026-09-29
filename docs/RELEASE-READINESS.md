@@ -1,5 +1,10 @@
 # Companion candidate readiness
 
+This is the historical recovery report. The [Windows qualification addendum](WINDOWS-QUALIFICATION.md)
+subsequently passed the actual Python 3.11 gate; its remaining gates still apply.
+See [development source/package provenance](DEVELOPMENT-SNAPSHOT.md) for the
+source publication. **0.5.0.dev0 remains not release-qualified.**
+
 Status: **cross-database process-crash recovery blocker resolved; Windows release
 gates remain open**. The [focused repair](RECOVERY.md) persists authoritative
 packets/transition receipts and reconciles downstream results without replay.

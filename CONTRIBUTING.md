@@ -49,3 +49,16 @@ exercise a copied old database during upgrade. Do not publish. Use the release
 readiness report to distinguish deterministic tests, simulated elapsed time,
 live calls, native UI checks and unresolved limitations. Research fixture tests
 are synthetic and require no installed model or historical private evidence.
+
+## Manual release-testing issue
+
+During release preparation, prepare or update one release-testing issue from
+[`.github/ISSUE_TEMPLATE/release-manual-testing.md`](.github/ISSUE_TEMPLATE/release-manual-testing.md)
+and the [manual test definitions](docs/MANUAL-RELEASE-TESTING.md). Review affected definitions whenever
+user-visible behavior changes; do not create a new issue for every development
+task. Keep exact candidate/package/source/hash and environment above one status
+table. The issue owns execution results; repository documents own procedures.
+Preserve prior-candidate evidence, identify affected retests, and keep automated
+evidence and owner approvals separate from human acceptance. Unresolved inherited
+requirements need explicit scope decisions, not silent removal. Templates and
+unpublished drafts are preparation only; publishing an issue requires authorization.

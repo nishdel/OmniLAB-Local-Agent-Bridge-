@@ -178,3 +178,8 @@ tests/test_v3_widget_native.py
 tests/test_v4_dashboard.py
 tests/test_v4_release.py
 tests/test_widget_native.py
+.github/ISSUE_TEMPLATE/release-manual-testing.md
+docs/MANUAL-RELEASE-TESTING.md
+docs/release-testing/0.5.0.dev0-issue-draft.md
+docs/WINDOWS-QUALIFICATION.md
+docs/DEVELOPMENT-SNAPSHOT.md

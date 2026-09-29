@@ -285,6 +285,32 @@ def test_detached_worker_survives_parent_and_prevents_duplicate(tmp_path, monkey
     assert (job/'completion.json').exists()
 
 
+@pytest.mark.skipif(os.name!='nt',reason='Windows file sharing semantics')
+@pytest.mark.parametrize('persistent',[False,True])
+def test_atomic_state_retries_sharing_denial_but_preserves_real_failure(tmp_path,monkeypatch,persistent):
+    target=tmp_path/'state.json'
+    io.atomic(target,{'state':'old'})
+    replace=io.os.replace
+    calls=[]
+    def replacement(source,destination):
+        calls.append(1)
+        if persistent or len(calls)==1:
+            error=PermissionError('Synthetic Windows reader sharing denial')
+            error.winerror=5
+            raise error
+        return replace(source,destination)
+    monkeypatch.setattr(io.os,'replace',replacement)
+    monkeypatch.setattr(io.time,'sleep',lambda _:None)
+    if persistent:
+        with pytest.raises(PermissionError):
+            io.atomic(target,{'state':'new'})
+        assert io.read(target)=={'state':'old'} and len(calls)==11
+        assert len(list(tmp_path.glob('state.json.*.tmp')))==1
+    else:
+        io.atomic(target,{'state':'new'})
+        assert io.read(target)=={'state':'new'} and len(calls)==2
+
+
 @pytest.mark.skipif(os.name!='nt',reason='Windows job object process ownership')
 def test_owned_child_exits_when_parent_dies(tmp_path):
     launcher=tmp_path/'owner.py'

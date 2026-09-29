@@ -14,6 +14,7 @@ from .schemas import compact
 class WorkflowStore:
     def __init__(self, store):
         self.store = store
+        self.journal = None  # Opt-in companion evidence; legacy workflow API stays metadata-only.
         with store.connect() as db:
             db.executescript('''
                 CREATE TABLE IF NOT EXISTS workflow_runs (
@@ -59,6 +60,8 @@ class WorkflowStore:
             if old:
                 if old['identity'] != identity or old['catalog'] != catalog:
                     raise BridgeError('This task ID already names another immutable workflow scope.')
+                if self.journal:
+                    self.journal.attach(db,old['id'])
                 return old['id']
             if db.execute('SELECT COUNT(*) FROM workflow_runs').fetchone()[0] >= 5000:
                 raise BridgeError('Workflow history capacity reached; retain or archive history before new work.')
@@ -69,6 +72,8 @@ class WorkflowStore:
             for stage in plan['stages']:
                 db.execute('INSERT INTO workflow_stages(run_id,stage_id) VALUES(?,?)', (run_id,stage['id']))
             self.event(db, run_id, 'started')
+            if self.journal:
+                self.journal.attach(db,run_id)
             return run_id
 
     def read(self, run_id):
@@ -81,12 +86,15 @@ class WorkflowStore:
     def _expire(self, db):
         lease = db.execute('SELECT * FROM workflow_lease WHERE slot=1').fetchone()
         if lease and lease['expires'] <= time.time():
-            db.execute("UPDATE workflow_runs SET state='handed_off',reason='interrupted',version=version+1,updated=? WHERE id=?",
-                       (time.time(),lease['run_id']))
-            db.execute("UPDATE workflow_stages SET state='handed_off' WHERE run_id=? AND stage_id=?",
-                       (lease['run_id'],lease['stage_id']))
-            self.event(db, lease['run_id'], 'handed_off', stage=lease['stage_id'], reason='interrupted')
-            db.execute('DELETE FROM workflow_lease WHERE slot=1')
+            self._interrupt(db,lease)
+
+    def _interrupt(self, db, lease):
+        db.execute("UPDATE workflow_runs SET state='handed_off',reason='interrupted',version=version+1,updated=? WHERE id=?",
+                   (time.time(),lease['run_id']))
+        db.execute("UPDATE workflow_stages SET state='handed_off' WHERE run_id=? AND stage_id=?",
+                   (lease['run_id'],lease['stage_id']))
+        self.event(db, lease['run_id'], 'handed_off', stage=lease['stage_id'], reason='interrupted')
+        db.execute('DELETE FROM workflow_lease WHERE owner=?',(lease['owner'],))
 
     def claim(self, run_id, version, stage, timeout):
         with self.store.connect() as db:
@@ -111,6 +119,8 @@ class WorkflowStore:
             db.execute("UPDATE workflow_stages SET state='running',seconds=seconds+? WHERE run_id=? AND stage_id=?",
                        (available,run_id,stage['id']))
             self.event(db, run_id, 'role_started', stage=stage['id'], role=stage['role'])
+            if self.journal:
+                self.journal.claimed(db,owner)
             return owner, available
 
     @staticmethod
@@ -162,6 +172,8 @@ class WorkflowStore:
             db.execute('BEGIN IMMEDIATE')
             lease = self._owner(db, owner)
             version = db.execute('SELECT version FROM workflow_runs WHERE id=?', (lease['run_id'],)).fetchone()[0]
+            if self.journal:
+                self.journal.payload(db,packet,digest,snapshot,lease['run_id'],version)
             db.execute('INSERT INTO workflow_results VALUES(?,?,?,?,?,?)',
                        (lease['run_id'],packet['stage_id'],packet['skill_id'],version,digest,snapshot))
 
@@ -171,7 +183,7 @@ class WorkflowStore:
                 AND version=(SELECT MAX(x.version) FROM workflow_results x
                     WHERE x.run_id=r.run_id AND x.stage_id=r.stage_id AND x.skill_id=r.skill_id)''', (run_id,stage_id))]
 
-    def finish(self, owner, elapsed, state, reason=''):
+    def finish(self, owner, elapsed, state, reason='', failure=None):
         with self.store.connect() as db:
             db.execute('BEGIN IMMEDIATE')
             lease = self._owner(db, owner)
@@ -184,6 +196,8 @@ class WorkflowStore:
             self.event(db, lease['run_id'], 'role_completed' if state=='ready' else state,
                        stage=lease['stage_id'], reason=reason)
             db.execute('DELETE FROM workflow_lease WHERE owner=?', (owner,))
+            if self.journal:
+                self.journal.committed(db,lease['run_id'],failure=failure)
 
     def wait_or_skip(self, run_id, version, stage, skip=False):
         with self.store.connect() as db:
@@ -196,6 +210,8 @@ class WorkflowStore:
             db.execute('UPDATE workflow_stages SET state=? WHERE run_id=? AND stage_id=?',
                        ('skipped' if skip else 'waiting_for_codex',run_id,stage['id']))
             self.event(db, run_id, 'skipped' if skip else 'checkpoint',stage=stage['id'], reason='not_relevant' if skip else stage['checkpoint'])
+            if self.journal:
+                self.journal.committed(db,run_id)
 
     def checkpoint(self, run_id, version, action, snapshot, note_digest, validation_status, rewind=None):
         with self.store.connect() as db:
@@ -229,18 +245,24 @@ class WorkflowStore:
             if action != 'revise':
                 db.execute("UPDATE workflow_stages SET state='codex_resolved' WHERE run_id=? AND stage_id=?", (run_id,current['id']))
             self.event(db, run_id, 'codex_'+action,stage=current['id'],reason=note_digest)
+            if self.journal:
+                self.journal.committed(db,run_id)
 
     def status(self, run_id):
         with self.store.connect() as db:
             db.execute('BEGIN IMMEDIATE')
             self._expire(db)
-        row = self.read(run_id)
+            return self._status(db,run_id)
+
+    def _status(self, db, run_id):
+        row = db.execute('SELECT * FROM workflow_runs WHERE id=?',(run_id,)).fetchone()
+        if row is None:
+            raise BridgeError('Unknown workflow run.')
         plan, limits = json.loads(row['plan']), json.loads(row['limits'])
-        with self.store.connect() as db:
-            stages = {r['stage_id']:dict(r) for r in db.execute('SELECT * FROM workflow_stages WHERE run_id=?', (run_id,))}
-            attempts = [dict(r) for r in db.execute('''SELECT a.request_id,a.stage_id,a.skill_id,a.kind,a.model,a.state,
-                a.input_tokens,a.output_tokens,a.output_bytes,u.duration,u.selection_reason,u.route_cap
-                FROM workflow_attempts a LEFT JOIN usage u ON u.id=a.request_id WHERE a.run_id=? ORDER BY a.created''', (run_id,))]
+        stages = {r['stage_id']:dict(r) for r in db.execute('SELECT * FROM workflow_stages WHERE run_id=?', (run_id,))}
+        attempts = [dict(r) for r in db.execute('''SELECT a.request_id,a.stage_id,a.skill_id,a.kind,a.model,a.state,
+            a.input_tokens,a.output_tokens,a.output_bytes,u.duration,u.selection_reason,u.route_cap
+            FROM workflow_attempts a LEFT JOIN usage u ON u.id=a.request_id WHERE a.run_id=? ORDER BY a.created''', (run_id,))]
         result = {'run_id':run_id,'workflow':plan['workflow'],'project_profile':plan['profile'],
                 'version':row['version'],'state':row['state'],'reason':row['reason'],
                 'next_stage':plan['stages'][row['position']]['id'] if row['position'] < len(plan['stages']) and row['state'] not in ('aborted','rejected') else None,

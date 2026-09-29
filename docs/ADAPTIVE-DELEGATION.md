@@ -5,7 +5,7 @@ layer. It prefers direct analysis; a workflow needs an explainable reason or an
 explicit project/user requirement. It makes no classifier model call. Decisions
 are advisory estimates, and all implementation and final decisions remain with
 Codex. The representative evaluation is recorded in
-[the adaptive report](v0.5/ADAPTIVE-REPORT.md).
+[the adaptive report](RELEASE-READINESS.md).
 
 ## Enable auto without changing existing callers
 
@@ -49,6 +49,10 @@ Replace illustrative evidence with the actual task before execution. Use `start`
 then `step` with the returned `run_id`/current `version` and the same task, then
 record the actual Codex checkpoint decision. The existing evidence, handoff,
 restart and shared-budget rules in [WORKFLOWS.md](WORKFLOWS.md) still apply.
+
+For independent worker lifetime, put this same task under `task_key`/`task` and
+use `companion workflow-submit`. Its next/checkpoint jobs reuse this persisted
+decision; they do not discard project controls. See [durable workflows](COMPANION-WORKFLOWS.md).
 
 Direct execution is one existing adapter call (or deterministic repository search)
 with shared accounting and a Codex decision. It does not add semantic-role prompts
@@ -148,7 +152,7 @@ when = "resources"
 `workflow_mode = "direct"` forces the initial analysis down the direct path.
 `workflow_mode = "workflow"` requires decomposition. A non-auto project mode
 takes precedence over the caller's requested mode. Required reviews are appended
-even after a direct initial analysis; direct → Security Reviewer → Codex is valid.
+even after a direct initial analysis; direct â†’ Security Reviewer â†’ Codex is valid.
 An already selected required role/skill pair is not duplicated. Existing
 `require_security` and `require_resources` remain supported.
 
@@ -162,11 +166,11 @@ with an explicit workflow/stage override is rejected as a policy conflict.
 
 Auto domain choices reuse existing definitions:
 
-- Architecture → `architect` / `architecture-review`.
-- Security or dependency risk → `security-reviewer` / `security-review`.
-- Resource cost → `performance-reviewer` / `resource-review`.
-- UI evidence → `ux-reviewer` / `ui-ux-review`.
-- Release evidence → `documentation-reviewer` / `release-review`.
+- Architecture â†’ `architect` / `architecture-review`.
+- Security or dependency risk â†’ `security-reviewer` / `security-review`.
+- Resource cost â†’ `performance-reviewer` / `resource-review`.
+- UI evidence â†’ `ux-reviewer` / `ui-ux-review`.
+- Release evidence â†’ `documentation-reviewer` / `release-review`.
 
 With several independent concerns, auto may retain the general analysis role
 alongside domain advice. Single-concern auto review can use only its specialist.

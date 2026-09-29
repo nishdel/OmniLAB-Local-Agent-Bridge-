@@ -365,7 +365,8 @@ class WorkflowEngine:
             except (BridgeError, ValueError, OSError) as error:
                 state, reason, failure = 'handed_off', 'execution_or_evidence_limit', str(error)[:300]
             finally:
-                self.ledger.finish(owner,time.monotonic()-started,state,reason)
+                details = {'failure':failure} if self.ledger.journal else {}
+                self.ledger.finish(owner,time.monotonic()-started,state,reason,**details)
         result = self.status(run_id)
         result['handoffs'] = packets
         result['evaluation'] = 'advisory_requires_codex' if state=='ready' else 'codex_handoff'
@@ -384,6 +385,8 @@ class WorkflowEngine:
                 raise BridgeError('Stale workflow version.')
             db.execute("UPDATE workflow_stages SET state='handed_off' WHERE run_id=? AND stage_id=?",(run_id,stage['id']))
             self.ledger.event(db,run_id,'handed_off',stage=stage['id'],reason=reason)
+            if self.ledger.journal:
+                self.ledger.journal.committed(db,run_id)
 
     @staticmethod
     def _content(skill, evidence, prior):

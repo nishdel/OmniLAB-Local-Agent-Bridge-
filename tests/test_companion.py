@@ -98,6 +98,17 @@ def test_duplicate_submission_and_completion_are_atomic(tmp_path):
     assert len(snapshot['events'])==1 and snapshot['jobs'][0]['result']=={'result':'persisted'}
 
 
+def test_submission_retry_ignores_inventory_timestamp_but_not_digest(tmp_path):
+    store,run=setup_run(tmp_path)
+    first={'content':'same','selection':{'name':'local','digest':'one','observed_at':1}}
+    jid=store.submit(run,'retry',first)
+    again={'content':'same','selection':dict(first['selection'],observed_at=2)}
+    assert store.submit(run,'retry',again)==jid
+    assert store.job(jid)['request']['selection']['observed_at']==1
+    again['selection']['digest']='changed'
+    with pytest.raises(ValueError): store.submit(run,'retry',again)
+
+
 def test_busy_session_and_simultaneous_review_claims(tmp_path):
     store,run=setup_run(tmp_path)
     completed(store,run,'one'); completed(store,run,'two')
@@ -191,6 +202,20 @@ def test_finalization_deduplicated_after_review_and_validation(tmp_path):
     with pytest.raises(ValueError): store.submit(run,'late',{})
 
 
+def test_model_validation_is_reviewed_and_scoped_to_digest_and_endpoint(tmp_path):
+    store,run=setup_run(tmp_path)
+    request={'tool':'analyze_code','endpoint':'http://localhost','selection':{'name':'custom','digest':'one'}}
+    jid=store.submit(run,'validated',request)
+    job=store.claim_job({});store.complete(jid,job['attempt_id'],{})
+    rows=[{'name':'custom','digest':'one','validation':'untested'}]
+    assert store.annotate_inventory(rows,'http://localhost')[0]['validation']=='untested'
+    event=store.claim_event();store.delivery(event['id'],event['delivery_id'],'awaiting_decision')
+    store.decide(event['id'],'corrected','Verified the corrected bounded code with its regression')
+    assert store.annotate_inventory(rows,'http://localhost')[0]['validated_tools']==['analyze_code']
+    assert store.annotate_inventory(rows,'http://other')[0]['validation']=='untested'
+    assert store.annotate_inventory([dict(rows[0],digest='two')],'http://localhost')[0]['validation']=='untested'
+
+
 def test_failure_review_finalizes_blocked(tmp_path):
     store,run=setup_run(tmp_path)
     jid=store.submit(run,'broken',{})
@@ -219,6 +244,26 @@ def test_missing_repository_blocks_dispatch_without_invoke(tmp_path,monkeypatch)
     monkeypatch.setattr(callbacks,'invoke',lambda *a:pytest.fail('must not dispatch'))
     dispatch(store,event,sys.executable)
     assert store.snapshot()['events'][0]['state']=='uncertain'
+
+
+def test_callback_contains_bounded_source_evidence_and_correct_session(tmp_path,monkeypatch):
+    from localagentbridge import callbacks
+    store,run=setup_run(tmp_path)
+    jid=store.submit(run,'source-review',{'objective':'review','content':'bounded source evidence','source_sha256':'digest','selection':{'name':'local'}})
+    job=store.claim_job({})
+    store.complete(jid,job['attempt_id'],{'answer':'proposal'})
+    event=store.claim_event()
+    monkeypatch.setattr(callbacks,'verify_repository',lambda e:str(tmp_path))
+    seen=[]
+    def invoke(argv,prompt,directory):
+        seen.append(prompt)
+        directory.mkdir(parents=True)
+        (directory/'response.txt').write_text('Report')
+        return 0,[{'type':'thread.started','thread_id':event['session_id']},{'type':'turn.completed'}]
+    monkeypatch.setattr(callbacks,'invoke',invoke)
+    callbacks.dispatch(store,event,sys.executable)
+    assert 'bounded source evidence' in seen[0] and 'UNTRUSTED_EVIDENCE' in seen[0]
+    assert store.snapshot()['events'][0]['state']=='awaiting_decision'
 
 
 def test_dock_reports_unknown_usage_and_cancellation_controls(tmp_path):
@@ -252,7 +297,11 @@ def test_actual_worker_survives_launcher_and_completion_survives_restart(tmp_pat
     import threading
     from localagentbridge.companion import git_identity
     root=Path(__file__).resolve().parents[1]
-    repository,base=git_identity(root)
+    target=tmp_path/'repository'
+    subprocess.run(['git','init',str(target)],check=True,capture_output=True)
+    subprocess.run(['git','-C',str(target),'-c','user.name=Fixture','-c','user.email=fixture@example.invalid',
+                    'commit','--allow-empty','-m','Fixture base'],check=True,capture_output=True)
+    repository,base=git_identity(target)
     class Handler(BaseHTTPRequestHandler):
         def log_message(self,*a): pass
         def do_GET(self):
@@ -298,6 +347,42 @@ def test_database_upgrade_and_future_version_guard(tmp_path):
     path=tmp_path/'companion/companion.sqlite3'
     with sqlite3.connect(path) as db: db.execute('PRAGMA user_version=99')
     with pytest.raises(ValueError,match='newer'): CompanionStore(path.parent)
+
+
+def test_real_worker_termination_reconciles_as_interrupted(tmp_path):
+    import psutil
+    from localagentbridge.companion import worker
+    root=Path(__file__).resolve().parents[1]
+    store,run=setup_run(tmp_path)
+    store.submit(run,'in-progress',{})
+    script=('import sys,time; from localagentbridge.companion_store import CompanionStore; '
+            'from localagentbridge.process_control import Lock,identity; '
+            's=CompanionStore(sys.argv[1]); lock=Lock(s.directory/"worker.lock"); lock.__enter__(); '
+            's.claim_job(identity()); time.sleep(60)')
+    launcher=subprocess.Popen([sys.executable,'-B','-c',script,str(store.directory)],cwd=root,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+    process=None
+    try:
+        until=time.monotonic()+10
+        while time.monotonic()<until:
+            old=store.snapshot()['jobs'][0]
+            if old['process']: break
+            time.sleep(.05)
+        recorded=old['process']
+        process=psutil.Process(recorded['pid'])
+        assert process.create_time()==recorded['created']
+        process.terminate()  # psutil checks creation identity before signaling.
+        process.wait(timeout=10)
+        launcher.wait(timeout=10)
+        worker(store.directory)
+        restarted=store.snapshot()
+        assert restarted['jobs'][0]['state']=='interrupted'
+        assert restarted['events'][0]['state']=='pending'
+        assert restarted['jobs'][0]['result'] is None
+    finally:
+        if process is not None and process.is_running():
+            process.terminate();process.wait(timeout=10)
+        if launcher.poll() is None:
+            launcher.terminate();launcher.wait(timeout=10)
 
 
 @pytest.mark.skipif(sys.platform!='win32',reason='Native Tk dock')

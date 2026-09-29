@@ -1,0 +1,12 @@
+{
+  "task_key": "helper-workflow-review-1",
+  "task": {
+    "task_id": "helper-workflow-review-1",
+    "kind": "review_change",
+    "objective": "Review whether the helper still accepts negative values.",
+    "context": "The observable contract requires returning the supplied value unchanged.",
+    "diff": "-return value\n+return abs(value)",
+    "validation_status": "not_run",
+    "delegation": {"mode": "auto"}
+  }
+}

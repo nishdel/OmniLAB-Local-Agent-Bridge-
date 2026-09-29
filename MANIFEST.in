@@ -1,0 +1,16 @@
+include README.md LICENSE pyproject.toml requirements.lock.txt config.example.toml
+include CHANGELOG.md CONTRIBUTING.md AGENTS.md SECURITY.md CODEX_POLICY.md MIGRATION-v0.5.md
+include PUBLIC-FILES.txt PUBLIC-RELEASE-CHECKLIST.md
+include *.md .gitignore
+recursive-include .github *.md *.yml
+recursive-include localagentbridge *.py *.toml
+recursive-include docs *.md *.json *.png
+recursive-include examples *.toml *.json
+recursive-include profiles *.toml
+recursive-include tests *.py *.json
+recursive-include scripts *.py
+prune data
+prune benchmarks
+prune release-staging
+prune docs/model-evaluations
+global-exclude __pycache__ *.pyc *.sqlite* *.log *.jsonl

@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "localagentbridge"
 version = "0.5.0.dev0"
-description = "Small local Ollama MCP bridge and Windows usage monitor"
+description = "Durable local coding contributions, Codex review and a Windows companion dock"
 readme = "README.md"
 requires-python = ">=3.11"
 license = "MIT"

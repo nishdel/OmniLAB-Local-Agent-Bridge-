@@ -6,7 +6,7 @@ from .telemetry import Store, configure_logging
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Local Ollama MCP bridge and usage monitor")
+    parser = argparse.ArgumentParser(description="Local coding companion, Ollama MCP bridge and usage monitor")
     parser.add_argument("--config", help="TOML config path (or LAB_CONFIG)")
     commands = parser.add_subparsers(dest="command", required=True)
     commands.add_parser("server", help="Run the MCP server over stdio")

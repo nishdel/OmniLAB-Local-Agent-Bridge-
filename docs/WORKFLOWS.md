@@ -4,11 +4,17 @@ Status: implemented in `0.5.0.dev0`; unreleased. Use the actual examples under
 [`examples/v0.5`](../examples/v0.5). The files under `docs/v0.5/REPORT.md`,
 `ARCHITECTURE.md` and `EXAMPLES.md` are the earlier audit/design proposal, not an
 API reference. Current validation and measured limitations are in the
-[implementation report](v0.5/IMPLEMENTATION.md).
+[implementation report](RELEASE-READINESS.md).
 
 The subsequent [adaptive delegation gate](ADAPTIVE-DELEGATION.md) adds a recommended
 auto entry point that prefers direct analysis and selects conditional specialists.
 The explicit workflows documented below remain available and compatible.
+
+They are also reachable through [durable companion jobs](COMPANION-WORKFLOWS.md).
+The companion calls this same engine, saves returned handoffs privately, shows
+budgets/checkpoints in dock details and requires explicit supervisor decisions.
+See the [pre-companion preservation matrix](FEATURE-PRESERVATION.md) for code,
+interface, test and documentation mappings.
 
 ## Enable deliberately
 
@@ -41,8 +47,8 @@ replace an explicit project allowlist.
 
 ## Definitions and ownership
 
-The hierarchy is task → workflow → role → selected skills → existing model
-routing → local analysis → evaluation/correction/handoff → Codex checkpoint.
+The hierarchy is task â†’ workflow â†’ role â†’ selected skills â†’ existing model
+routing â†’ local analysis â†’ evaluation/correction/handoff â†’ Codex checkpoint.
 A workflow stage invokes only the listed skills, not every skill its role supports.
 
 | Definition | Responsibility |
@@ -293,6 +299,6 @@ runs; archive/export tooling is deferred.
 Use a workflow when staged evidence or an implementation checkpoint is useful.
 For a small, already scoped review, direct delegation may be cheaper. The first
 real self-review found no additional verified issue from decomposition and
-measured higher latency and token use. See the [comparison](v0.5/DOGFOOD.md).
+measured higher latency and token use. See the [comparison](LOCAL-CONTRIBUTIONS.md).
 Schema validity, confidence and local stage completion are not factual acceptance.
 Codex remains responsible for inspecting source, executing checks and deciding.

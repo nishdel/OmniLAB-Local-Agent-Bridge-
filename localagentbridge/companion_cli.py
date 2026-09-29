@@ -18,7 +18,16 @@ def add_parser(commands):
     submit.add_argument('--run',required=True)
     submit.add_argument('--request',type=Path,required=True)
     submit.add_argument('--model')
+    submit.add_argument('--execution',choices=['exact','routed'],help='Default: configured routing when roles exist; --model explicitly chooses exact execution')
     submit.add_argument('--no-deadline',action='store_true')
+    workflow = actions.add_parser('workflow-submit',help='Queue one existing v0.5 workflow step, preserving policy and budgets')
+    workflow.add_argument('--run',required=True)
+    workflow.add_argument('--request',type=Path,required=True)
+    for name in ('workflow-next','workflow-checkpoint','workflow-status'):
+        command = actions.add_parser(name,help='Continue or inspect a durable v0.5 workflow')
+        command.add_argument('--job',required=True)
+        if name=='workflow-checkpoint':
+            command.add_argument('--request',type=Path,required=True,help='Trusted checkpoint object and optional updated task evidence')
     for action in ('controller','start'):
         controller = actions.add_parser(action,help='Run the controller' if action=='controller' else 'Start a detached controller')
         controller.add_argument('--codex-exe',type=Path,help='Exact installed Codex executable; enables callbacks')
@@ -28,6 +37,7 @@ def add_parser(commands):
     status.add_argument('--run')
     actions.add_parser('pause',help='Pause starting new local jobs')
     actions.add_parser('resume',help='Allow queued local jobs to start; does not restart interrupted generation')
+    actions.add_parser('recover',help='Reconcile durable workflow evidence without executing jobs or sending callbacks')
     actions.add_parser('shutdown',help='Stop controller dispatch after the current callback; workers finish independently')
     cancel = actions.add_parser('cancel',help='Cancel a run, or just the specified job')
     cancel.add_argument('--run',required=True)
@@ -46,6 +56,7 @@ def add_parser(commands):
     decide.add_argument('--event',required=True)
     decide.add_argument('--outcome',choices=['accepted','corrected','rejected','further_work'],required=True)
     decide.add_argument('--validation',required=True)
+    decide.add_argument('--local',action='store_true',help='Record supervising review locally, without sending a callback; uncertain delivery still requires reconciliation')
     final = actions.add_parser('finalize',help='Finalize only after every job and review is resolved')
     final.add_argument('--run',required=True)
     final.add_argument('--summary',required=True)
@@ -60,7 +71,7 @@ def run(args, config):
     action = args.action
     result = None
     if action=='inventory':
-        result = asyncio.run(discover(config))
+        result = store.annotate_inventory(asyncio.run(discover(config)),config.endpoint)
     elif action=='select':
         selected = select_model(asyncio.run(discover(config)),args.model)
         store.setting('default_model',selected['name'])
@@ -76,10 +87,39 @@ def run(args, config):
         if len(raw)>100000:
             raise ValueError('Request exceeds 100,000 bytes')
         request = json.loads(raw)
-        if set(request)!={'task_key','tool','objective','content'}:
-            raise ValueError('Request requires task_key, tool, objective and content only')
+        if not {'task_key','tool','objective','content'}<=set(request) or set(request)-{'task_key','tool','objective','content','role','routing','consensus','roles'}:
+            raise ValueError('Request requires task_key, tool, objective and content; optional role/routing/consensus/roles')
         result = {'job_id':asyncio.run(submit(store,config,args.run,**request,model=args.model,
+                                            execution=args.execution,
                                             no_deadline=args.no_deadline or config.no_inference_deadline))}
+    elif action in ('workflow-submit','workflow-next','workflow-checkpoint','workflow-status'):
+        from .companion_workflows import submit_workflow, follow_workflow, service_for
+        request = {}
+        if action in ('workflow-submit','workflow-checkpoint'):
+            with args.request.open('rb') as stream:
+                raw = stream.read(100001)
+            if len(raw)>100000:
+                raise ValueError('Request exceeds 100,000 bytes')
+            request = json.loads(raw)
+        if action=='workflow-submit':
+            if set(request)!={'task_key','task'}:
+                raise ValueError('Workflow request requires task_key and task')
+            result = {'job_id':asyncio.run(submit_workflow(store,config,args.run,**request))}
+        elif action=='workflow-status':
+            job = store.job(args.job)
+            if job['request'].get('execution')!='workflow':
+                raise ValueError('Job is not a workflow operation')
+            engine = service_for(store,job).workflows
+            # Lookup only; never starts or replays interrupted work.
+            from .workflow import digest
+            with engine.ledger.store.connect() as db:
+                row = db.execute('SELECT id FROM workflow_runs WHERE task_key=?',
+                    (digest(job['request']['workflow_task']['task_id']),)).fetchone()
+            result = engine.status(row[0]) if row else {'state':'not_started'}
+        else:
+            if action=='workflow-checkpoint' and ('checkpoint' not in request or set(request)-{'checkpoint','task'}):
+                raise ValueError('Supply checkpoint and optional updated task')
+            result = {'job_id':follow_workflow(store,args.job,**request)}
     elif action=='controller':
         serve(store.directory,args.codex_exe,args.once)
     elif action=='start':
@@ -95,6 +135,9 @@ def run(args, config):
         result = {'controller':identity(process.pid),'directory':str(store.directory)}
     elif action=='status':
         result = store.snapshot(args.run)
+    elif action=='recover':
+        from .companion_recovery import recover
+        result = {'recovery':recover(store)}
     elif action in ('pause','resume'):
         result = {'paused':store.setting('paused',action=='pause')}
     elif action=='shutdown':
@@ -112,7 +155,7 @@ def run(args, config):
         store.reconcile_session(args.run,args.evidence)
         result = {'run_id':args.run,'session_reconciled':True}
     elif action=='decide':
-        store.decide(args.event,args.outcome,args.validation)
+        store.decide(args.event,args.outcome,args.validation,local=args.local)
         result = {'event_id':args.event,'decision':args.outcome}
     elif action=='finalize':
         result = {'state':store.finalize(args.run,args.summary,args.validation_passed)}
@@ -120,4 +163,6 @@ def run(args, config):
         from .dock import run_dock
         run_dock(config,store)
     if result is not None:
-        print(json.dumps(result,indent=2,ensure_ascii=False))
+        # Redirected Windows stdout may use cp1252. JSON escapes preserve every
+        # model/evidence character without depending on the terminal encoding.
+        print(json.dumps(result,indent=2,ensure_ascii=True))

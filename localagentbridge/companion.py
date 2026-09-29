@@ -1,9 +1,6 @@
 """Controller and independent, serial local worker. CLI/file interface, no listener."""
 import asyncio
-from dataclasses import replace
 import hashlib
-import json
-import os
 from pathlib import Path
 import subprocess
 import sys
@@ -14,7 +11,6 @@ from .companion_store import CompanionStore
 from .config import Config
 from .process_control import Lock, detached, identity
 from .selection import discover, select_model
-from .schemas import SCHEMAS
 
 
 def git_identity(repository):
@@ -34,8 +30,20 @@ def verify_repository(run):
     return root
 
 
-async def submit(store, config, run_id, task_key, tool, objective, content, model=None, no_deadline=False):
-    if tool not in ('analyze_code','summarize_context','review_diff','analyze_test_output'):
+async def submit(store, config, run_id, task_key, tool, objective, content, model=None, no_deadline=False,
+                 execution=None, **options):
+    if execution not in (None,'exact','routed'):
+        raise ValueError('Unknown execution mode')
+    if execution=='routed' and model is not None:
+        raise ValueError('An exact model override conflicts with configured routing')
+    if execution=='routed' or execution is None and model is None and config.roles:
+        from dataclasses import replace
+        from .companion_workflows import submit_service
+        return await submit_service(store,replace(config,no_inference_deadline=no_deadline),run_id,
+                                    task_key,tool,objective,content,**options)
+    if options:
+        raise ValueError('Role/routing/consensus options require routed execution')
+    if tool not in ('analyze_code','summarize_context','review_diff','analyze_test_output','second_opinion'):
         raise ValueError('Unsupported bounded contribution tool')
     if not content.strip() or len(content)+len(objective)>config.max_input_chars:
         raise ValueError('Empty or oversized contribution; supply a bounded excerpt')
@@ -71,14 +79,27 @@ def job_config(store, job):
 
 async def execute(store, job):
     attempt = job['attempt_id']
+    service = None
+    journal = None
+    started = time.time()
     try:
-        cfg = job_config(store, job)
-        selection = select_model(await discover(cfg), cfg.model)
-        if selection.get('digest') != job['request']['selection'].get('digest'):
-            raise ValueError('Selected model digest changed since submission')
-        bridge = Bridge(cfg)
         req = job['request']
-        task = asyncio.create_task(bridge.analyze(req['tool'],req['content'],req['objective'],with_metadata=True))
+        if req.get('execution') in ('workflow','routed'):
+            from .companion_workflows import service_for, perform, usage_since
+            service = service_for(store,job)
+            if req['execution']=='workflow':
+                from .workflow_recovery import RecoveryJournal
+                journal = RecoveryJournal(service.workflows.ledger,job)
+                service.workflows.ledger.journal = journal
+            bridge = service.bridge
+            task = asyncio.create_task(perform(service,req))
+        else:
+            cfg = job_config(store, job)
+            selection = select_model(await discover(cfg), cfg.model)
+            if selection.get('digest') != req['selection'].get('digest'):
+                raise ValueError('Selected model digest changed since submission')
+            bridge = Bridge(cfg)
+            task = asyncio.create_task(bridge.analyze(req['tool'],req['content'],req['objective'],with_metadata=True))
         try:
             while not task.done():
                 if store.job(job['id'])['cancel_requested']:
@@ -96,16 +117,32 @@ async def execute(store, job):
             if not task.done():
                 task.cancel()
                 await asyncio.gather(task,return_exceptions=True)
-        with bridge.store.connect() as db:
-            usage = db.execute('SELECT * FROM usage WHERE id=?',(result['_meta']['request_id'],)).fetchone()
-        store.complete(job['id'],attempt,result={'answer':result,'usage':dict(usage) if usage else None})
+        if service:
+            usage = usage_since(service,started)
+        else:
+            with bridge.store.connect() as db:
+                row = db.execute('SELECT * FROM usage WHERE id=?',(result['_meta']['request_id'],)).fetchone()
+                usage = dict(row) if row else None
+        if journal:
+            journal.deliver(store,job['id'])
+        else:
+            store.complete(job['id'],attempt,result={'answer':result,'usage':usage})
     except Exception as error:
+        if journal:
+            with journal.ledger.store.connect() as db:
+                operation = journal.operation(db,job['id'])
+            if operation and operation['receipt']:
+                # The authoritative transition already committed. Do not replace
+                # it with a failure merely because downstream delivery failed.
+                raise
         store.complete(job['id'],attempt,error=type(error).__name__+': '+str(error),state='failed')
 
 
 def worker(directory):
     store = CompanionStore(directory)
     with Lock(store.directory/'worker.lock'):
+        from .companion_recovery import recover_locked
+        recover_locked(store)
         # An acquired kernel lock proves there is no previous cooperating worker.
         for old in store.snapshot()['jobs']:
             if old['state']=='running':
@@ -137,6 +174,11 @@ def serve(directory, codex_exe=None, once=False):
     store = CompanionStore(directory)
     with Lock(store.directory/'controller.lock'):
         store.recover_deliveries()
+        from .companion_recovery import recover
+        try:
+            recover(store)
+        except RuntimeError:
+            pass  # A cooperating live worker still owns the journal.
         store.setting('controller_stop',False)
         store.setting('controller_process',identity())
         try:

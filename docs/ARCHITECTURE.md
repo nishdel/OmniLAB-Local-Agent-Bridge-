@@ -34,7 +34,7 @@ Fixed consensus is two or three configured roles, with Codex resolving disagreem
 intermediate attempts and final returned payload sizes. These are distinct accounting
 units. `collector.py`, `otel.py` and `codex_usage.py` run independently of MCP.
 `dashboard_state.py` derives readable model states; `dashboard.py` uses native tabs.
-Hardware process sampling runs only during explicit benchmarks.
+Hardware performance sampling remains opt-in; companion workers also record their own process identity.
 
 Older single-model configs and v0.1 tool arguments remain supported. SQLite
 migrations only add tables/columns; a new checkout creates an empty local database.
@@ -86,3 +86,41 @@ orchestration, not an OS resource governor or authentication boundary. Native
 usage cards continue to show existing generation telemetry; workflow status is
 available through MCP and CLI. See [WORKFLOWS.md](WORKFLOWS.md) for contracts,
 accounting semantics and limitations.
+
+## Durable companion path (candidate)
+
+`companion_cli` and `dock` use `CompanionStore` as the local-user controller
+interface. No HTTP control server is exposed. `companion.py` owns scheduling;
+the dock owns no worker lifecycle. A controller lifetime kernel lock prevents
+competing schedulers in one state directory, and a worker lock serializes model
+calls. Detached workers use the controller runtime directory, not source_root.
+
+Submission checks worktree HEAD, source_root, inventory and exact model selection;
+SQLite persists the input excerpt, digest/options and task key. Workers revalidate
+HEAD and model digest. Exact jobs invoke Bridge; routed jobs preserve the full
+configuration through Service. `companion_workflows.py` invokes one existing
+WorkflowEngine step/checkpoint per job, preserving versions, budgets and bounded
+handoffs across process restarts. For companion jobs, exact private packets and
+operation receipts commit with the corresponding workflow ledger transitions.
+The companion then copies each receipt, result and unique completion event in
+one transaction and acknowledges it afterward. Startup replays this database
+copy idempotently, not the work. Acquiring the old worker lock permits retaining
+partial evidence and marking unfinished attempts interrupted, never resuming
+tokens. See [recovery](RECOVERY.md) for authority, ordering and legacy cases.
+
+`callbacks.py` validates repository identity and resumes a dedicated Codex CLI
+session using its exact returned identifier. The outbox claims one callback per
+session. A crash after claim is uncertain, requiring explicit reconciliation.
+Recorded accepted/corrected/rejected/further_work decisions carry validation
+notes. Only resolved jobs/reviews permit idempotent finalization; failures cannot
+become completed. The current callback is report-only and cannot apply patches.
+Local supervising review can be recorded with `decide --local` without dispatch.
+Successful finalization also requires every attached workflow checkpoint resolved.
+
+State flow: queued → running → succeeded/failed/cancelled/interrupted → pending
+review → dispatching → awaiting_decision/retry/blocked/uncertain → reviewed →
+validating → completed/blocked/cancelled. Queue pause only gates admission.
+
+Data includes authorized task excerpts/results in companion storage and its
+workflow recovery tables; ordinary telemetry stays metadata-only. See SECURITY.md for private storage
+and cloud callback flow, and DECISIONS.md for compatibility decisions.

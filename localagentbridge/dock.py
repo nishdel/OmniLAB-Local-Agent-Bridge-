@@ -46,6 +46,16 @@ def presentation(snapshot, run_id=None):
         lines += ['',f"{job['task_key']} · {job['id']} · {job['state']}",
                   f"Model: {job['request']['selection']['name']} ({job['request']['selection'].get('digest') or 'digest unavailable'})",
                   f"Queue wait: {waiting:.1f}s · local execution: {'unavailable' if inference is None else f'{inference:.1f}s'}"]
+        result = job.get('result') or {}
+        workflow = result.get('answer',{}).get('workflow')
+        if workflow:
+            budget = workflow['budget']
+            lines += [f"Workflow: {workflow['run_id']} · {workflow['state']} · next: {workflow['next_stage']}",
+                      f"Profile: {workflow['project_profile']} · version: {workflow['version']} · path: {workflow.get('delegation',{}).get('path','explicit workflow')}",
+                      f"Budget: {budget['attempts']}/{budget['limits']['max_attempts']} attempts; {budget['reserved_tokens']} reserved tokens; {budget['seconds']}s charged",
+                      'Advance with companion workflow-next; trusted decisions use workflow-checkpoint.']
+        if job['request'].get('model_pins'):
+            lines.append('Pinned routing inventory: '+', '.join(job['request']['model_pins']))
         event = next((e for e in events if e['job_id']==job['id']),None)
         if event:
             review = (event['review_ended']-event['review_started']) if event['review_ended'] is not None and event['review_started'] is not None else None
@@ -140,7 +150,8 @@ class CompanionDock:
         self.inventory_running=True
         def load():
             try:
-                self.commands.put(('inventory',asyncio.run(discover(self.config))))
+                rows=asyncio.run(discover(self.config))
+                self.commands.put(('inventory',self.store.annotate_inventory(rows,self.config.endpoint)))
             except Exception as error:
                 self.commands.put(('inventory_error',type(error).__name__+': '+str(error)))
         threading.Thread(target=load,daemon=True).start()
@@ -149,7 +160,7 @@ class CompanionDock:
         try:
             selected=select_model(self.inventory,self.model_choice.get())
             self.store.setting('default_model',selected['name'])
-            self.message.set('Default saved for future jobs; capability metadata is not a coding quality evaluation.')
+            self.message.set('Default saved for future exact jobs. Routed/workflow jobs retain their configured roles and profiles.')
         except ValueError as error:
             self.message.set(str(error))
 

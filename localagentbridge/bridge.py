@@ -19,6 +19,7 @@ class Bridge:
         self.transport = transport
         self.lock = asyncio.Lock()
         self.request_template = None  # opt-in benchmark fixture; never exposed by MCP
+        self.model_guard = None  # durable jobs revalidate exact inventory before every attempt
 
     @asynccontextmanager
     async def exclusive(self):
@@ -70,6 +71,8 @@ class Bridge:
                 import copy
                 body = copy.deepcopy(self.request_template) | {'model':model}
             try:
+                if self.model_guard:
+                    await self.model_guard(model)
                 if _execution:
                     if self.request_template is not None:
                         raise BridgeError('Workflow calls cannot use benchmark request overrides.')

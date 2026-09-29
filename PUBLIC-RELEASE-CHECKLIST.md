@@ -1,39 +1,43 @@
-# Public release checklist — v0.4.1
+# Public release checklist — companion candidate
 
-The public source is built from `PUBLIC-FILES.txt`; the private working directory
-is never uploaded. Final validation is recorded in [VERIFICATION-v0.4.1.md](VERIFICATION-v0.4.1.md).
+This is an unreleased development candidate. See
+[release readiness](docs/RELEASE-READINESS.md) for exact observed results.
+Historical v0.4.1 verification remains in VERIFICATION-v0.4.1.md; its checkmarks
+do not certify this candidate. No publication is authorized by this checklist.
 
-## Source and privacy
+## Implemented and checked
 
-- [x] Explicit source allowlist; configs, credentials, databases, logs, rollouts,
-  raw benchmarks, caches, weights, virtual environments and build output excluded.
-- [x] Public examples use portable paths and a single-model starter.
-- [x] Public benchmark aggregates are anonymized; exercises and screenshots are synthetic.
-- [x] MIT attribution retained; dependency and model licenses documented separately.
-- [x] No private Git history is imported; publication starts from the reviewed source.
-- [x] Release audit checks secret/path/identifier patterns, private audit terms,
-  representative ignore rules and unexpected files in the exact export.
+- [x] Existing repository and stable release preserved; development uses a separate worktree.
+- [x] Coordinating runtime frozen; original source hashes unchanged.
+- [x] Exact installed-model selection, durable jobs/results, outbox and review gates.
+- [x] Duplicate/restart/cancellation/ownership and unavailable-review regressions.
+- [x] Real local GPT-OSS code, test and documentation contributions, including rejections.
+- [x] Native Tk dock controls and independent controller/worker lifetime tests.
+- [x] User, contributor, configuration, security, upgrade and architecture documentation.
+- [x] Public allowlist audit; wheel/source content inspection; clean venv install.
+- [x] Synthetic v0.4.1 database upgrade and uninstall preserving data.
+- [x] Obsolete/unreachable code removed; meaningful safety tests and evidence retained.
+- [x] MIT and separately installed dependency notices retained.
+- [x] Actual pre-companion v0.5 feature-preservation matrix and reachable catalog/workflow regressions.
+- [x] Durable workflow steps/checkpoints reuse the existing engine, budgets and evidence validation.
+- [x] Exact installed Qwen3 14B retained and exercised in independent sequential consensus.
+- [x] Direct Bridge versus workflow/consensus development contributions identified explicitly.
 
-## Behavior and documentation
+## Remaining gates
 
-- [x] Qwen3 4B is the only required starter model; stronger profiles are opt-in.
-- [x] Light, Medium, Large and Maximum selection and resource limits documented.
-- [x] Quality defaults to Large and prefers GPT-OSS for substantive work.
-- [x] Codex retains implementation, architecture, security and final verification.
-- [x] Model gates, bounded escalation and supervision requirements remain explicit.
-- [x] Content compression is distinguished from unmeasured cloud-token savings.
-- [x] Installation, configuration, MCP registration, doctor, smoke and troubleshooting documented.
-- [x] Bug/feature templates and a private security-reporting link are configured.
+- [ ] Specifically approved live Codex callback and exact-session resumption.
+- [x] Packaged local workflow with independently recorded Codex review and finalization (no authenticated callback claim).
+- [ ] Fresh Windows-machine acceptance beyond this host's clean virtual environment.
+- [ ] Python minimum-version and other supported-platform compatibility matrix.
+- [ ] Active CPU/peak memory, true callback latency and perceptual UI measurements.
+- [ ] Native symlink rejection under Windows Developer Mode or equivalent symlink privilege.
 
-## Publication gates
+The [focused recovery repair](docs/RECOVERY.md) resolves the reproduced
+cross-database process-crash blocker. Legacy missing output and ambiguous records
+remain explicit intervention cases. Callback, fresh-machine and visual gates
+are separate from that verdict; the original broad preservation audit is retained.
 
-Before pushing each release, verify the exact allowlisted Git export, run the full
-mocked regression suite and lint, install it in a clean environment, check doctor
-and run bounded real MCP smoke calls. Do not repeat expensive benchmarks without
-a reason. Confirm Issues and GitHub private vulnerability reporting are enabled.
-Push the verified commit and an annotated version tag; create release notes that
-state the remaining quality and measurement limitations.
-
-Pattern scans and manual review are scoped evidence, not proof against every
-possible secret. Never force-add ignored personal data. If history is imported
-in a future release, audit every reachable ref/blob before publishing it.
+The candidate does not bundle a model, require one public model tag, automatically
+buy credits, or publish releases. Pattern scans and tests are scoped evidence,
+not proof against every possible security issue. Keep raw task/results and model
+history private; publication needs a separate explicit decision after its gates.

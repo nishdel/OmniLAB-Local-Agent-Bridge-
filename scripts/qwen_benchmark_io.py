@@ -44,7 +44,17 @@ def atomic(path, value):
         json.dump(clean(value), stream, indent=2, ensure_ascii=False, allow_nan=False)
         stream.flush()
         os.fsync(stream.fileno())
-    os.replace(temp, path)
+    # A concurrent Windows reader can briefly deny replacement even though both
+    # files are owned/writable. Retry only that bounded sharing window. Permanent
+    # access failures still propagate; keep the temp evidence and old state.
+    for attempt in range(11):
+        try:
+            os.replace(temp, path)
+            break
+        except PermissionError as error:
+            if os.name!='nt' or getattr(error,'winerror',None) not in (5,32) or attempt==10:
+                raise
+            time.sleep(.02)
 
 
 def append(path, value):

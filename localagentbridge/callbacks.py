@@ -101,6 +101,7 @@ def dispatch(store, event, executable):
         job = store.job(event['job_id'])
         packet = {'event_id':event['id'],'job_id':job['id'],'attempt_id':job['attempt_id'],
                   'base_revision':event['base_revision'],'task':job['request']['objective'],
+                  'content':job['request']['content'],'source_sha256':job['request'].get('source_sha256'),
                   'selection':job['request']['selection'],'result':job['result'],'error':job['error'],
                   'local_state':job['state']}
         prompt = ('Review this local contribution for the managed run. Use no tools. '

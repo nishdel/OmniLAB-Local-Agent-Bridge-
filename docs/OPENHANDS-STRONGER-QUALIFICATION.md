@@ -1,5 +1,49 @@
 # Stronger-model OpenHands qualification — 2026-10-09
 
+## Workflow documentation publication — 2026-10-10
+
+Publication scope is the existing development branch and a draft PR, not a main
+merge, tag or release. The configured former repository URL redirects to
+[nishdel/OmniLAB-Local-Agent-Bridge-](https://github.com/nishdel/OmniLAB-Local-Agent-Bridge-);
+ownership and the default base `main` were independently verified. The PR/remote
+branch records establish publication state; the older sections below retain
+their historical no-push/no-activation statements at their original cutoffs.
+
+The [complete workflow](WORKFLOW.md) and [README overview](../README.md#system-overview)
+now explain entry points, policy/context, real stored states, protected tool
+execution, data locations, independent review, the dock and separate accounting.
+Five canonical Mermaid views were added; the two legacy architecture diagrams
+remain. No executable source, active configuration, routing scope or runtime
+installation changed. Strata stays disabled and OpenHands remains SDK-only.
+
+| Check | Result and scope |
+|---|---|
+| Documentation and CLI | 46 Markdown files and generated reference checked; local links/anchors and 31 named source symbols checked; 16 CLI help interfaces inspected without executing activation commands |
+| Mermaid | All seven blocks parse with pinned Mermaid 11.12.2, including the five new views; Node DOM adapter used for parsing only |
+| Rendering | Visual layout and GitHub rendering not verified: embedded browser initialization failed and no standalone browser binary was available. Syntax success is not rendering success |
+| Lint/source audit | Ruff passes; 229 public allowlisted files audit clean, with reviewed synthetic test-path exceptions only |
+| Runtime evidence reuse | All 94 files in the close-out regression source manifest are byte-identical; reuse 591 passed / 1 skipped and 180 overlapping wheel checks, not a fresh full regression |
+| Human checks | All 11 existing human rows remain untested; no dock interaction inferred from automation |
+
+The reviewed starting commits are
+`bec07f63bc8a0991576d7392353f1a541615eeeb`,
+`90629f46a694624ae5d59b3258cc403bef7fccba` and
+`71791b32d58cd1d007c4bcdf84a014a9a91fdd24`.
+The reused accounting wheel SHA-256 is
+`df9b041c8198213b9237078e39fe71ff18e7c6e55112c771ee7d516f88db2429`;
+the unchanged active controller wheel is
+`20243196aac84474af583e1dbf6a6ba653edf9dfa3d1b25dae287ec39679f5fc`.
+These are different artifacts with different roles, not a controller upgrade.
+
+One real Qwen27 advisory contributed the transport draft: 621 input / 244 output,
+cache unknown, accepted after Codex corrections and independently recorded review.
+See [contributions](LOCAL-CONTRIBUTIONS.md#qwen27-publication-documentation-contribution).
+The whole cloud publication turn is attributed to implementation investment,
+including planning, dispatch, corrections, verification and common reporting
+overhead; no fractional task cost is invented. No evaluation comparison or normal
+operating workload was run. Actual cutoff-based counters remain private, with
+current totals reported at handoff. Operating savings remain not established.
+
 ## Close-out checkpoint
 
 The accepted deployment and required prior dependencies are committed locally at

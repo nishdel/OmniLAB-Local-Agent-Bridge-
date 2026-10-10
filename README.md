@@ -1,33 +1,63 @@
-# LocalAgentBridge — coding companion candidate
+# OmniLAB / LocalAgentBridge
 
-Local Ollama models propose bounded code, tests and documentation; Codex reviews,
-integrates and validates. The bridge keeps local work and results alive between
-Codex turns. A compact Windows Tk dock shows local jobs, review state and usage.
+LAB turns selected local work into durable, bounded jobs. Codex plans and reviews;
+OpenHands manages permitted implementation tools; Ollama runs the selected local
+model. A Windows companion dock exposes job and review state.
 
-**0.5.0.dev0 is a development snapshot, not release-qualified.** The public
-v0.4.1 release is unchanged. See [source and package provenance](docs/DEVELOPMENT-SNAPSHOT.md),
-[release readiness](docs/RELEASE-READINESS.md) and the latest
-[Windows qualification addendum](docs/WINDOWS-QUALIFICATION.md) for evidence
-and open gates. [Manual test definitions](docs/MANUAL-RELEASE-TESTING.md) and the
-[unpublished issue draft](docs/release-testing/0.5.0.dev0-issue-draft.md) prepare
-owner testing; they do not record completed acceptance or authorize publication.
+**0.5.0.dev0 is a development snapshot, not a completed release.** The public
+v0.4.1 functionality and existing v0.5 workflows remain supported. Start with the
+[complete workflow guide](docs/WORKFLOW.md), then the [quickstart](docs/QUICKSTART.md)
+or [qualified project operations](docs/SELECTIVE-SETUP.md#qwen27-project-workflow).
 
-## Scoped Qwen27 workflow
+## System overview
 
-The personal LocalAgentBridge worktree uses a qualified Qwen27 profile through
-the durable companion. Public defaults and explicit model selection remain
-available. [Setup and operations](docs/SELECTIVE-SETUP.md#qwen27-project-workflow)
-describe the pinned runtime, start/stop/status, rollback and optional Strata.
-[Current evidence](docs/OPENHANDS-STRONGER-QUALIFICATION.md#standard-model-milestone)
-separates installed, tested and active components.
-[Accounting](docs/SELECTIVE-PILOT.md#milestone-accounting) separates setup investment
-from measured operating savings. Human dock/focus/DPI acceptance remains open.
+```mermaid
+flowchart TD
+    U["User request"] --> C["[A] Codex supervision"]
+    C --> R["[A] LAB policy and routing"]
+    R -->|"codex_direct handoff"| C
+    R --> D[("[A] Companion SQLite<br/>jobs, results, review state")]
+    W["[A] Controller and serial worker"] <-->|"read, claim, update"| D
+    W --> H["[A] OpenHands SDK<br/>restricted task tools"]
+    H -->|"inference mailbox"| W
+    W -->|"advisory or relayed inference"| O["[A] Ollama backend"]
+    O --> Q["[A] Selected Qwen27 model"]
+    W -.->|"alternative backend only"| S["[D/U] Strata adapter<br/>runtime DISABLED and blocked"]
+    W --> E["[A] Evidence and protected checks"]
+    E --> C
+    C -->|"trusted review and finalization"| D
+    K["[A/U] Dock<br/>human checks pending"] <-->|"status and controls"| D
+    W --> A["[A] Usage receipts and accounting utility"]
+    C -.->|"explicit session metadata import"| A
+```
+
+**Legend:** `[A]` active and exercised; `[D]` implemented/configured but disabled;
+`[O]` optional or conditional; `[U]` untested or blocked. Dashed connections are
+conditional alternatives or explicit collection, not permission grants. SQLite
+stores records; the controller/worker reads and changes them. It does not dispatch
+work independently. See the guide for the exact [transport boundary](docs/WORKFLOW.md#trust-boundaries-and-data-movement)
+and [accounting limitations](docs/WORKFLOW.md#accounting-and-observability).
+
+## Current project deployment
+
+The dated personal profile uses exact `qwen3.8:27b` through Ollama, with supervised
+local-first documentation and small-fix routing **only in the selective execution
+project worktree**. Public model selection and explicit per-job overrides remain.
+The [identity and effective profile](docs/WORKFLOW.md#qualified-personal-profile)
+are an example qualification, not a mandatory model for other users.
+
+OpenHands SDK/tools 1.53.0 is exercised through the restricted, networkless
+container/mailbox path. **No OpenHands web UI is installed.** The optional Strata
+adapter exists, but its runtime remains disabled and unqualified. No Strata
+service address is verified. Eleven human checks remain unperformed in the
+[manual ledger](docs/release-testing/selective-execution-issue-draft.md).
+Operating token savings are **not established**.
 
 ## Start here
 
 Use Windows, Python 3.11+ with Tcl/Tk, Git, an Ollama server with an installed
-completion model, and authenticated Codex CLI for managed reviews. Model size and
-hardware fit are your choice. The package never installs or deletes models.
+completion model, and authenticated Codex CLI when using managed reviews.
+The package never installs or deletes models.
 
 ```powershell
 py -3 -m venv .venv
@@ -35,78 +65,42 @@ py -3 -m venv .venv
 .\.venv\Scripts\python.exe -m localagentbridge --config examples/companion.toml companion inventory
 ```
 
-Follow the [quickstart](docs/QUICKSTART.md) to select an exact model and worktree,
-submit a task, start the controller and review its result. See the
-[user guide](docs/USER-GUIDE.md), [configuration/CLI reference](docs/CONFIGURATION.md),
-[troubleshooting](docs/TROUBLESHOOTING.md) and [upgrade/uninstall](MIGRATION-v0.5.md).
-Install from this candidate checkout or its locally built wheel, not an assumed
-published package version. Use a non-editable installation for a coordinating runtime.
+These are generic installation instructions, not commands to replace the active
+qualified controller. Use a non-editable installation for a coordinating runtime.
+Follow the quickstart to choose a worktree/model and submit a bounded task.
 
-## What runs
+## Documentation map
 
-```text
-Supervisor → durable submission → SQLite jobs → independent serial worker → Ollama
-                                      ↑                    │
-Tk dock / local CLI ← states/results ← transactional completion + review outbox
-                                      │
-                 controller → exact managed Codex session → report → supervisor validation
-```
+| Need | Guide |
+|---|---|
+| Complete workflow, source map, sequence/lifecycle/trust/accounting diagrams | [Workflow](docs/WORKFLOW.md) |
+| Setup, verified start/stop/status, SDK access, disabled Strata and rollback | [Selective setup and operations](docs/SELECTIVE-SETUP.md) |
+| Dock, model selector and review controls | [User guide](docs/USER-GUIDE.md) |
+| Configuration and CLI flags | [Generated reference](docs/CONFIGURATION.md) |
+| Safety, privacy and recovery | [Security](SECURITY.md), [recovery](docs/RECOVERY.md), [troubleshooting](docs/TROUBLESHOOTING.md) |
+| Usage attribution and honest savings methodology | [Accounting](docs/SELECTIVE-PILOT.md) |
+| Live qualification and immutable package evidence | [Qualification](docs/OPENHANDS-STRONGER-QUALIFICATION.md), [development snapshot](docs/DEVELOPMENT-SNAPSHOT.md) |
+| Human checks and unresolved local issue entries | [Manual testing](docs/MANUAL-RELEASE-TESTING.md), [selective checklist](docs/release-testing/selective-execution-issue-draft.md) |
+| Retained interfaces, skills, profiles and workflows | [Architecture](docs/ARCHITECTURE.md), [workflows](docs/WORKFLOWS.md), [durable workflows](docs/COMPANION-WORKFLOWS.md), [profiles](docs/PROFILES.md), [adaptive routing](docs/ADAPTIVE-DELEGATION.md) |
+| Preservation and contribution history | [Feature matrix](docs/FEATURE-PRESERVATION.md), [local contributions](docs/LOCAL-CONTRIBUTIONS.md), [role mapping](docs/ROLE-MIGRATION.md) |
+| Development, upgrade and release gates | [Contributing](CONTRIBUTING.md), [AGENTS](AGENTS.md), [migration](MIGRATION-v0.5.md), [readiness](docs/RELEASE-READINESS.md) |
 
-Each job records model/digest/options, worktree, base revision, attempt and result.
-Callbacks queue per managed session; unavailable or uncertain delivery stays
-visible. A finished local inference is not a successful run. The supervisor
-records decisions and validates before finalization. Closing the dock hides it
-without stopping the controller. Local and reported Codex usage stay separate;
-missing counters are unavailable, and compression is not measured cloud savings.
+## Authority and limits
 
-## Demonstration and limits
+A finished inference is not accepted work. Codex independently inspects evidence,
+records review decisions and validates before finalization. Legacy/advisory
+models propose text without tools. In the selective implementation lane,
+OpenHands can execute only contract-permitted tools inside the approved sandbox.
+Explicit trusted patch integration exists; models cannot accept or integrate
+their own work.
 
-The [contribution ledger](docs/LOCAL-CONTRIBUTIONS.md) records genuine GPT-OSS
-code/test/doc proposals used for this candidate, including rejected and corrected
-work. The [example task](examples/companion-task.json) is a synthetic boundary bug
-for a small first run. It does not edit source. Deterministic fake-provider and
-simulated clock tests are distinct from live integration evidence in the report.
+Closing the dock hides it without stopping jobs. HTTP cancellation alone cannot
+prove a shared inference server stopped generation; uncertain ownership retains
+the reservation. No automatic startup service or bundled EXE is supplied.
+Windows is the tested desktop target; other systems are not certified.
 
-This is not a general autonomous agent, a Codex replacement, a benchmark suite,
-or a bypass for usage limits. Local models never execute shell commands.
-Callbacks are read-only reports; automatic patch integration is not implemented.
-HTTP cancellation does not guarantee a shared Ollama server stops generation.
-No-deadline generation cannot run through computer shutdown. There is no bundled
-EXE installer or automatic startup service. Windows is the tested desktop target;
-other operating systems are not certified.
-
-## Existing interfaces and contributors
-
-The stdio MCP tools, direct/adaptive routing, bounded advisory workflows and usage
-monitor remain supported: [workflow guide](docs/WORKFLOWS.md),
-[adaptive delegation](docs/ADAPTIVE-DELEGATION.md), [profiles](docs/PROFILES.md),
-[usage dashboard](docs/DASHBOARD.md), [delegation policy](CODEX_POLICY.md).
-
-The [feature-preservation matrix](docs/FEATURE-PRESERVATION.md) audits the actual
-pre-companion v0.5 implementation. Use the [durable workflow guide](docs/COMPANION-WORKFLOWS.md)
-to carry those skills, roles, profiles, budgets and checkpoints through jobs and
-the dock. The [quality configuration](examples/companion-quality.toml) keeps
-GPT-OSS preferred, exact Qwen3 14B fallback/consensus and Qwen3 4B lightweight work.
-
-See [architecture](docs/ARCHITECTURE.md), [decisions](docs/DECISIONS.md),
-[contributing](CONTRIBUTING.md), [agent guidance](AGENTS.md),
-[security/privacy](SECURITY.md), [dependencies/notices](docs/DEPENDENCIES.md),
-[changelog](CHANGELOG.md), and [historical benchmark aggregates](docs/benchmarks/README.md).
-
-## Optional selective execution
-
-The [selective execution guide](docs/SELECTIVE-EXECUTION.md) adds opt-in supervisor
-contracts, a Strata inference adapter and an isolated OpenHands implementation
-executor to the existing companion. Defaults and the retained v0.5 workflows stay
-unchanged. See [setup and boundaries](docs/SELECTIVE-SETUP.md),
-[role/skill mapping](docs/ROLE-MIGRATION.md) and the [prepared pilot](docs/SELECTIVE-PILOT.md).
-Strata/OpenHands and the new GPU are not live-qualified by mocked tests.
-
-The [selective execution implementation report](docs/SELECTIVE-IMPLEMENTATION-REPORT.md) records verified stages, live limits and deferred qualification.
-
-The Qwen27 milestone now has a local Git checkpoint. Project activation and the
-pinned OpenHands SDK transport remain scoped to this checkout; OpenHands has no
-web UI and Strata runtime remains disabled. See [operator setup](docs/SELECTIVE-SETUP.md),
-[usage attribution](docs/SELECTIVE-PILOT.md) and the
-[unperformed human dock checks](docs/release-testing/selective-execution-issue-draft.md).
-This is a development checkpoint, not release completion.
+The [usage dashboard](docs/DASHBOARD.md) and dock show available measurements,
+not demonstrated cloud savings. Local tokens, configured context and maximum
+output are different quantities. See also [decisions](docs/DECISIONS.md),
+[dependency notices](docs/DEPENDENCIES.md), [changelog](CHANGELOG.md),
+[delegation policy](CODEX_POLICY.md) and [historical benchmarks](docs/benchmarks/README.md).

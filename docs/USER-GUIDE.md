@@ -2,8 +2,11 @@
 
 The companion is a bounded coding/review assistant. You or supervising Codex
 provide a selected excerpt; local models propose code, tests or explanations.
-The supervisor integrates and validates. The companion does not execute commands
-invented by a local model, modify arbitrary repositories, or bypass cloud quotas.
+The supervisor integrates and validates. Legacy/advisory jobs have no
+model-directed tools. The separately qualified
+selective implementation lane permits only bounded tools inside its restricted
+sandbox; see the [complete workflow](WORKFLOW.md). Neither path grants arbitrary
+repository access or bypasses cloud quotas.
 
 The dock shows the selected run/task, exact model, local input/output tokens,
 total elapsed time, queued and locally finished counts. `unavailable` means no

@@ -244,3 +244,23 @@ The actual receipt again records the qualified digest, runtime flags and positiv
 GPU allocation. It is implementation investment, not a savings measurement.
 Security/accounting code, acceptance and Git checkpoints remained trusted Codex work.
 The prior contributions and all failed/retried attempts remain preserved.
+
+## Qwen27 publication documentation contribution
+
+On 2026-10-10, one bounded native advisory at source base 71791b3 drafted the
+SDK/mailbox transport sequence and trust explanation from selected source context.
+Actual provider usage: **621 input / 244 output tokens**, cached input unknown;
+one inference attempt, no local retry. Loaded digest, context and GPU/runtime
+flags matched the qualified profile. Two oversized context submissions were
+rejected before job creation/inference; context was narrowed without raising limits.
+
+**Accepted after Codex repair:** the local draft omitted tool observations and
+made mailbox file access look like a direct relay-to-host call. Codex checked
+runner, sandbox and selective execution source, corrected those details, added
+the tool loop and independent verification, and integrated the result in
+[the workflow guide](WORKFLOW.md#trust-boundaries-and-data-movement). Trusted review
+recorded the original candidate hash and correction rationale, then finalized
+the run. This was advisory documentation work, not a fresh OpenHands runtime test.
+Codex performed architectural verification, accounting, publication safety and
+GitHub operations; those authority-sensitive tasks were not delegated.
+All usage is documentation/publication investment, not measured operating savings.

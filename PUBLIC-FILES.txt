@@ -35,6 +35,7 @@ docs/RECOVERY.md
 docs/RELEASE-READINESS.md
 docs/TROUBLESHOOTING.md
 docs/USER-GUIDE.md
+docs/WORKFLOW.md
 docs/WORKFLOWS.md
 docs/benchmarks/README.md
 docs/benchmarks/v0.3-reference.json

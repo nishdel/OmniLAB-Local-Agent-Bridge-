@@ -1,5 +1,9 @@
 # Architecture
 
+For the complete current path, see the [end-to-end workflow and source map](WORKFLOW.md).
+The first diagrams below describe the retained MCP/adaptive interfaces; the README
+and workflow guide own the current system, sequence, lifecycle, trust and accounting views.
+
 ```mermaid
 flowchart TD
   C[Codex: orchestration and final decisions] -->|stdio MCP| S[Seven bounded analysis tools]
@@ -97,8 +101,9 @@ calls. Detached workers use the controller runtime directory, not source_root.
 
 Submission checks worktree HEAD, source_root, inventory and exact model selection;
 SQLite persists the input excerpt, digest/options and task key. Workers revalidate
-HEAD and model digest. Exact jobs invoke Bridge; routed jobs preserve the full
-configuration through Service. `companion_workflows.py` invokes one existing
+HEAD and model digest. Legacy exact jobs invoke Bridge; qualified profile jobs
+use the native contract provider. Routed jobs preserve the full configuration
+through Service. `companion_workflows.py` invokes one existing
 WorkflowEngine step/checkpoint per job, preserving versions, budgets and bounded
 handoffs across process restarts. For companion jobs, exact private packets and
 operation receipts commit with the corresponding workflow ledger transitions.
@@ -117,9 +122,9 @@ become completed. The current callback is report-only and cannot apply patches.
 Local supervising review can be recorded with `decide --local` without dispatch.
 Successful finalization also requires every attached workflow checkpoint resolved.
 
-State flow: queued → running → succeeded/failed/cancelled/interrupted → pending
-review → dispatching → awaiting_decision/retry/blocked/uncertain → reviewed →
-validating → completed/blocked/cancelled. Queue pause only gates admission.
+Jobs, review events and parent runs have separate stored states. See the
+[source-mapped lifecycle](WORKFLOW.md#job-lifecycle); local execution success is
+not independent acceptance or finalization.
 
 Data includes authorized task excerpts/results in companion storage and its
 workflow recovery tables; ordinary telemetry stays metadata-only. See SECURITY.md for private storage
@@ -130,7 +135,9 @@ and cloud callback flow, and DECISIONS.md for compatibility decisions.
 The optional [contract path](SELECTIVE-EXECUTION.md) adds three explicit lanes:
 Codex direct return, bounded advisory, and isolated OpenHands implementation.
 Inference backend selection (Ollama or Strata) is separate from execution ownership.
-Native Ollama advisory reuses Bridge; the SDK consumes bounded Chat Completions.
+Qualified native Ollama advisory uses ChatProvider and runtime binding checks;
+legacy advisory retains Bridge. The SDK consumes bounded Chat Completions via the
+container-local relay and trusted host mailbox transport.
 The deterministic companion scheduler, store, worker, dock and explicit supervisor
 review remain authoritative. See [setup](SELECTIVE-SETUP.md) for exact provider,
 sandbox and candidate-verification boundaries. Legacy workflow semantics above

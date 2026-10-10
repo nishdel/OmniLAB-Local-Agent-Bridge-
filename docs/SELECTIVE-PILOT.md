@@ -1,5 +1,9 @@
 # Matched pilot protocol (prepared, not run)
 
+The [accounting diagram](WORKFLOW.md#accounting-and-observability) shows the separate
+report utility, explicit attribution and dock boundary. Historical totals below
+are dated report windows, not current lifetime totals.
+
 ## Close-out attribution
 
 Operators attribute usage by binding complete sessions, turns, or jobs to specific tasks and categories. Cloud receipts track Codex activity, while local receipts cover LAB runs. Bindings link entire units to a single run, rejecting overlaps or conflicting labels. All retries and failures count toward that run. If counters are missing, usage remains unknown. Unbound activity is reported as unattributed, and shared controller overhead stays visible without invented allocations. Savings are only confirmed when equivalent baseline and hybrid runs, including full supervision and repair, are independently accepted. Local tokens do not equal cloud tokens saved. Historical comparisons lack isolated planning costs, so they cannot establish savings.

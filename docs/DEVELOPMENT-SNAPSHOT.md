@@ -1,5 +1,10 @@
 # 0.5.0.dev0 development source and retained packages
 
+The current supervised Qwen27 work continues on `codex/selective-local-execution`.
+See the [publication qualification addendum](OPENHANDS-STRONGER-QUALIFICATION.md#workflow-documentation-publication--2026-10-10)
+and [complete workflow](WORKFLOW.md). The earlier companion-release-candidate
+provenance below remains historical evidence, not the current activation scope.
+
 The companion-release-candidate branch is **development work, not a qualified
 Windows release candidate**. Its historical branch name grants no acceptance.
 Source publication does not merge into main, create a release/tag, distribute a

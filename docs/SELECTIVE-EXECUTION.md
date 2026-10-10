@@ -1,5 +1,9 @@
 # Selective local execution (development)
 
+For the current complete workflow, see [WORKFLOW.md](WORKFLOW.md). Historical
+hardware/preparation observations below retain their original scope; current
+project activation and the dated profile are in [operations](SELECTIVE-SETUP.md).
+
 Codex owns contracts, risk classification, final review and integration. LAB owns
 durable admission, deterministic routing and evidence. Ollama and Strata are
 alternative inference providers. OpenHands is an optional sandboxed executor.

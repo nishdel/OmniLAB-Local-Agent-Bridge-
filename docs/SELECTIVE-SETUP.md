@@ -1,5 +1,8 @@
 # Optional provider/executor setup and rollback
 
+See the [complete workflow and source map](WORKFLOW.md) for entry points, actual
+stored states, transport, data locations and accounting boundaries.
+
 ## Qwen27 project workflow
 
 Activation status: enabled and live-tested for this project after independent technical acceptance. Documentation and small-fix categories use supervised local-first routing; test generation remains a scoped supervisor decision. Both broad pilots remain disabled.

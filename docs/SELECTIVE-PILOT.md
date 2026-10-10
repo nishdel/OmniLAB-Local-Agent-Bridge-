@@ -1,5 +1,52 @@
 # Matched pilot protocol (prepared, not run)
 
+## Close-out attribution
+
+Operators attribute usage by binding complete sessions, turns, or jobs to specific tasks and categories. Cloud receipts track Codex activity, while local receipts cover LAB runs. Bindings link entire units to a single run, rejecting overlaps or conflicting labels. All retries and failures count toward that run. If counters are missing, usage remains unknown. Unbound activity is reported as unattributed, and shared controller overhead stays visible without invented allocations. Savings are only confirmed when equivalent baseline and hybrid runs, including full supervision and repair, are independently accepted. Local tokens do not equal cloud tokens saved. Historical comparisons lack isolated planning costs, so they cannot establish savings.
+
+The close-out starts at 2026-10-10 10:16:10 UTC, after the original milestone.
+A binding is trusted bookkeeping in the existing usage database; it contains no
+second token counter. Bind cloud sessions (or exact complete turns) and local LAB
+runs (or exact jobs) to a common accounting run/task identity:
+
+~~~text
+companion contract-usage-bind --kind cloud --session SESSION --run RUN --task TASK --category operating --evidence "Complete isolated supervisor run"
+companion contract-usage-bind --kind local --session LAB_RUN --run RUN --task TASK --category operating --evidence "All local attempts for this task"
+~~~
+
+For a whole turn/job use --logical-id EXACT_ID. Categories are implementation,
+evaluation, operating and unattributed. Repeating an identical binding is safe;
+conflicting relabels and overlapping session/turn bindings fail. A session-level
+binding includes later receipts, retries, cloud repairs and fallback in that
+session. Separate fallback sessions require their own binding to the same run.
+The reporting view separates cloud/local counters per category and run; source,
+session, turn/job, request, status, model and cutoff remain inspectable.
+Cached input and reasoning remain subsets. Empty/missing coverage is unknown.
+Bindings are available through trusted CLI, not model-controlled tools.
+
+Before a measured comparison, bind complete dedicated supervisor sessions from
+planning and dispatch through final review/repair; import all their metadata.
+Do not infer completeness from a binding or from a successful final answer.
+Validate actual counters and duplicate imports before running either arm.
+Never bind one interleaved shared turn to a single operating task.
+
+The historical generation-only baseline reported 23,173 input, zero cached
+input and 1,127 output tokens (393 reasoning subset; total 24,300). It omitted
+isolated planning and independent acceptance costs. Hybrid task review shared
+the implementation session, so its cost cannot be recovered from cumulative
+events. Task labels do not create missing phase counters. Close-out validated
+the new bindings with those real receipts and synthetic missing/conflict/replay
+checks; it did not repeat an incomplete comparison. Net operating savings remain
+**not established**. There is no new baseline, percentage estimate or bill claim.
+
+The shared controller turns include implementation, reporting and evaluation
+work. Their actual cloud counters are retained as mixed/unattributed overhead,
+with a run identity and reason; no fractions are invented. Dedicated local setup
+work is implementation investment; the old isolated baseline and explicit
+validation probes are evaluation overhead. Normal operating work has no measured
+matched sample in this milestone. These disjoint views do not silently charge
+all local tokens as savings or add the same cloud receipt twice.
+
 ## Milestone accounting
 
 The standard-model milestone is separate from the historical qualification work
@@ -32,7 +79,7 @@ Provider counters do not establish cloud savings. Every report states its
 cutoff and missing coverage; the final conversational response lies after its
 last measured cutoff.
 
-**Implementation investment:** all measured planning, bootstrap, local work,
+**Original investment view (before category attribution):** all measured planning, bootstrap, local work,
 failed attempts, retries, repair, integration, validation and review in the
 milestone. The small isolated Codex baseline is explicitly evaluation overhead,
 separate from productive local contributions. Shared coordinating-session work

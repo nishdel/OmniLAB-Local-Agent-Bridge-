@@ -393,3 +393,26 @@ launch and allocation before claiming the drafter is absent. This is distinct
 from `think=false`. Never change a shared service, model tag or production
 default to apply this per-request override. Draft removal is not a guarantee
 that the main weights, KV cache and runtime workspaces fit the memory guard.
+
+## Local checkpoint and accounting utility
+
+The accepted deployment is checkpointed at bec07f63bc8a0991576d7392353f1a541615eeeb.
+Later close-out commits add attribution and documentation. The active controller
+continues using its original immutable installed wheel; the accounting utility
+is a separate offline installation from the reviewed close-out source. Use its
+Python executable for contract-usage-bind/import/report only. Do not upgrade an
+active controller/worker or start a second controller against the same store.
+Both installations use the same additive usage schema; private operations.txt
+records their exact paths and verified commands.
+
+Rolling back attribution code does not require changing Qwen, deleting usage,
+dropping the metadata table or restarting the accepted controller. Use the prior
+installed utility; old readers ignore the new table. Deployment rollback remains
+the tested private rollback.py procedure above. The source checkpoints are local:
+no push, merge, tag, release, unrelated repository routing or new pilot activation.
+
+Human dock acceptance remains outstanding. Follow the single compact checklist
+in the [manual draft](release-testing/selective-execution-issue-draft.md), observing
+idle, running, awaiting review and completed; exact model/backend/usage; cancel;
+and an explicit override followed by restart persistence. An open window or an
+automated widget binding test does not mark these human checks passed.

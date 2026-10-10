@@ -103,3 +103,10 @@ unchanged. See [setup and boundaries](docs/SELECTIVE-SETUP.md),
 Strata/OpenHands and the new GPU are not live-qualified by mocked tests.
 
 The [selective execution implementation report](docs/SELECTIVE-IMPLEMENTATION-REPORT.md) records verified stages, live limits and deferred qualification.
+
+The Qwen27 milestone now has a local Git checkpoint. Project activation and the
+pinned OpenHands SDK transport remain scoped to this checkout; OpenHands has no
+web UI and Strata runtime remains disabled. See [operator setup](docs/SELECTIVE-SETUP.md),
+[usage attribution](docs/SELECTIVE-PILOT.md) and the
+[unperformed human dock checks](docs/release-testing/selective-execution-issue-draft.md).
+This is a development checkpoint, not release completion.

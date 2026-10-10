@@ -45,3 +45,80 @@ def test_inherited_counter_without_last_response_is_unknown(tmp_path):
     with store.connect() as db:
         assert db.execute('SELECT COUNT(*) FROM usage').fetchone()[0]==0
     assert state['total']['total_tokens']==1100
+
+
+def test_whole_session_and_run_include_all_attempts_and_future_rows(tmp_path):
+    from localagentbridge.usage_report import bind_usage
+    c=CompanionStore(tmp_path);s=Store(c.directory/'usage')
+    bind_usage(c,kind='cloud',session_id='supervisor',run_id='work',task_id='task',
+               category='operating',evidence='Isolated supervisor session from planning through review')
+    bind_usage(c,kind='local',session_id='local-run',run_id='work',task_id='task',
+               category='operating',evidence='LAB run includes failed first attempt and retry')
+    for ident,source,session,total in [('plan','rollout','supervisor',12),('repair','rollout','supervisor',8),
+                                       ('failed','local','local-run',None),('retry','local','local-run',20)]:
+        s.usage(id=ident,source=source,session_id=session,model=source,started=3,total_tokens=total)
+    report=investment(c,cutoff=4)
+    assert report['categories']['operating']['cloud']['tokens']['total_tokens']['total']==20
+    local=report['categories']['operating']['local']['tokens']['total_tokens']
+    assert local['total'] is None and local['known_total']==20 and local['missing_records']==1
+    assert {r['attribution']['run_id'] for r in report['records']}=={'work'}
+    assert {r['kind'] for r in report['runs']}=={'cloud','local'}
+
+
+def test_whole_turns_separate_investment_evaluation_and_unattributed(tmp_path):
+    from localagentbridge.usage_report import bind_usage
+    c=CompanionStore(tmp_path);s=Store(c.directory/'usage')
+    for turn,category in [('setup','implementation'),('controller','evaluation')]:
+        bind_usage(c,kind='cloud',session_id='shared',logical_id=turn,run_id='milestone',
+                   category=category,evidence='Complete identified turn, no fractional allocation')
+    for turn in ('setup','controller','unbound'):
+        s.usage(id=turn,source='rollout',session_id='shared',logical_id=turn,model='cloud',
+                started=5,input_tokens=10,cached_input_tokens=6,output_tokens=2,total_tokens=12)
+    report=investment(c,cutoff=6)
+    for category in ('implementation','evaluation','unattributed'):
+        totals=report['categories'][category]['cloud']['tokens']
+        assert totals['total_tokens']['total']==12 and totals['cached_input_tokens']['total']==6
+    assert report['categories']['operating']['cloud']['records']==0
+    assert report['categories']['operating']['cloud']['tokens']['total_tokens']['total'] is None
+
+
+def test_attribution_is_idempotent_conflict_safe_and_nonoverlapping(tmp_path):
+    import pytest
+    from localagentbridge.usage_report import bind_usage
+    c=CompanionStore(tmp_path)
+    args=dict(kind='cloud',session_id='s',logical_id='turn',run_id='run',
+              category='implementation',evidence='whole turn')
+    assert bind_usage(c,**args)==bind_usage(c,**args)
+    for changes in ({'category':'operating'},{'run_id':'different'},{'logical_id':None},
+                    {'evidence':''},{'logical_id':''},{'category':'invented'}):
+        with pytest.raises(ValueError):bind_usage(c,**(args|changes))
+    bind_usage(c,**(args|{'session_id':'whole','logical_id':None}))
+    with pytest.raises(ValueError):bind_usage(c,**(args|{'session_id':'whole'}))
+    # Separate domains cannot accidentally label a cloud session as a local run.
+    bind_usage(c,**(args|{'kind':'local','logical_id':None}))
+
+
+def test_attribution_does_not_override_stream_dedup_or_invent_turn_ids(tmp_path):
+    from localagentbridge.usage_report import bind_usage
+    c=CompanionStore(tmp_path);s=Store(c.directory/'usage')
+    bind_usage(c,kind='cloud',session_id='s',logical_id='t',run_id='r',
+               category='operating',evidence='whole exact rollout turn')
+    for source,turn in [('rollout','t'),('otel',None)]:
+        s.usage(id=source,source=source,session_id='s',logical_id=turn,model='cloud',started=1,total_tokens=10)
+    report=investment(c,cutoff=2)
+    assert len(report['records'])==1
+    assert report['categories']['unattributed']['cloud']['tokens']['total_tokens']['total']==10
+
+
+def test_bind_cli_and_old_usage_upgrade(tmp_path):
+    import argparse,sqlite3
+    from localagentbridge import selective_cli
+    path=tmp_path/'usage';path.mkdir()
+    db=sqlite3.connect(path/'usage.sqlite3')
+    db.execute('CREATE TABLE checkpoints (id TEXT PRIMARY KEY,state TEXT NOT NULL)')
+    db.execute("INSERT INTO checkpoints VALUES ('old','{}')");db.commit();db.close()
+    c=CompanionStore(tmp_path); parser=argparse.ArgumentParser();selective_cli.add(parser.add_subparsers(dest='action'))
+    args=parser.parse_args(['contract-usage-bind','--kind','local','--session','lab-run','--run','work',
+                           '--category','evaluation','--evidence','retained evaluation'])
+    assert selective_cli.run(args,None,c)['run_id']=='work'
+    assert Store(path).checkpoint('old')=={}

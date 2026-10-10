@@ -44,3 +44,10 @@ retry, accepted after Codex repair, or failed/blocked. Report usage from
 actual provider or cumulative cloud evidence; local tokens are not cloud
 tokens saved, missing counters are unknown, and any savings claim needs an
 equivalent accepted baseline including overhead.
+
+For measured task costs, bind the entire dedicated cloud supervisor session and
+LAB run to one accounting run/task before importing usage. Include planning,
+dispatch, retries, repair and review; mark shared controller overhead separately.
+Never allocate a fraction of a shared turn or infer savings from local tokens.
+Keep complete isolated baseline/hybrid inputs and acceptance equivalent. Stop a
+comparison if either arm lacks attributable counters; record the precise gap.

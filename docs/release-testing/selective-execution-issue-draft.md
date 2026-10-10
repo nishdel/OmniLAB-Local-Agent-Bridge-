@@ -7,10 +7,10 @@ filled from the reviewed artifact before owner testing. No published release is
 claimed. Use [manual definitions](../MANUAL-RELEASE-TESTING.md) and the
 [setup/qualification guide](../SELECTIVE-SETUP.md).
 
-Candidate: codex/selective-local-execution based on 0b817c5; uncommitted development
-changes. Rechecked 2026-10-10: Windows 10 19045, 32 GB RAM,
+Candidate: codex/selective-local-execution; accepted deployment checkpoint
+bec07f63bc8a0991576d7392353f1a541615eeeb plus the recorded close-out commits. Rechecked 2026-10-10: Windows 10 19045, 32 GB RAM,
 RTX 3060 12,288 MiB, driver 560.94; internal GTX reports Code 31.
-Human acceptance: Passed 0 / Failed 0 / Blocked 0 / Not tested 10 / N/A 0.
+Human acceptance: Passed 0 / Failed 0 / Blocked 0 / Not tested 11 / N/A 0.
 The current 27B configuration independently passed the frozen UTC repository task.
 The later bounded batch also accepted Qwen35 fixture and UTC; Gemma accepted
 its fixture but exhausted the UTC output allowance. No human acceptance row has passed. See
@@ -35,10 +35,11 @@ Net operating token savings are not established; partial cancelled usage is unkn
 | Test | Tested? | Result | Issue registered | Evidence/notes |
 |---|---|---|---|---|
 | Package identity, launch, upgrade and rollback (M01, C05) | No | Not tested | — | Final installed candidate checked locally; fresh Windows/human launch remains required. |
-| Exact backend/model selection and absence (M02, C01, C02) | No | Not tested | — | Qwen3.8 exact digest aaee06c39dcf passed direct Bridge/tool screening; this does not repeat durable worker/human qualification. GPT tag changed through automatic migration and needs reassessment. Strata disabled: Q-15. |
-| Durable jobs and accurate parent/child states (M03) | No | Not tested | — | Actual hidden Tk controls matched live job and usage; human checks outstanding. |
+| Displayed model/backend, usage and absence (M02, C01, C02) | No | Not tested | — | Confirm exact selected model/backend and measured versus unavailable usage against the job receipt. Keep missing values unknown. Strata disabled: Q-15. |
+| Explicit model override and restart persistence | No | Not tested | — | Select a default, submit an explicit override, then restart dock/controller after work resolves. Verify the override affects that job and the saved default persists; no silent substitution. |
+| Idle -> running -> awaiting review -> completed (M03) | No | Not tested | — | Observe all four dock states and elapsed time; completed requires trusted review/finalization. Hidden widget checks do not establish human acceptance. |
 | Keyboard, focus, DPI and readability (M04, M05) | No | Not tested | — | Human/native acceptance still required. |
-| Hide/reopen, independent worker and cancellation (M06) | No | Not tested | — | Live MCP closure, owned cancellation and restart checked; human hide/reopen outstanding. |
+| Hide/reopen and cancellation (M06) | No | Not tested | — | Cancel a bounded owned job in the dock; verify cancellation/uncertainty and resource release. Hiding/reopening must not silently cancel work. Automated lifecycle checks already recorded. |
 | Retained workflows, profiles, budgets and checkpoints (C03) | No | Not tested | — | Include new contract dependency/integration order. |
 | Conditional managed review callback (C04) | No | Not tested | — | Separate callback authorization is still required. |
 | Conditional OpenHands isolation and tool round trip | No (human); live qualification recorded | Not tested | Q-10, Q-12, Q-14 | Current final collector + qwen3.8:27b passed fixture and useful UTC task with independent acceptance. Later Qwen35 fixture/UTC accepted; Gemma fixture accepted and UTC output-limited. Historical failures retained. Scoped project activation is recorded in the standard-model milestone; human controls remain untested and unrelated pilots remain inactive. |

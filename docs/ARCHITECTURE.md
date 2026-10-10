@@ -158,3 +158,11 @@ durable receipts repair accounting after restart without replaying inference.
 records. It never counts measurement views as additional provider requests.
 The dock reflects per-request available counters and exact backend/model,
 task, project, elapsed time and separate execution/verification/review states.
+
+Usage attribution adds metadata to the existing telemetry database through
+usage_bindings. It maps a whole cloud session/turn or LAB run/job to an accounting
+run/task and category. It never modifies token receipts. Reports first deduplicate
+alternative cloud streams, then join exact identities; absent bindings and
+missing fields remain explicit. Trusted CLI owns bindings; model tools cannot
+relabel costs. Existing frozen controllers can continue using the additive schema.
+See [accounting semantics](SELECTIVE-PILOT.md).

@@ -10,6 +10,14 @@ from .task_store import TaskStore
 def add(actions):
     ingest = actions.add_parser('contract-usage-import', help='Import metadata from one explicit Codex rollout into existing accounting')
     ingest.add_argument('--rollout', type=Path, required=True)
+    binding = actions.add_parser('contract-usage-bind', help='Trusted attribution of a whole cloud session/turn or local run/job')
+    binding.add_argument('--kind', choices=['cloud','local'], required=True)
+    binding.add_argument('--session', required=True)
+    binding.add_argument('--logical-id', help='Exact complete cloud turn or local job; omit for the whole session/run')
+    binding.add_argument('--run', required=True, help='Accounting run identity shared by its cloud and local work')
+    binding.add_argument('--task')
+    binding.add_argument('--category', choices=['implementation','evaluation','operating','unattributed'], required=True)
+    binding.add_argument('--evidence', required=True)
     report = actions.add_parser('contract-usage-report', help='Report recorded investment and explicit savings coverage')
     report.add_argument('--since', type=float, default=0)
     report.add_argument('--cutoff', type=float)
@@ -93,6 +101,10 @@ def run(args, config, store):
             consumed += count
         return {'bytes_processed':consumed,'source':'rollout cumulative deltas','database':str(usage.path),
                 'coverage':'Metadata only through persisted checkpoint; pending/incomplete lines remain for next import'}
+    if args.action == 'contract-usage-bind':
+        from .usage_report import bind_usage
+        return bind_usage(store, kind=args.kind, session_id=args.session, logical_id=args.logical_id,
+                          run_id=args.run, task_id=args.task, category=args.category, evidence=args.evidence)
     if args.action == 'contract-usage-report':
         from .usage_report import investment, operating_savings
         return {'investment':investment(store,args.since,args.cutoff,args.session),

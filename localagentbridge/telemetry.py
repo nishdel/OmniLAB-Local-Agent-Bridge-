@@ -40,6 +40,11 @@ class Store:
                   reasoning_output_tokens INTEGER, total_tokens INTEGER, tokens_per_second REAL,
                   input_chars INTEGER, output_bytes INTEGER, status TEXT NOT NULL);
                 CREATE INDEX IF NOT EXISTS usage_group ON usage(session_id,model,source);
+                CREATE TABLE IF NOT EXISTS usage_bindings (
+                  kind TEXT NOT NULL, session_id TEXT NOT NULL, logical_id TEXT NOT NULL,
+                  run_id TEXT NOT NULL, task_id TEXT, category TEXT NOT NULL,
+                  evidence TEXT NOT NULL, created REAL NOT NULL,
+                  PRIMARY KEY(kind,session_id,logical_id));
                 CREATE TABLE IF NOT EXISTS activity (
                   id TEXT PRIMARY KEY, source TEXT NOT NULL, session_id TEXT NOT NULL,
                   model TEXT NOT NULL, started REAL NOT NULL, updated REAL NOT NULL,

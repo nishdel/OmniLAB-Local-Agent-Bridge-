@@ -233,3 +233,14 @@ package integration and independent verification are Codex work because they
 establish or exercise trusted authority. The small Codex-only test comparator is
 evaluation investment, not a local contribution. No delegated task is counted as
 accepted until its independent review and protected checks pass.
+
+## Qwen27 close-out contribution
+
+The existing installed controller ran one bounded accounting-documentation advisory
+with the same accepted Qwen27 profile. Codex reviewed it against the implementation
+and integrated the paragraph in SELECTIVE-PILOT.md unchanged: accepted without
+Codex repair, one attempt, 291 input / 130 output tokens; cache usage unknown.
+The actual receipt again records the qualified digest, runtime flags and positive
+GPU allocation. It is implementation investment, not a savings measurement.
+Security/accounting code, acceptance and Git checkpoints remained trusted Codex work.
+The prior contributions and all failed/retried attempts remain preserved.

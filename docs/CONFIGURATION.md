@@ -41,6 +41,7 @@ Existing LAB_MODEL/LAB_ENDPOINT/LAB_DATA_DIR and role overrides remain supported
 | Action | Flags/arguments |
 |---|---|
 | `contract-usage-import` | `--rollout` |
+| `contract-usage-bind` | `--kind`, `--session`, `--logical-id`, `--run`, `--task`, `--category`, `--evidence` |
 | `contract-usage-report` | `--since`, `--cutoff`, `--session` |
 | `contract-route` | `--request` |
 | `contract-submit` | `--request`, `--run` |

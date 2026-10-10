@@ -53,6 +53,30 @@ driver, Docker/WSL, networking, callback, issue publication or release publicati
 is authorized merely by filling this draft.
 
 
+## Bounded pre-merge follow-up — 2026-10-10
+
+At published source `819448220e03b406001382bc684d0b539b727694`, neither main nor
+the PR branch contained an Actions workflow. Repository Actions was enabled;
+the API listed zero workflows/runs, not a queued job or an approval request.
+The follow-up adds [minimal PR validation](../../.github/workflows/pr-validation.yml)
+with read-only permissions and existing mocked-provider checks. Exact published
+SHA and CI result belong to [draft PR #1](https://github.com/nishdel/OmniLAB-Local-Agent-Bridge-/pull/1);
+workflow presence alone does not pass acceptance.
+
+Graphical access was retried: the embedded browser kernel failed during Windows
+sandbox initialization (setup refresh errors). Native desktop control is unavailable
+in this session. **No human check or graphical Mermaid check passed.** The existing
+11 rows and detailed criteria remain unchanged. No local inference, restart,
+model/configuration change or benchmark was needed for CI security review.
+
+Owner diagram review: inspect one overview in [README](../../README.md#system-overview),
+four views in [WORKFLOW](../WORKFLOW.md), and two retained views in
+[ARCHITECTURE](../ARCHITECTURE.md) on GitHub. Confirm all seven render; inspect
+labels, clipping, arrow direction, protected/write boundaries and Strata's explicit
+disabled alternative. Local parsing and fetched Markdown HTML are not graphical
+GitHub evidence. The previous syntax evidence remains applicable because the
+seven blocks did not change.
+
 ## Historical evidence and qualification issues
 
 Local draft only; none published. New milestone status is recorded above; the following earlier evidence is retained.

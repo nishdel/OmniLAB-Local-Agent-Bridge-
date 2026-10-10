@@ -62,3 +62,18 @@ Preserve prior-candidate evidence, identify affected retests, and keep automated
 evidence and owner approvals separate from human acceptance. Unresolved inherited
 requirements need explicit scope decisions, not silent removal. Templates and
 unpublished drafts are preparation only; publishing an issue requires authorization.
+
+## Pull request validation
+
+[PR validation](.github/workflows/pr-validation.yml) runs for pull requests to
+`main`, including drafts, on opened/synchronize/reopened/ready-for-review events.
+There are no path filters. It checks the exact PR head on Windows/Python 3.13
+using the existing locked dependencies, pytest, Ruff, documentation/reference
+checker and public-source/ignore audit. Tests use mocked providers; no model,
+Ollama or OpenHands installation/inference runs in CI.
+
+Official checkout/setup actions are pinned by commit, checkout credentials are
+not persisted, and the workflow grants only contents:read. It uses ephemeral
+GitHub-hosted runners, no secrets, no privileged PR event and no artifact publishing.
+A missing/queued/skipped/failed check is not a passing check. Human dock,
+graphical Mermaid and separately qualified live runtime acceptance remain distinct.

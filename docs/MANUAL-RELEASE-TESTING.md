@@ -245,7 +245,7 @@ routing and checkpoints use LAB-C03 when affected; model selection remains publi
 ## Selective-execution addendum
 
 Use the [current unpublished grouped draft](release-testing/selective-execution-issue-draft.md)
-for the new source candidate. Preserve the old draft/package results. Its ten rows
+for the new source candidate. Preserve the old draft/package results. Its eleven rows
 group every existing M01–M06 and C01–C06 definition; none is waived. Do not mark
 human tests passed from automated fixtures, source inspection or model output.
 

@@ -95,7 +95,11 @@ def candidate(tmp_path,monkeypatch):
     content = content.replace('source_root = "../.."','source_root = '+json.dumps(repository.as_posix()))
     content = content.replace('data_dir = "../../data/v05-example"','data_dir = "history"')
     content = content.replace('http://localhost:11434',f'http://127.0.0.1:{server.server_port}')
-    content = content.replace('timeout_seconds = 180','timeout_seconds = 4')
+    # This fixture tests committed crash boundaries, not four-second latency.
+    # Windows file/SQLite work can consume that lease before the injected crash.
+    # Expiry checks below still wait for the actual recorded lease; runtime
+    # defaults and production resource/time budgets are unchanged.
+    content = content.replace('timeout_seconds = 180','timeout_seconds = 15')
     config.write_text(content)
     env = {k:v for k,v in os.environ.items() if not k.startswith('LAB_')}
     def cli(*args):

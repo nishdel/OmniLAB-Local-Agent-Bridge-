@@ -23,6 +23,7 @@ PRIVATE_SAMPLES = ('config.toml', 'config.work.local.toml', '.env', '.env.produc
 # Exact reviewed synthetic attack fixtures, not file-wide exemptions.
 SYNTHETIC_MATCHES = {
     ('tests/test_v2_context.py', 'absolute_windows_path', 'C:/outside'),
+    ('tests/test_selective_contracts.py', 'absolute_windows_path', 'C:/x'),
     ('tests/test_v4_release.py', 'absolute_personal_unix_path', '/Users/Private/'),
 }
 SYNTHETIC_MATCHES |= {('scripts/prepare_release.py', label, value) for _,label,value in SYNTHETIC_MATCHES}

@@ -16,7 +16,9 @@ from .selection import discover, select_model
 def git_identity(repository):
     repository = Path(repository).resolve(strict=True)
     def git(*args):
-        return subprocess.check_output(['git','-C',str(repository),*args],text=True,stderr=subprocess.DEVNULL,timeout=10).strip()
+        return subprocess.check_output(['git','-C',str(repository),*args],text=True,
+            stdin=subprocess.DEVNULL,stderr=subprocess.DEVNULL,timeout=10,
+            creationflags=subprocess.CREATE_NO_WINDOW if sys.platform=='win32' else 0).strip()
     root = Path(git('rev-parse','--show-toplevel')).resolve()
     if root != repository:
         raise ValueError('Select a repository/worktree root')
@@ -56,6 +58,17 @@ async def submit(store, config, run_id, task_key, tool, objective, content, mode
         raise ValueError('Configured source_root must match the selected worktree')
     rows = await discover(config)
     selected = select_model(rows, model or store.setting('default_model') or config.adaptive.preferred_model or config.model)
+    if any(p['model']==selected['name'] and p['backend']=='ollama' for p in config.selective.get('model_profiles', [])):
+        from .local_profile import resolve_contract
+        from .selective import prepare
+        from .task_store import TaskStore
+        c = resolve_contract(config, dict(task_id=task_key, objective=objective, requirement_ref='Companion '+tool,
+            acceptance={'advisory':'Answer the bounded request; supervisor independently reviews findings'},
+            repository=run['repository'],base_revision=run['base_revision'],context=content,model=selected['name'],
+            requested_lane='local_advisory',risk='low',ambiguity=False,supervisor_approved=True,
+            coherent_scope=True,reversible=True,category='advisory'))
+        requests = await prepare(config,[c])
+        return TaskStore(store).submit_many(run_id,requests)[0]
     request = dict(tool=tool, objective=objective, content=content, selection=selected,
                    endpoint=config.endpoint, timeout_seconds=None if no_deadline else config.timeout_seconds,
                    max_input_chars=config.max_input_chars, max_output_tokens=config.max_output_tokens,
@@ -78,6 +91,9 @@ def job_config(store, job):
 
 
 async def execute(store, job):
+    if job['request'].get('execution') == 'contract':
+        from .selective import execute as execute_contract
+        return await execute_contract(store,job)
     attempt = job['attempt_id']
     service = None
     journal = None
@@ -144,7 +160,25 @@ def worker(directory):
         from .companion_recovery import recover_locked
         recover_locked(store)
         # An acquired kernel lock proves there is no previous cooperating worker.
+        # A crash after complete() but before finally/release() must retain an
+        # explicit uncertainty that the supervisor can reconcile, not strand an
+        # active reservation forever or replay completed inference.
+        reservation = store.snapshot().get('inference_reservation')
+        if reservation and reservation['state'] == 'active':
+            reserved = store.job(reservation['job_id'])
+            if reserved['state'] != 'running':
+                from .task_store import TaskStore
+                TaskStore(store).release(reserved, confirmed=False)
         for old in store.snapshot()['jobs']:
+            if old['state']=='running' and old['request'].get('execution')=='contract':
+                from .task_store import TaskStore
+                if old['request']['routing']['effective_lane']=='local_implementation':
+                    asyncio.run(execute(store,old))
+                else:
+                    TaskStore(store).release(old, confirmed=False)
+                    TaskStore(store).update(old,execution_status='interrupted',review_status='escalated')
+                    store.complete(old['id'],old['attempt_id'],state='interrupted',error='Uncertain contract inference; not replayed')
+                continue
             if old['state']=='running':
                 store.complete(old['id'],old['attempt_id'],state='interrupted',error='Worker exited; generation cannot resume mid-token')
         while True:

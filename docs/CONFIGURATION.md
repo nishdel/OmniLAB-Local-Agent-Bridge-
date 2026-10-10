@@ -34,11 +34,23 @@ Existing LAB_MODEL/LAB_ENDPOINT/LAB_DATA_DIR and role overrides remain supported
 | `model_registry` | `factory: list` |
 | `adaptive` | `factory: AdaptiveConfig` |
 | `agentic` | `factory: AgenticConfig` |
+| `selective` | `factory: dict` |
 
 ## Companion actions
 
 | Action | Flags/arguments |
 |---|---|
+| `contract-usage-import` | `--rollout` |
+| `contract-usage-report` | `--since`, `--cutoff`, `--session` |
+| `contract-route` | `--request` |
+| `contract-submit` | `--request`, `--run` |
+| `contract-review` | `--event`, `--candidate`, `--outcome`, `--validation`, `--coverage` |
+| `contract-correct` | `--job`, `--note` |
+| `contract-resource-release` | `--job`, `--evidence` |
+| `contract-qualify-start` | `--backend`, `--model`, `--activate`, `--context-tokens` |
+| `contract-qualify-record` | `--job` |
+| `contract-metric` | `--job`, `--request` |
+| `contract-integrate` | `--job`, `--candidate` |
 | `inventory` |  |
 | `select` | `model` |
 | `create` |  |
@@ -62,11 +74,17 @@ Existing LAB_MODEL/LAB_ENDPOINT/LAB_DATA_DIR and role overrides remain supported
 | `finalize` | `--run`, `--summary`, `--validation-passed` |
 | `dock` |  |
 
-The companion uses `data_dir/companion/companion.sqlite3` (schema 1), with private
+The companion uses `data_dir/companion/companion.sqlite3` (schema 3), with private
 callback artifacts under `reviews/<run>/<delivery>/`. No control endpoint is exposed.
 The CLI/store interface is the dock contract; state names appear in USER-GUIDE.md.
 Existing nested sections: roles, routes, search, delegation, model_registry, adaptive, agentic.
 See the existing profiles and workflow guides for those bounded interfaces.
+Optional selective.defaults selects a model/backend; selective.model_profiles binds exact identity,
+limits and provider controls. selective.project_root restricts that personal profile to one checkout.
+Explicit job model overrides the persistent selector, which overrides the configured default.
+Profile output/attempt/retry limits may be narrowed; changed context requires separate qualification.
+selective.host_limits requires whole-host RAM admission, hard/sustained headroom and GPU ceilings.
+See SELECTIVE-SETUP.md for runtime bindings and SELECTIVE-PILOT.md for accounting semantics.
 A direct job with no_inference_deadline keeps the HTTP connect timeout at five seconds;
 it disables generation/read deadlines, not workflow budgets or callback watchdogs.
 Analysis task JSON requires task_key, tool, objective and content. Routed execution

@@ -6,7 +6,13 @@ Use disposable sample content and a test account/profile. Review screenshots and
 
 ## Recording results
 
-Use these columns exactly:
+For the scoped selective milestone, keep the existing issue draft overview compact:
+
+Test | Tested? | Result | Issue registered | Evidence/notes
+
+Record tester/date, candidate hash and definitions in its notes/header. The broader release matrix below retains its established detailed schema:
+
+Use these columns for that matrix:
 
 ID | Test | Expected result | Tested | Result | Issue registered | Tester / date | Evidence / notes
 
@@ -32,8 +38,7 @@ and a disposable sample-repo with an existing Git HEAD. No public companion
 installer is claimed. Stop if the kit or prerequisites are missing.
 
 Prerequisites: normal Windows account, Python 3.11+ including Tcl/Tk, Git,
-already installed Ollama and an existing completion model. Use the existing
-GPT-OSS preference; no automatic model download/delete. A fresh-machine check
+already installed Ollama and an existing completion model. Use the explicitly selected project model; the qualified Qwen27 profile applies only to its scoped project configuration. No automatic model download/delete. A fresh-machine check
 requires a genuinely clean host, not merely this venv.
 
 Extract the kit, open that folder in File Explorer, type powershell in its
@@ -236,3 +241,73 @@ criteria (LAB-C06) distinct. The existing Python 3.11, package and process-crash
 results remain automated evidence tied to their original artifacts. Callback
 authentication/quota fixtures are not live proof. Retained v0.4.1/v0.5 workflow,
 routing and checkpoints use LAB-C03 when affected; model selection remains public.
+
+## Selective-execution addendum
+
+Use the [current unpublished grouped draft](release-testing/selective-execution-issue-draft.md)
+for the new source candidate. Preserve the old draft/package results. Its ten rows
+group every existing M01–M06 and C01–C06 definition; none is waived. Do not mark
+human tests passed from automated fixtures, source inspection or model output.
+
+For grouped model/job tests, compare dock state with companion status and stored
+evidence at queued, running, finished, verification_failed, awaiting_review,
+accepted and integrated checkpoints. Include parent/child dependencies, selected
+skills, exact model identity, routing/fallback reason and unavailable usage.
+Re-run existing focus, keyboard, DPI, hide/reopen and independent-worker checks.
+
+Conditional Strata tests require a verified serving binding and the selected
+Coder artifacts. Exercise unloaded health, unknown alias, wrong underlying
+identity, malformed/overflowed responses, reasoning separation and cancellation.
+Do not install/download models as an incidental manual check.
+
+Conditional OpenHands tests require the documented quota-capable Linux sandbox
+and pinned SDK image. Run the explicitly activated disposable qualification probe,
+inspect real terminal/editor/tool-result exchanges and check practical prompt
+size. Confirm inability to reach host home/credentials/database, external network,
+Docker socket, unrelated repositories and protected acceptance files. Try an
+out-of-scope edit, forged success report and changed candidate after review.
+
+For recovery, interrupt an owned executor/controller at dispatch, inference receipt,
+candidate collection and verification boundaries. Reconcile exact container labels
+and immutable image before continuing. Confirm no duplicate model request after
+an uncertain receipt and no second inference across backends. Observe queue pause,
+slow no-deadline inference and cancellation_pending. Only demonstrably owned work
+may be stopped. Check correction exhaustion and dependency-ordered integration,
+including failure of combined acceptance tests.
+
+The RTX eGPU is detected and short automated/live checks are recorded in the
+[live report](SELECTIVE-LIVE-QUALIFICATION.md). The grouped human/pilot row stays
+unexecuted until setup is qualified, the pilot is explicitly activated and
+whole-system memory/context/sandbox headroom is measured. Verify actual storage
+quota enforcement; an accepted Docker option is insufficient. The later
+[blocker report](SELECTIVE-BLOCKER-RESOLUTION.md) records actual ENOSPC/read-only
+probes without claiming SDK qualification. For its proposed bounded tmpfs profile,
+require trusted seeding, protected acceptance files, bounded exec collection before
+container exit and honest escalation after lost volatile state. Retest cancellation
+and restart on the actual approved image; environment diagnostics do not pass
+this human checklist.
+Use the [matched pilot protocol](SELECTIVE-PILOT.md), record loading and queueing,
+and keep observed, estimated and unavailable values distinct.
+
+
+### Current bounded executor follow-up
+
+The [bounded qualification report](OPENHANDS-BOUNDED-QUALIFICATION.md) records the
+exact approved SDK/model/image and failed qwen3:4b-instruct outcome. For the
+conditional OpenHands row in the existing grouped draft, retain separate checks
+for denied commands, exact allowed files/tests, command timeout/cancellation,
+output/storage exhaustion, failed evidence collection and owned cleanup even if
+host evidence storage fills. Missing collection cannot pass. Confirm actual
+candidate bytes and protected tests independently before any supervisor acceptance.
+These automated/live diagnostics do not mark human dock/focus checks complete.
+The useful repository task remains gated; neither comparison pilot is activated.
+
+
+### Stronger-model follow-up
+
+See [stronger-model qualification](OPENHANDS-STRONGER-QUALIFICATION.md) for the
+final collector's real 27B fixture and independently accepted UTC repository patch.
+That patch is retained in a disposable worktree. The 35B retry's independently
+valid diagnostic bytes do not erase its failed collection state. Preserve exact
+configuration/candidate bindings, inspect actual diffs, and keep human UI rows
+untested. Neither pilot is activated by this narrow live result.

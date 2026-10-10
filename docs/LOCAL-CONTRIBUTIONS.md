@@ -124,3 +124,112 @@ Private evidence records the exact task, model digest, installed runtime hashes,
 payload, provider usage, supervisor feedback and state snapshots. Local agents
 provided bounded opinions, not authority to alter records or approve recovery.
 No authenticated callback, model download or model deletion was performed.
+
+## Selective execution development contribution (2026-10-08)
+
+The unchanged companion-development Bridge at base 0b817c5 supplied one real
+adaptive advisory on a bounded regression-test plan. Exact model: qwen3:4b,
+digest 359d7dd4bcdab3d86b87d73ac27966f4dbb9f5efdfcc75d34a8764a09474fae7,
+Q4_K_M. It completed in 15.40 seconds and suggested concurrent duplicate admission,
+cross-lane dependencies and partial-recovery checks. Codex used those as test
+prompts, wrote/reviewed the implementation and tests, and rejected its generic
+uncertainties about requirements that were already explicit. No local patch was
+applied automatically. This was advisory input, not independent acceptance.
+
+A new generic-chat advisory smoke then failed completion validation after 41.82
+seconds. The output-budget behavior exposed a mismatch with the proven native
+Ollama path. The implementation was corrected to reuse Bridge's structured schema,
+skill hook, exact guard, thinking setting and accounting. A real corrected smoke
+reported 1,011 input / 145 output tokens, 7.263 seconds model loading, 17.756 seconds
+provider total and 20.322 seconds controller elapsed. Its factual missing-model
+finding was checked against selection.py; its unrelated uncertainty was excluded.
+
+The smoke demonstrated finished execution with a distinct awaiting_review state
+before the supervising disposition. Detailed private evidence is retained under
+workspace data/selective-local-contribution, data/selective-live-advisory and
+data/selective-live-native. These runs are not a matched pilot, quality certificate
+or evidence of cloud-token savings. No hosted routing, authenticated callback,
+model download/deletion or GPU benchmark was used.
+
+
+## RTX qualification contribution (2026-10-08)
+
+The final installed candidate ran the same exact qwen3:4b digest through MCP and
+an independent controller/worker on RTX 3060, 16,384 context, code-review@1.0.
+It proposed cloud-suffix and remote_host checks. Codex inspected selection.py and
+existing tests, supplied missing exact-selection coverage and discarded speculative
+and incomplete findings. Outcome: corrected advisory handoff; no patch integrated.
+Usage was 1,105 input / 275 output tokens, 6.944 seconds loading / 11.031 seconds
+provider total. These are smoke observations, not comparable speed or quality claims.
+
+Actual dock data, completion-before-review, owned cancellation and restart evidence
+is retained under data/selective-egpu-qualification-20261008. See
+[live qualification](SELECTIVE-LIVE-QUALIFICATION.md). No OpenHands/Strata agent
+contribution, cloud savings or release readiness is claimed.
+
+The subsequent [blocker-resolution pass](SELECTIVE-BLOCKER-RESOLUTION.md) used
+direct Codex diagnostics and review. It produced no new local-model contribution
+and did not run the SDK agent. Earlier genuine advisory evidence remains intact.
+The qualified qwen3:4b tag is now absent; no replacement tag inherits its result.
+
+
+## Installed-model screen contribution (2026-10-09)
+
+The same fixed candidate at base 0b817c5 used its installed Bridge transport,
+structured parser and accounting for one identical advisory each from GPT-OSS20,
+Qwen3.6-35B, Gemma4-26B and Qwen3.8-27B. Exact digests, settings, outputs and
+[supervisor dispositions](SELECTIVE-LIVE-QUALIFICATION.md#installed-model-follow-up--2026-10-09)
+are retained. Qwen3.8's findings, minimal fixes and proposed tests passed independent
+fixture review with no correction. GPT found both bugs but needed two editorial
+correction groups; Qwen3.6 and Gemma exhausted their declared output allowance
+without a final advisory. Actual synthetic tool exchanges were checked separately.
+
+Codex authored the fixture/oracle/harness, reviewed outputs, investigated the
+sandbox and prepared documentation. No model patch was integrated and no SDK
+agent executed. GPT's automatic local compatibility migration changed its current
+tag after its tested resident exited, so that new binding inherits no result.
+The report also discloses Ollama's two-blob automatic pruning side effect.
+This preliminary direct Bridge assistance is not a durable worker, human UI,
+implementation or matched-pilot qualification, and implies no cloud-token savings.
+
+## Bounded 4b-instruct qualification (2026-10-09)
+
+Codex performed authorized direct bootstrap: command restrictions, native SDK
+wire conversion, frozen correction baselines and failed-output collection. The
+local 4b-instruct model made nine real SDK inference calls and produced incorrect
+fixture edits. Protected tests failed; no suggestion/patch was accepted or rescued
+by Codex. The useful timestamp task was frozen and its failing baseline verified,
+but was not dispatched past the failed qualification gate. See
+[the bounded report](OPENHANDS-BOUNDED-QUALIFICATION.md). This failed attempt does
+not establish general model quality, savings or release readiness.
+
+
+## Stronger-model bounded qualification, 2026-10-09
+
+The [stronger-model report](OPENHANDS-STRONGER-QUALIFICATION.md) records genuine
+LAB-to-OpenHands-to-Ollama delegation: exact qwen3.8:27b generated the UTC timestamp
+change, ran the protected test, and received independent Codex acceptance without
+candidate repair. The patch remains isolated and uncommitted. 35B's first fixture
+failed tool policy; its second generated correct retained bytes but failed normal
+collection. Codex's context/budget/qualification/evidence bootstrap edits are
+separate direct work, not local-model contributions. No savings/equivalence claim.
+
+## Qwen27 standard model milestone
+
+Qualified `qwen3.8:27b` on Ollama 0.40.2 used the retained OpenHands 1.53.0
+networkless restricted mailbox. Immutable runtime snapshots kept in-flight jobs
+independent of source edits. All model calls retained the accepted 65,536 context,
+28 GPU layers, draft 4, 1,536 maximum output and thinking-off profile.
+
+| Task | Outcome | Independent evidence |
+|---|---|---|
+| Append scoped local-first guidance to AGENTS.md | Accepted without Codex repair; integrated | Exact patch inspected; protected original prefix and required policy clauses passed again in a fresh Linux verifier. |
+| Generate UTC timestamp regression tests | Accepted after one local retry; integrated without Codex patch repair | Seven cases passed protected checks in two non-UTC zones and killed the original regression. First attempt exhausted the tool error budget; correction clarified only tools/paths. The retry also corrected its own epoch oracle. All calls are charged. |
+| Installed-default accounting discovery | Accepted after Codex repair | Live advisory through the persistent installed controller; 992 input / 208 output tokens. Correct findings; Codex removed three words to meet the 120-word bound (original 123). Original and corrected artifacts retained. |
+| Historical accepted UTC fix | Previously accepted; integrated unchanged | Original accepted patch/hash preserved. New accounting edits to the same module are Codex work. |
+
+Security controls, default/profile bindings, resource guard, accounting,
+package integration and independent verification are Codex work because they
+establish or exercise trusted authority. The small Codex-only test comparator is
+evaluation investment, not a local contribution. No delegated task is counted as
+accepted until its independent review and protected checks pass.

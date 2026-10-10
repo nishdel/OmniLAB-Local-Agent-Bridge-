@@ -49,6 +49,9 @@ class Bridge:
         if _held:
             chosen_role, model = cfg.resolve_model(tool, role)
             model = _chosen_model or model
+            if any(p['model']==model and p['backend']=='ollama' for p in cfg.selective.get('model_profiles', [])):
+                raise BridgeError('Qualified project profiles require companion submit/contract-submit; legacy transport cannot verify their runtime settings')
+
             source_bytes = len(content.encode("utf-8"))
             record = Recorder(self.store, tool, model, input_chars, role=chosen_role,
                               source_bytes=source_bytes, group_id=group_id, **(_route or {}))

@@ -30,3 +30,30 @@ diagnosis; an old heartbeat is not proof of graceful process exit.
 Keep raw diagnostics private. They can contain supplied repository excerpts,
 model outputs and local paths. Share a redacted state summary, version and error
 category, never a database or authentication directory.
+
+## Qualified project workflow
+
+- **Identity/backend/template mismatch:** compare the exact recorded digest,
+  Ollama version and template hash in the qualification evidence. Restore the
+  approved configuration or ask the supervisor for a new qualification. Do not
+  substitute a model or redownload weights automatically.
+- **Runner settings differ:** LAB withheld the tool call because actual
+  context/offload/draft flags did not match. Check the private profile against
+  the live runner evidence; do not weaken the check.
+- **Resource admission/pressure stop:** preserve OS headroom and wait for
+  unrelated work or an existing model residency to end. Inspect resources.jsonl
+  and the durable reservation. Never raise ceilings to force a pass.
+- **Cancellation pending:** a disconnected request does not prove provider
+  termination. After independent verification that the owned work is stopped
+  and the provider is idle, use contract-resource-release with the job ID and
+  concrete evidence. Never clear another job's reservation.
+- **Legacy transport cannot verify the profile:** use companion submit or
+  contract-submit with the qualified project config. Old Bridge/workflow
+  configurations remain available; they are not proof of this runtime profile.
+- **Strata disabled:** no compatible runnable installation was found in the
+  checked locations. The example port is not a live URL. Supply an actual
+  installation path for separate verification; do not run an automatic large
+  download or networking/driver setup.
+- **Token totals unavailable:** inspect per-request coverage and the accounting
+  cutoff. Missing and cancelled-response counters are unknown. Cached/reasoning
+  counters are subsets, and local tokens are not cloud tokens avoided.

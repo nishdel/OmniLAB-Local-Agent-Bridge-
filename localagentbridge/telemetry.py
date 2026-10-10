@@ -9,7 +9,7 @@ import time
 import uuid
 
 LOG = logging.getLogger("localagentbridge")
-TOKEN_FIELDS = ("input_tokens", "cached_input_tokens", "output_tokens", "reasoning_output_tokens", "total_tokens")
+TOKEN_FIELDS = ("input_tokens", "cached_input_tokens", "output_tokens", "reasoning_output_tokens", "cache_write_input_tokens", "total_tokens")
 
 
 def configure_logging(config):
@@ -65,7 +65,7 @@ class Store:
             # Additive v0.2 migration: v0.1 readers/writers remain compatible.
             db.execute("BEGIN IMMEDIATE")
             columns = {row[1] for row in db.execute("PRAGMA table_info(usage)")}
-            for name, kind in {"role": "TEXT", "source_bytes": "INTEGER", "context_compression": "REAL",
+            for name, kind in {"cache_write_input_tokens": "INTEGER", "role": "TEXT", "source_bytes": "INTEGER", "context_compression": "REAL",
                                "outcome": "TEXT", "outcome_at": "REAL", "group_id": "TEXT",
                                "generation_seconds": "REAL", "load_seconds": "REAL",
                                "logical_id": "TEXT", "escalated_from": "TEXT", "escalation_reason": "TEXT",

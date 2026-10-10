@@ -7,7 +7,10 @@ from .telemetry import TOKEN_FIELDS, LOG
 
 
 def timestamp(value):
-    return datetime.fromisoformat(value.replace("Z", "+00:00")).timestamp()
+    parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return parsed.timestamp()
 
 
 def counts(value):
@@ -129,13 +132,17 @@ class RolloutReader:
                 if not previous or reset:
                     # A fork/resume can inherit cumulative usage. Count only its
                     # first observed last response, not its parent's history.
-                    delta = last if last["total_tokens"] is not None else total
+                    # Without a last-response counter, inherited cumulative
+                    # history is not attributable to this session.
+                    delta = last
                 else:
-                    delta = {k: max(0, v - (previous.get(k) or 0)) if v is not None else None for k, v in total.items()}
+                    delta = {k: max(0, v - previous[k]) if v is not None and previous.get(k) is not None
+                             else None for k, v in total.items()}
                 state["total"] = total
                 if delta["total_tokens"]:
                     self.store.usage(id=event_id, source="rollout", session_id=state.get("session", event_id),
-                                     model=state.get("model", "unknown"), started=when, **delta)
+                                     model=state.get("model", "unknown"), started=when,
+                                     logical_id=state.get("activity"), **delta)
                     state["generated"] = state.get("generated", 0) + (delta["output_tokens"] or 0)
                 self.touch(state, when)
             else:

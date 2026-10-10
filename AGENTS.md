@@ -22,3 +22,25 @@ Inspect imports, CLI hooks, dynamic registration and package contents before
 removing code. Preserve models, user databases and historical evidence. Do not
 publish a release as part of implementation. See CONTRIBUTING.md and
 docs/RELEASE-READINESS.md for the current gates.
+
+## Supervised local-first workflow
+
+The project model is qwen3.8:27b served by Ollama (output capped at 1536
+tokens, 65536 context, 28 GPU layers, draft 4, thinking off). Advisory work
+flows LAB -> Ollama; implementation flows LAB -> OpenHands -> Ollama. Codex
+owns planning, security, independent patch/test review, acceptance and
+integration; LAB owns durable jobs, evidence, budgets and review state.
+OpenHands tools only see task-declared paths, protected acceptance and exact
+approved test commands; the container is networkless and host inference uses
+a trusted mailbox. This is project/personal configuration, not a requirement
+for public users; exact per-job choices and the public model selector remain.
+
+Never silently replace a missing or different model, ignore runtime settings,
+grow output allowances or relax safety limits. Run one inference at a time;
+split work, bound retries and explain escalation or direct Codex work. Local
+output never authorizes its own permissions or acceptance. Record independent
+acceptance outcomes: accepted without Codex repair, accepted after local
+retry, accepted after Codex repair, or failed/blocked. Report usage from
+actual provider or cumulative cloud evidence; local tokens are not cloud
+tokens saved, missing counters are unknown, and any savings claim needs an
+equivalent accepted baseline including overhead.

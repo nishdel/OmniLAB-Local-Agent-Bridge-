@@ -12,6 +12,17 @@ and open gates. [Manual test definitions](docs/MANUAL-RELEASE-TESTING.md) and th
 [unpublished issue draft](docs/release-testing/0.5.0.dev0-issue-draft.md) prepare
 owner testing; they do not record completed acceptance or authorize publication.
 
+## Scoped Qwen27 workflow
+
+The personal LocalAgentBridge worktree uses a qualified Qwen27 profile through
+the durable companion. Public defaults and explicit model selection remain
+available. [Setup and operations](docs/SELECTIVE-SETUP.md#qwen27-project-workflow)
+describe the pinned runtime, start/stop/status, rollback and optional Strata.
+[Current evidence](docs/OPENHANDS-STRONGER-QUALIFICATION.md#standard-model-milestone)
+separates installed, tested and active components.
+[Accounting](docs/SELECTIVE-PILOT.md#milestone-accounting) separates setup investment
+from measured operating savings. Human dock/focus/DPI acceptance remains open.
+
 ## Start here
 
 Use Windows, Python 3.11+ with Tcl/Tk, Git, an Ollama server with an installed
@@ -81,3 +92,14 @@ See [architecture](docs/ARCHITECTURE.md), [decisions](docs/DECISIONS.md),
 [contributing](CONTRIBUTING.md), [agent guidance](AGENTS.md),
 [security/privacy](SECURITY.md), [dependencies/notices](docs/DEPENDENCIES.md),
 [changelog](CHANGELOG.md), and [historical benchmark aggregates](docs/benchmarks/README.md).
+
+## Optional selective execution
+
+The [selective execution guide](docs/SELECTIVE-EXECUTION.md) adds opt-in supervisor
+contracts, a Strata inference adapter and an isolated OpenHands implementation
+executor to the existing companion. Defaults and the retained v0.5 workflows stay
+unchanged. See [setup and boundaries](docs/SELECTIVE-SETUP.md),
+[role/skill mapping](docs/ROLE-MIGRATION.md) and the [prepared pilot](docs/SELECTIVE-PILOT.md).
+Strata/OpenHands and the new GPU are not live-qualified by mocked tests.
+
+The [selective execution implementation report](docs/SELECTIVE-IMPLEMENTATION-REPORT.md) records verified stages, live limits and deferred qualification.

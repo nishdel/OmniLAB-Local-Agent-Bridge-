@@ -84,8 +84,11 @@ class Config:
     model_registry: list[ModelProfile] = field(default_factory=list)
     adaptive: AdaptiveConfig = field(default_factory=AdaptiveConfig)
     agentic: AgenticConfig = field(default_factory=AgenticConfig)
+    selective: dict = field(default_factory=dict)
 
     def __post_init__(self):
+        from .selective_config import validate_policy
+        self.selective = validate_policy(self.selective)
         if type(self.no_inference_deadline) is not bool:
             raise ValueError('no_inference_deadline must be boolean')
         if type(self.thinking) is not bool and self.thinking not in ('low', 'medium', 'high'):

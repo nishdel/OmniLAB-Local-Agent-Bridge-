@@ -124,3 +124,37 @@ validating → completed/blocked/cancelled. Queue pause only gates admission.
 Data includes authorized task excerpts/results in companion storage and its
 workflow recovery tables; ordinary telemetry stays metadata-only. See SECURITY.md for private storage
 and cloud callback flow, and DECISIONS.md for compatibility decisions.
+
+## Selective execution extension
+
+The optional [contract path](SELECTIVE-EXECUTION.md) adds three explicit lanes:
+Codex direct return, bounded advisory, and isolated OpenHands implementation.
+Inference backend selection (Ollama or Strata) is separate from execution ownership.
+Native Ollama advisory reuses Bridge; the SDK consumes bounded Chat Completions.
+The deterministic companion scheduler, store, worker, dock and explicit supervisor
+review remain authoritative. See [setup](SELECTIVE-SETUP.md) for exact provider,
+sandbox and candidate-verification boundaries. Legacy workflow semantics above
+remain available; they do not acquire tool permissions from the new lane.
+
+## Qualified project profiles and accounting
+
+`local_profile.py` resolves project-scoped defaults and explicit model/backend
+overrides before the existing contract admission. Trusted profiles carry exact
+identities and bounded limits, with no mandatory machine model in distribution
+defaults. Profiled companion advisory jobs use the same native provider and
+runtime verification as OpenHands implementation; legacy callers keep their
+existing configuration and unsupported transport/profile combinations fail.
+
+`runtime_profile.py` verifies the actual runner model path and flags.
+Provider admission checks the installed version, digest, quantization and stored
+template hash; completed responses verify loaded digest/context before an SDK
+tool call can execute. LAB's host resource guard observes loading/execution;
+the durable reservation admits one inference workload across providers.
+No lifecycle or acceptance authority enters the model-controlled sandbox.
+
+Successful, failed and interrupted requests feed the existing usage table;
+durable receipts repair accounting after restart without replaying inference.
+`usage_report.py` creates provenance/cutoff/missing-coverage views from those
+records. It never counts measurement views as additional provider requests.
+The dock reflects per-request available counters and exact backend/model,
+task, project, elapsed time and separate execution/verification/review states.

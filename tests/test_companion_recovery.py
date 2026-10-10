@@ -326,7 +326,7 @@ def test_additive_schema_migration_retains_all_existing_data(candidate):
     assert dump(store.directory/'usage/usage.sqlite3',{'companion_operations','companion_payloads','companion_journal_meta'})==old_usage
     assert store.job(jid)==job
     with store.db() as db:
-        assert db.execute('PRAGMA user_version').fetchone()[0]==2
+        assert db.execute('PRAGMA user_version').fetchone()[0]==3
         assert db.execute('PRAGMA journal_mode').fetchone()[0]=='wal'
         assert db.execute('PRAGMA synchronous').fetchone()[0]==2
 

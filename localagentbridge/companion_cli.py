@@ -10,6 +10,8 @@ from .companion_store import CompanionStore
 def add_parser(commands):
     parser = commands.add_parser('companion',help='Durable local contributions and managed read-only Codex review')
     actions = parser.add_subparsers(dest='action',required=True)
+    from .selective_cli import add as add_selective
+    add_selective(actions)
     actions.add_parser('inventory',help='List installed models and advertised capabilities; no inference')
     select = actions.add_parser('select',help='Save an exact installed model default for future jobs')
     select.add_argument('model')
@@ -70,7 +72,10 @@ def run(args, config):
     store = CompanionStore(config.data_dir/'companion')
     action = args.action
     result = None
-    if action=='inventory':
+    if action.startswith('contract-'):
+        from .selective_cli import run as selective_run
+        result = selective_run(args, config, store)
+    elif action=='inventory':
         result = store.annotate_inventory(asyncio.run(discover(config)),config.endpoint)
     elif action=='select':
         selected = select_model(asyncio.run(discover(config)),args.model)

@@ -36,7 +36,7 @@ class CompanionStore:
         self.path = self.directory / 'companion.sqlite3'
         self.clock = clock
         with self.db() as db:
-            if db.execute('PRAGMA user_version').fetchone()[0] > 2:
+            if db.execute('PRAGMA user_version').fetchone()[0] > 3:
                 raise ValueError('Companion database is newer than this runtime; use the matching version')
             db.execute('PRAGMA journal_mode=WAL')
             db.executescript('''
@@ -63,7 +63,9 @@ class CompanionStore:
                   receipt_digest TEXT, disposition TEXT NOT NULL, detail TEXT NOT NULL,
                   updated REAL NOT NULL);
             ''')
-            db.execute('PRAGMA user_version=2')
+            from .task_store import migrate
+            migrate(db)
+            db.execute('PRAGMA user_version=3')
 
     @contextmanager
     def db(self):
@@ -153,7 +155,9 @@ class CompanionStore:
                 return None
             if db.execute("SELECT 1 FROM jobs WHERE state='running'").fetchone():
                 return None
-            row = db.execute("SELECT j.* FROM jobs j JOIN runs r ON r.id=j.run_id WHERE j.state='queued' AND r.cancel_requested=0 ORDER BY j.created,j.id LIMIT 1").fetchone()
+            row = db.execute("SELECT j.* FROM jobs j JOIN runs r ON r.id=j.run_id WHERE j.state='queued' AND r.cancel_requested=0 ORDER BY j.created,j.id").fetchall()
+            from .task_store import eligible
+            row = next((r for r in row if eligible(db,r)), None)
             if not row:
                 return None
             attempt = str(uuid.uuid4())
@@ -290,6 +294,7 @@ class CompanionStore:
             db.execute('BEGIN IMMEDIATE')
             row = db.execute('''SELECT e.*,r.session_id,r.repository,r.base_revision FROM events e
                 JOIN runs r ON r.id=e.run_id WHERE e.state IN ('pending','retry')
+                AND NOT EXISTS (SELECT 1 FROM contract_jobs c WHERE c.job_id=e.job_id AND c.lane='codex_direct')
                 AND (e.retry_at IS NULL OR e.retry_at<=?) AND r.session_id IS NOT NULL
                 AND NOT EXISTS (SELECT 1 FROM settings s WHERE s.key='session_init:'||r.id AND s.value!='"ready"')
                 AND NOT EXISTS (SELECT 1 FROM events a JOIN runs b ON b.id=a.run_id
@@ -335,7 +340,7 @@ class CompanionStore:
             if not changed:
                 raise ValueError('Event does not need reconciliation')
 
-    def decide(self, event_id, outcome, validation, local=False):
+    def decide(self, event_id, outcome, validation, local=False, candidate_hash=None, coverage=None):
         if outcome not in ('accepted', 'corrected', 'rejected', 'further_work') or not validation.strip():
             raise ValueError('A review outcome and validation evidence are required')
         with self.db() as db:
@@ -344,6 +349,8 @@ class CompanionStore:
             allowed = ('awaiting_decision','reviewed','pending','retry') if local else ('awaiting_decision','reviewed')
             if not row or row['state'] not in allowed:
                 raise ValueError('Reconcile delivery before deciding')
+            from .task_store import review_guard
+            review_guard(db,row,outcome,candidate_hash,coverage)
             if row['state'] == 'reviewed':
                 if row['decision'] != outcome or row['validation'] != validation:
                     raise ValueError('Decision already recorded')
@@ -377,9 +384,16 @@ class CompanionStore:
                     workflows[request['workflow_task']['task_id']] = result.get('answer',{}).get('workflow',{}).get('state')
             if validation_passed and any(state!='codex_verified' for state in workflows.values()):
                 raise ValueError('Unresolved workflow checkpoints prevent successful finalization')
+            from .task_store import effective_jobs
+            effective_ids = {j['id'] for j in effective_jobs(jobs).values()}
             if validation_passed:
                 verify_final_workflows(ledger,jobs)
-            successful = validation_passed and all(j['state']=='succeeded' for j in jobs) and all(e['decision'] in ('accepted','corrected') for e in events)
+                contracts = db.execute("SELECT c.* FROM contract_jobs c JOIN jobs j ON j.id=c.job_id WHERE j.run_id=?", (run_id,)).fetchall()
+                if any(c['review_status'] != 'accepted' or c['accepted_hash'] != c['candidate_hash'] or
+                       c['lane'] == 'local_implementation' and (c['verification_status'] != 'passed' or c['integration_status'] != 'integrated')
+                       for c in contracts if c['job_id'] in effective_ids):
+                    raise ValueError('Unresolved contract verification/review/integration prevents finalization')
+            successful = validation_passed and all(j['state']=='succeeded' for j in jobs if j['id'] in effective_ids) and all(e['decision'] in ('accepted','corrected') for e in events if e['job_id'] in effective_ids)
             state = 'cancelled' if run['cancel_requested'] else 'completed' if successful else 'blocked'
             db.execute('UPDATE runs SET state=?,finalized=?,summary=? WHERE id=?', (state, self.clock(), summary, run_id))
         return state
@@ -399,8 +413,19 @@ class CompanionStore:
             jobs = [dict(r) for r in db.execute('SELECT * FROM jobs ORDER BY created') if r['run_id'] in ids]
             events = [dict(r) for r in db.execute('SELECT * FROM events ORDER BY created') if r['run_id'] in ids]
             recoveries = [dict(r) for r in db.execute('SELECT * FROM recoveries') if any(j['id']==r['job_id'] for j in jobs)]
+            contracts = {r['job_id']:dict(r) for r in db.execute('SELECT * FROM contract_jobs')}
+            reservation = db.execute('SELECT * FROM inference_reservation WHERE singleton=1').fetchone()
+            measurements = {}
+            for metric in db.execute('SELECT job_id,payload FROM task_measurements ORDER BY created'):
+                measurements.setdefault(metric['job_id'], []).append(json.loads(metric['payload']))
         for row in jobs:
+            if row['id'] in contracts:
+                state = contracts[row['id']]
+                state['evidence'] = json.loads(state['evidence']) if state['evidence'] else None
+                row['contract_state'] = state
+                row['measurements'] = measurements.get(row['id'], [])
             for key in ('request','result','process'):
                 row[key] = json.loads(row[key]) if row[key] else None
         return dict(runs=runs, jobs=jobs, events=events, recoveries=recoveries,
-                    paused=self.setting('paused') or False, now=self.clock())
+                    paused=self.setting('paused') or False, now=self.clock(),
+                    inference_reservation=dict(reservation) if reservation else None)

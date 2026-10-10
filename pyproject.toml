@@ -31,7 +31,7 @@ localagentbridge-tray = "localagentbridge.widget:main"
 include = ["localagentbridge*"]
 
 [tool.setuptools.package-data]
-localagentbridge = ["definitions/*/*.toml"]
+localagentbridge = ["definitions/*/*.toml", "executor_assets/*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

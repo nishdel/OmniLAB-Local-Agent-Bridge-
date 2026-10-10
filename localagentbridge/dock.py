@@ -19,6 +19,20 @@ def display(value):
     return 'unavailable' if value is None else f'{value:,}'
 
 
+def job_usage(job):
+    reported = (job.get('result') or {}).get('usage')
+    if reported is not None:
+        return reported
+    state = job.get('contract_state') or {}
+    if (state.get('evidence') or {}).get('usage_incomplete'):
+        return {}
+    receipts = (state.get('evidence') or {}).get('usage')
+    if isinstance(receipts, list):
+        return {field: reported_total(receipts, field) for field in
+                ('input_tokens','output_tokens','cached_input_tokens')}
+    return {}
+
+
 def presentation(snapshot, run_id=None):
     runs = snapshot['runs']
     run = next((r for r in runs if r['id']==run_id), runs[0] if runs else None)
@@ -29,29 +43,55 @@ def presentation(snapshot, run_id=None):
     active = next((j for j in jobs if j['state']=='running'),None)
     queued = sum(j['state']=='queued' for j in jobs)
     completed = sum(j['state'] in ('succeeded','failed','cancelled','interrupted') for j in jobs)
-    usage = [(j.get('result') or {}).get('usage') or {} for j in jobs]
+    usage = [job_usage(j) for j in jobs]
     model = active['request']['selection']['name'] if active else (jobs[-1]['request']['selection']['name'] if jobs else 'unselected')
+    selected_job = active or (jobs[-1] if jobs else None)
+    if selected_job and selected_job.get('contract_state',{}).get('lane')=='codex_direct':
+        model = 'Codex supervisor'
     end = run['finalized'] if run['finalized'] is not None else snapshot['now']
     elapsed = max(0,end-run['created'])
     state = 'local_generation' if active else 'local_queued' if queued else run['state']
-    title = (f"{active['task_key'] if active else run['id'][:8]} · {model} · {state}\n"
-             f"Local in {display(reported_total(usage,'input_tokens'))} / out {display(reported_total(usage,'output_tokens'))} · "
-             f"{elapsed:.0f}s total · {queued} queued / {completed} finished local · {'queue paused' if snapshot['paused'] else 'queue enabled'}")
+    if active and active.get('contract_state'):
+        cs = active['contract_state']
+        state = 'verifying' if cs['verification_status']=='running' else cs['execution_status']
+    if selected_job and selected_job.get('contract_state') and selected_job['contract_state']['lane']!='codex_direct':
+        model = selected_job['contract_state']['backend'] + '/' + model
+    title = (f"{active['task_key'] if active else run['id'][:8]}  |  {model}  |  {state}\n"
+             f"Local in {display(reported_total(usage,'input_tokens'))} / out {display(reported_total(usage,'output_tokens'))}  |  "
+             f"{elapsed:.0f}s total  |  {queued} queued / {completed} finished local  |  {'queue paused' if snapshot['paused'] else 'queue enabled'}")
     lines = [f"Run: {run['id']}",f"Repository: {run['repository']}",f"Base: {run['base_revision']}",
              f"Codex session: {run['session_id'] or 'not initialized'}",'Local completion requires a separate review and validation.']
     for job in jobs:
         finish = job['ended'] if job['ended'] is not None else snapshot['now']
         waiting = (job['started'] if job['started'] is not None else finish)-job['created']
         inference = finish-job['started'] if job['started'] is not None else None
-        lines += ['',f"{job['task_key']} · {job['id']} · {job['state']}",
+        lines += ['',f"{job['task_key']}  |  {job['id']}  |  {job['state']}",
                   f"Model: {job['request']['selection']['name']} ({job['request']['selection'].get('digest') or 'digest unavailable'})",
-                  f"Queue wait: {waiting:.1f}s · local execution: {'unavailable' if inference is None else f'{inference:.1f}s'}"]
+                  f"Queue wait: {waiting:.1f}s  |  local execution: {'unavailable' if inference is None else f'{inference:.1f}s'}"]
+        if job.get('contract_state'):
+            cs = job['contract_state']
+            contract = job['request']['contract']
+            children = [j for j in jobs if j.get('request',{}).get('contract',{}).get('parent_id')==contract['task_id']]
+            finished = sum(j['state'] in ('succeeded','failed','cancelled','interrupted') for j in children)
+            lines += [f"Lane: {cs['lane']}  |  backend: {cs['backend']}  |  role: {job['request']['role']}",
+                      'Skills: ' + ', '.join(s['id']+'@'+s['version'] for s in job['request']['skills']),
+                      'Routing: ' + job['request']['routing']['reason'],
+                      f"Execution: {cs['execution_status']}  |  verification: {cs['verification_status']}  |  review: {cs['review_status']}  |  integration: {cs['integration_status']}",
+                      f"Parent: {contract['parent_id'] or 'none'}  |  children finished: {finished}/{len(children)}",
+                      'Dependencies: ' + ', '.join(contract['dependencies']),
+                      'Candidate: ' + (cs['candidate_hash'] or 'unavailable')]
+            actual_usage = job_usage(job)
+            lines.append(f"Local reported tokens: in {display(actual_usage.get('input_tokens'))} / out {display(actual_usage.get('output_tokens'))}")
+            for measurement in job.get('measurements', []):
+                lines.append('Measurement ('+measurement['kind']+'): '+measurement['phase']+' '+json.dumps(measurement['metrics']))
+            if cs['lane']=='codex_direct':
+                lines.append('Model above is requested only; this lane makes no local inference call.')
         result = job.get('result') or {}
         workflow = result.get('answer',{}).get('workflow')
         if workflow:
             budget = workflow['budget']
-            lines += [f"Workflow: {workflow['run_id']} · {workflow['state']} · next: {workflow['next_stage']}",
-                      f"Profile: {workflow['project_profile']} · version: {workflow['version']} · path: {workflow.get('delegation',{}).get('path','explicit workflow')}",
+            lines += [f"Workflow: {workflow['run_id']}  |  {workflow['state']}  |  next: {workflow['next_stage']}",
+                      f"Profile: {workflow['project_profile']}  |  version: {workflow['version']}  |  path: {workflow.get('delegation',{}).get('path','explicit workflow')}",
                       f"Budget: {budget['attempts']}/{budget['limits']['max_attempts']} attempts; {budget['reserved_tokens']} reserved tokens; {budget['seconds']}s charged",
                       'Advance with companion workflow-next; trusted decisions use workflow-checkpoint.']
         if job['request'].get('model_pins'):
@@ -59,8 +99,8 @@ def presentation(snapshot, run_id=None):
         event = next((e for e in events if e['job_id']==job['id']),None)
         if event:
             review = (event['review_ended']-event['review_started']) if event['review_ended'] is not None and event['review_started'] is not None else None
-            lines += [f"Review: {event['state']} · {event['decision'] or event['reason'] or 'pending'}",
-                      f"Review elapsed: {'unavailable' if review is None else f'{review:.1f}s'} · event: {event['id']}",
+            lines += [f"Review: {event['state']}  |  {event['decision'] or event['reason'] or 'pending'}",
+                      f"Review elapsed: {'unavailable' if review is None else f'{review:.1f}s'}  |  event: {event['id']}",
                       'Codex reported usage: '+(event['review_usage'] or 'unavailable')]
         if job.get('error'):
             lines.append('Error: '+job['error'])
@@ -68,6 +108,8 @@ def presentation(snapshot, run_id=None):
             lines.append(json.dumps(job['result']['answer'],indent=2,ensure_ascii=False))
     if run.get('summary'):
         lines.append('\nFinal report: '+run['summary'])
+    if snapshot.get('inference_reservation'):
+        lines.append('Inference reservation: ' + snapshot['inference_reservation']['state'])
     return dict(title=title,details='\n'.join(lines),active=active,run=run)
 
 
@@ -83,7 +125,7 @@ class CompanionDock:
         self.pinned=tk.BooleanVar(root,value=bool(store.setting('dock_pinned')))
         self.message=tk.StringVar(root)
         self.status=tk.StringVar(root)
-        root.title('LocalAgentBridge · Companion')
+        root.title('LocalAgentBridge  |  Companion')
         root.geometry('780x220')
         root.minsize(540,200)
         root.protocol('WM_DELETE_WINDOW',self.hide)
@@ -170,8 +212,8 @@ class CompanionDock:
             size=selected.get('size')
             size=f'{size/2**30:.2f} GiB' if isinstance(size,(int,float)) else 'size unavailable'
             details=selected.get('details') or {}
-            self.message.set(f"{size} · {details.get('quantization_level','quantization unavailable')} · "
-                             f"{selected['validation']} · capabilities: {', '.join(selected.get('capabilities') or []) or 'unknown'}")
+            self.message.set(f"{size}  |  {details.get('quantization_level','quantization unavailable')}  |  "
+                             f"{selected['validation']}  |  capabilities: {', '.join(selected.get('capabilities') or []) or 'unknown'}")
 
     def refresh(self):
         if self.closed:

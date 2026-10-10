@@ -1,0 +1,67 @@
+[
+  {
+    "schema_version": 1,
+    "task_id": "bounded-source-fix",
+    "objective": "Repair the documented boundary in subject.py",
+    "requirement_ref": "issue-or-original-request",
+    "acceptance": {
+      "boundary": "The upper boundary is included; values outside the interval are rejected."
+    },
+    "non_goals": [
+      "No interface or dependency changes"
+    ],
+    "repository": "REPLACE_WITH_ABSOLUTE_REPOSITORY",
+    "base_revision": "0000000000000000000000000000000000000000",
+    "permitted_files": [
+      "subject.py"
+    ],
+    "context_files": [
+      "subject.py",
+      "acceptance.py"
+    ],
+    "acceptance_files": [
+      "acceptance.py"
+    ],
+    "operations": [
+      "read",
+      "edit",
+      "test"
+    ],
+    "skills": [
+      "implementation-proposal"
+    ],
+    "role": "local-worker",
+    "dependencies": [],
+    "requested_lane": "local_implementation",
+    "orchestration": "auto",
+    "backend": "ollama",
+    "model": "qwen3:4b",
+    "exact_identity": "REPLACE_WITH_OBSERVED_DIGEST",
+    "require_exact": true,
+    "risk": "low",
+    "ambiguity": false,
+    "coherent_scope": true,
+    "reversible": true,
+    "category": "bounded-source-fix",
+    "supervisor_approved": false,
+    "checks": [
+      {
+        "id": "boundary",
+        "argv": [
+          "python",
+          "acceptance.py"
+        ],
+        "covers": [
+          "boundary"
+        ]
+      }
+    ],
+    "limits": {
+      "steps": 20,
+      "implementation_attempts": 2,
+      "transport_retries": 1,
+      "context_tokens": 16384,
+      "inference_deadline_seconds": null
+    }
+  }
+]

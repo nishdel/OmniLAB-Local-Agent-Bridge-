@@ -1,5 +1,49 @@
 # Stronger-model OpenHands qualification — 2026-10-09
 
+## Close-out checkpoint
+
+The accepted deployment and required prior dependencies are committed locally at
+bec07f63bc8a0991576d7392353f1a541615eeeb. Narrow attribution and handoff changes
+are at 90629f46a694624ae5d59b3258cc403bef7fccba, independently checked in a clean
+detached checkout. This evidence update changes documentation only. Neither
+checkpoint includes private configuration, sessions, databases, weights or raw
+evidence bundles. No push, merge, tag or release occurred.
+
+Clean-checkout regression: **591 passed, 1 skipped** in
+684.092 seconds. The skip remains the Windows symlink privilege check.
+The separate **180 extracted-wheel checks** overlap the full suite; do not add
+their counts. Ruff, 45-document checks, the 228-file public-source audit,
+wheel/sdist inspection, offline install and retained-state v0.4.1 upgrade passed.
+All 88 package files matched committed runtime source. Artifact manifests are
+private under data/qwen-closeout-20261010/package/; documentation-only follow-up
+checks preserve exact runtime identity. This is reproducibility evidence, not
+fresh-machine, Python-minimum, authenticated callback or release acceptance.
+
+The active controller remains on the prior accepted immutable package. A separate
+offline-installed accounting utility provides whole-session/turn and LAB run/job
+bindings in the existing usage database. Duplicate bindings are idempotent;
+conflicting or overlapping assignments fail. Actual historical CLI receipts and
+live LAB receipts were checked. Shared controller costs remain mixed/unattributed;
+no fractional allocation or new generation-only baseline was produced.
+The old comparison still lacks full matched supervision costs; net operating
+savings remain **not established**. See [accounting](SELECTIVE-PILOT.md#close-out-attribution).
+
+One useful close-out Qwen advisory produced the operator paragraph: 106 words,
+291 input / 130 output tokens, independently accepted and integrated unchanged.
+Its runtime receipt again verified the accepted identity/profile. Nine installed
+model identities, the original Qwen accepted patch and the private configuration
+hash were preserved. Controller admission remains project-only, one inference
+at a time; no active job/reservation remained and normal model expiry was observed.
+OpenHands remains the pinned restricted SDK transport with no web UI. Strata's
+adapter is retained and runtime disabled under its existing documented blockers.
+
+The compact manual ledger now has **eleven untested human rows**, including all
+requested dock transitions, display/usage, cancellation, explicit override and
+restart persistence. Automated checks do not change those human results.
+Verified absolute commands and the unchanged deployment rollback procedure are
+in private data/qwen-closeout-20261010/operations.txt. The prior installed utility
+can be used again without deleting the additive attribution table or receipts.
+
 ## Standard model milestone
 
 Current milestone: **project Qwen27 default and supervised routing active**. The existing

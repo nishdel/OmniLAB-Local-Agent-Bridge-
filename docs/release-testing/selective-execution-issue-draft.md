@@ -24,7 +24,7 @@ Automated/mocked and live smoke results are in the [implementation report](../SE
 separate from this table. Assess applicability before changing Blocked/N/A.
 
 Current automated milestone: project-only Qwen27 default and supervised routing
-are active. Source regression is 586 passed / 1 skipped in one complete final-source run; extracted-wheel checks overlap and are recorded separately.
+are active. Clean committed-source regression is 591 passed / 1 skipped; 180 extracted-wheel checks overlap and are recorded separately.
 Installed start/cancel/recovery/restart and the actual dock data binding were
 checked. Qwen documentation was accepted without repair, UTC tests after local
 retry, and advisory after a three-word Codex trim. No human row below changes.
@@ -44,7 +44,7 @@ Net operating token savings are not established; partial cancelled usage is unkn
 | Conditional managed review callback (C04) | No | Not tested | — | Separate callback authorization is still required. |
 | Conditional OpenHands isolation and tool round trip | No (human); live qualification recorded | Not tested | Q-10, Q-12, Q-14 | Current final collector + qwen3.8:27b passed fixture and useful UTC task with independent acceptance. Later Qwen35 fixture/UTC accepted; Gemma fixture accepted and UTC output-limited. Historical failures retained. Scoped project activation is recorded in the standard-model milestone; human controls remain untested and unrelated pilots remain inactive. |
 | Candidate verification, stale/forged acceptance and recovery | No | Not tested | — | Include one correction then escalation and exact combined integration checks. |
-| Conditional eGPU/resources and matched pilot (C06) | No | Not tested | — | RTX short checks verified separately; pilot inactive/not ready; human responsiveness untested. |
+| Conditional eGPU/resources and matched pilot (C06) | No | Not tested | Q-20 (local draft) | RTX short checks verified separately; pilot inactive/not ready; human responsiveness untested. |
 
 All inherited detailed M01–M06 and C01–C06 procedures remain applicable through
 these grouped references; this compact table does not waive them. New selective
@@ -207,3 +207,5 @@ openhands-moe-20261010. Model identities, original checkouts and accepted Qwen27
 patch preserved. Pilots/general routing inactive; human verification still pending.
 
 - Q-15 (current): Optional Strata has no runnable compatible installation/assets in the bounded inventory. The inspected Flash-Next upstream does not qualify dense Qwen27; separate weights/runtime/driver compatibility and safe admission remain unresolved. No large download, driver/network change or live Strata acceptance is claimed.
+
+- Q-20 (close-out): Usage identity bindings and missing/duplicate/conflict checks now pass. Historical generation-only baseline and shared hybrid supervision do not provide complete matched costs. No new comparison was run; net savings remain unknown. Mixed controller usage is retained explicitly. This local entry is not a published issue.

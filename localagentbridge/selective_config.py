@@ -20,8 +20,12 @@ def validate_policy(value):
     for backend, provider in value.get('providers', {}).items():
         if backend not in ('ollama', 'strata') or not isinstance(provider, dict):
             raise ValueError('Unknown provider')
-        if set(provider) - {'enabled', 'endpoint', 'binding', 'api_key_env', 'temperature', 'reasoning_effort', 'verify_loaded_context', 'native_context', 'num_gpu', 'keep_alive_seconds', 'strict_context', 'draft_num_predict', 'runtime_binding'}:
+        if set(provider) - {'enabled', 'endpoint', 'binding', 'api_key_env', 'temperature', 'reasoning_effort', 'verify_loaded_context', 'native_context', 'num_gpu', 'keep_alive_seconds', 'strict_context', 'draft_num_predict', 'runtime_binding', 'enable_thinking'}:
             raise ValueError('Unknown provider setting')
+        if 'enabled' in provider and type(provider['enabled']) is not bool:
+            raise ValueError('Provider enabled must be boolean')
+        if 'enable_thinking' in provider and (backend != 'strata' or type(provider['enable_thinking']) is not bool):
+            raise ValueError('enable_thinking requires a Strata boolean setting')
         if provider.get('runtime_binding') and (backend != 'ollama' or not provider.get('native_context') or not provider.get('verify_loaded_context')):
             raise ValueError('Effective runtime binding requires verified native Ollama transport')
         for key, low, high in (('num_gpu', 0, 256), ('keep_alive_seconds', 0, 1800), ('draft_num_predict', 0, 16)):

@@ -43,7 +43,7 @@ def test_provider_local_boundary(url):
     with pytest.raises(ProviderError): ChatProvider('strata',{'endpoint':'http://localhost'})
 
 
-def test_nonstream_reasoning_and_optional_usage():
+def test_nonstream_reasoning_and_optional_usage(verified_strata_transport):
     response=completion(usage={'prompt_tokens':11,'completion_tokens':3,'prompt_tokens_details':{'cached_tokens':7}})
     response['choices'][0]['message']['reasoning_content']='private reasoning'
     p=ChatProvider('strata',{'enabled':True,'endpoint':'http://localhost:8080'},
@@ -54,7 +54,7 @@ def test_nonstream_reasoning_and_optional_usage():
     assert validate_completion(completion())['usage']['input_tokens'] is None
 
 
-def test_streaming_separates_reasoning_and_requires_done():
+def test_streaming_separates_reasoning_and_requires_done(verified_strata_transport):
     lines=[
       {'choices':[{'delta':{'reasoning_content':'think'},'finish_reason':None}]},
       {'choices':[{'delta':{'content':'final'},'finish_reason':None}]},
@@ -120,7 +120,7 @@ def test_connect_retries_but_never_replays_read_timeout():
     assert len(calls)==1
 
 
-def test_no_deadline_preserves_connect_timeout_and_no_redirect():
+def test_no_deadline_preserves_connect_timeout_and_no_redirect(verified_strata_transport):
     seen=[]
     def handler(req):
         seen.append(req.extensions['timeout'])
@@ -184,3 +184,13 @@ def test_sampling_and_context_policy_reject_invalid_values(key,value):
     from localagentbridge.config import Config
     with pytest.raises(ValueError):
         Config(selective={'providers':{'ollama':{key:value}}})
+
+
+@pytest.fixture
+def verified_strata_transport(monkeypatch):
+    # Transport-only tests; real binding validation is exercised separately.
+    async def inspect(self, model):
+        return dict(ready=True, identity_verified=True, identity='fixture', context_tokens=65536,
+                    tools_advertised=True, template_sha256='template', build_info='Strata fixture',
+                    serving_model='coder', backend='strata', model=model)
+    monkeypatch.setattr(ChatProvider, 'inspect', inspect)

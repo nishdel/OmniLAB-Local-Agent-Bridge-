@@ -1,5 +1,131 @@
 # Selective local execution implementation report
 
+## Strata upgrade — 2026-10-12
+
+**Delivered adapter/configuration work; Strata is not functional or enabled on
+this machine.** Stage A stopped at missing runtime/compatible assets. No Strata
+inference, LAB advisory through Strata, or OpenHands/Strata implementation passed.
+[Current setup and installation approval package](SELECTIVE-SETUP.md#independent-strata-status)
+and [source-verified workflow](WORKFLOW.md#source-map) are the canonical details.
+
+### Verified starting point
+
+The workspace root is an older non-Git source copy. Work continued in the existing
+isolated `codex/selective-local-execution` checkout at
+`a9a4bad6eaa2761d3a3648854f83664a94bc119d`, preserving both uncommitted manual
+session documents. Its former LocalAgentBridge origin redirects to OmniLAB.
+Draft PR #1 was open on that exact head with successful Windows validation;
+main was `f6df420181f21856cb421619e2c1310f6cf46685`, latest release v0.4.1.
+The retained close-out installed package is 0.5.0.dev0, wheel SHA-256
+`df9b041c8198213b9237078e39fe71ff18e7c6e55112c771ee7d516f88db2429`;
+all **88 installed runtime files equal the starting Git revision**. The older
+operations file points to an earlier GPU package with three differing accounting
+files; it was not mistaken for this newer package. Installed runtimes were not upgraded.
+
+| Component | Implemented | Live verified | Enabled | Published where at start | Remaining work |
+|---|---|---|---|---|---|
+| Durable LAB v0.5 and dock | Yes | Scoped prior lifecycle/backend evidence; owner confirms opening and some selections only | Project config active | Development branch / PR #1 | Full human controls acceptance |
+| Ollama advisory | Yes | Qwen27 prior runs and one advisory in this pass | Qualified project config; service initially stopped | Development branch / PR #1 | No general performance claim |
+| OpenHands implementation | Restricted SDK 1.53.0 | Qwen27 and Qwen35 fixture + UTC accepted; Gemma fixture accepted, UTC output-limited; 4B acceptance failed | Project-only approved categories; Docker engine initially stopped | Development branch / PR #1 | No new SDK execution claimed here |
+| Strata | Existing adapter, now hardened | No live model/API/SDK qualification | Disabled | Development branch / PR #1 | Explicit installation approval, loaded identity and stages A/B/C |
+| Main / release | v0.4.1 | Historical scope | Separate from development | Default branch / release | Human review and merge; no release authorized |
+
+### Implementation and evidence boundaries
+
+The existing `ChatProvider` now bounds metadata and SSE bytes, translates SDK
+text blocks, validates tool-result history, rejects images/unsupported streaming
+tools, pins non-thinking behavior, disables runtime MCP, checks output counters,
+and validates actual serving identity before and after each request. The existing
+host-only mailbox path is unchanged. `strata_identity.verify_binding` checks
+trusted complete artifact/config metadata against the listening server and child
+engine, exact arguments, template and loaded context. Model-name echoes never
+establish identity. Readiness errors distinguish unreachable, disabled, unloaded,
+unverified and incompatible states. No fallback or cloud inference was added.
+
+`companion provider-status` adds read-only diagnostics; configured Strata profiles
+appear in the existing model selector with explicit status and an unavailable
+reason. Only reviewed, loaded, verified choices are selectable. The same durable
+setting stores `strata::ALIAS`; explicit contracts keep backend/model separate.
+Existing Ollama selections, profiles, workflow budgets, recovery, cancellation,
+expiry, review/integration guards, protected tests and dock controls are retained.
+
+Current upstream source is pinned at
+`7695859aa13afb248bdb4d36f9b2e95707db079d`; release metadata is 0.1.43.
+Installed Qwen35 is `qwen3.6:35b`, parent
+`qwen3.6-source:35b-a3b-mtp-q4_K_M-20260824`, qwen35moe / Q4_K_M,
+35,505,251,456 parameters, 256 experts / 8 active. Current manifest identity is
+`a7eb95c53bcf96b4bdd008d0fab4a5dac88047d9c1a7a9ab88ed453423fbd87c`.
+The manifest references main weight SHA-256
+`d372de8e934898a59e6ccfabc3368474711384d8f1fd4d22d87a3f0a45400cdc`;
+its 21,718,480,960-byte file and GGUF v3 header were observed. The full weight
+was not rehashed or loaded during this pass. It is not a Flash-Next Coder binding.
+Ollama's nine-tag inventory was read without model replacement or cloud access.
+
+### Staged qualification
+
+| Stage | Actual result | Next gate |
+|---|---|---|
+| A: Strata readiness + bounded inference | **Blocked before inference**: no service/config/runtime or compatible assets in bounded inventory; disabled project setting confirmed by CLI | Approve the pinned installation package; verify actual headers/weights/engine and loading peaks |
+| B: LAB durable advisory through Strata | **Not run**, prerequisite A failed | One correlated bounded job after A |
+| C: LAB → restricted OpenHands → Strata → edits/tests → Codex | **Not run**, A/B failed | Disposable protected fixture, exact tool round trip, independent diff/test acceptance |
+| Strata cancel/failure | Deterministic transport cancellation closes the response; HTTP rejection/timeout certainty tested. Live unreachable endpoint observed. **No live generation cancellation claim** | Once A passes, qualify owned inference cancellation and retained uncertain reservation |
+| LAB → Ollama/Qwen27 advisory | Completed and independently reviewed **after Codex correction**; no local code patch | Contribution ledger records exact job/receipt, limits, timings and measured peaks |
+
+The one advisory used a separate durable store and the unchanged installed worker,
+with exact native Qwen27 context/GPU settings. Its [contribution record](LOCAL-CONTRIBUTIONS.md#strata-upgrade-advisory--2026-10-12)
+keeps model output and Codex correction separate. The adapter/security work was
+direct Codex work; a model cannot approve its own architecture or permissions.
+The broad benchmark pilots remain inactive and no token savings are claimed.
+
+### Validation and publication
+
+Focused provider/profile suite: **66 passed** (fixture-based, overlapping the full
+regression). Full regression, packaging, documentation/diagram validation and
+publication results are recorded in the final addendum below. The initial full
+run was retired after source review changes; it is not counted as a completed gate.
+
+The README now includes architecture and advisory/implementation sequence views;
+WORKFLOW retains its detailed sequence, lifecycle, trust, storage and accounting
+views and source map. The existing eleven-row manual ledger records two incomplete
+owner observations and nine untested rows, with **zero fully passed rows**. No
+widget, callback, fresh-install or performance gate was removed. The diagrams
+make no claim that Codex runs locally or that SQLite dispatches jobs.
+
+Private evidence is retained under the task's dated evidence directory:
+`local-inventory.json`, `installed-base-check.json`, `qwen35-weight-inventory.json`,
+`advisory-dispatch.json`, `advisory-result.json`, `advisory-review.json`, test logs,
+source/package hashes and diagram validation. Databases, private config, source
+inspection cache, raw model output and machine paths are excluded from publication.
+
+
+### Final validation addendum — 2026-10-12
+
+- Full Windows source regression: **614 passed, 1 skipped**, 883.45 seconds.
+  The skip remains conditional; it is not live Strata or complete human acceptance.
+- Offline-installed package: **114 passed**, overlapping the full suite. Wheel
+  inspection matched **89 runtime files**. Wheel/sdist built from the explicit
+  public allowlist; copied v0.4.1 usage/checkpoint survived the supported upgrade.
+  Existing dependencies were reused without downloading or replacing the controller.
+- Ruff and generated CLI/configuration checks pass. The source-reference check
+  inspected 46 Markdown files, 311 local links, 47 anchors and 43 code symbols.
+  Public-source audit inspected 232 files with no findings; no private config,
+  databases, raw job/session logs or weights are included.
+- Eight native Mermaid diagrams parse with the existing local Mermaid 11.12.2
+  renderer. All eight were visually inspected in the browser. The overview and
+  trust view were revised to remove cramped groups; retry labels were shortened.
+  The detailed six-participant sequence remains a deeper view suitable for zoom.
+  GitHub's actual renderer and exact remote CI are checked after pushing; their
+  outcome belongs to PR #1's current validation, not this pre-push snapshot.
+- The two owner observations remain incomplete and nine human rows untested.
+  Native widget control/persistence/error/cancellation acceptance was not performed
+  through the browser. Strata live stages A/B/C and live generation cancellation
+  remain blocked as recorded above.
+
+Publication target remains `codex/selective-local-execution` and draft PR #1.
+No main-branch update, merge, tag, release, general enablement or runtime upgrade
+is performed. Remote review/CI and the retained human merge gates still apply.
+
+
 Latest scoped result: [bounded MoE batch](OPENHANDS-STRONGER-QUALIFICATION.md#bounded-moe-configuration-batch--2026-10-10). Qwen35 independently completed fixture and UTC with full collection; Gemma passed a safe fixture but its UTC response exhausted output. Qwen27 remains preserved and was not rerun. Both pilots and general routing stay disabled. Earlier sections retain historical scope.
 
 Historical bounded qualification: [qwen3:4b-instruct outcome](OPENHANDS-BOUNDED-QUALIFICATION.md).

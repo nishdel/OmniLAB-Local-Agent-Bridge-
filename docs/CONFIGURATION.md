@@ -54,6 +54,7 @@ Existing LAB_MODEL/LAB_ENDPOINT/LAB_DATA_DIR and role overrides remain supported
 | `contract-integrate` | `--job`, `--candidate` |
 | `inventory` |  |
 | `select` | `model` |
+| `provider-status` | `--backend`, `--model` |
 | `create` |  |
 | `submit` | `--run`, `--request`, `--model`, `--execution`, `--no-deadline` |
 | `workflow-submit` | `--run`, `--request` |

@@ -58,17 +58,21 @@ async def submit(store, config, run_id, task_key, tool, objective, content, mode
         raise ValueError('Configured source_root must match the selected worktree')
     rows = await discover(config)
     selected = select_model(rows, model or store.setting('default_model') or config.adaptive.preferred_model or config.model)
-    if any(p['model']==selected['name'] and p['backend']=='ollama' for p in config.selective.get('model_profiles', [])):
+    selected_backend = selected.get('backend', 'ollama')
+    selected_name = selected.get('model', selected['name'])
+    if any(p['model']==selected_name and p['backend']==selected_backend for p in config.selective.get('model_profiles', [])):
         from .local_profile import resolve_contract
         from .selective import prepare
         from .task_store import TaskStore
         c = resolve_contract(config, dict(task_id=task_key, objective=objective, requirement_ref='Companion '+tool,
             acceptance={'advisory':'Answer the bounded request; supervisor independently reviews findings'},
-            repository=run['repository'],base_revision=run['base_revision'],context=content,model=selected['name'],
+            repository=run['repository'],base_revision=run['base_revision'],context=content,model=selected_name,backend=selected_backend,
             requested_lane='local_advisory',risk='low',ambiguity=False,supervisor_approved=True,
             coherent_scope=True,reversible=True,category='advisory'))
         requests = await prepare(config,[c])
         return TaskStore(store).submit_many(run_id,requests)[0]
+    if selected_backend != 'ollama':
+        raise ValueError('Strata selection requires a qualified selective profile')
     request = dict(tool=tool, objective=objective, content=content, selection=selected,
                    endpoint=config.endpoint, timeout_seconds=None if no_deadline else config.timeout_seconds,
                    max_input_chars=config.max_input_chars, max_output_tokens=config.max_output_tokens,

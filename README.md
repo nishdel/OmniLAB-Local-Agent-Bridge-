@@ -9,34 +9,87 @@ v0.4.1 functionality and existing v0.5 workflows remain supported. Start with th
 [complete workflow guide](docs/WORKFLOW.md), then the [quickstart](docs/QUICKSTART.md)
 or [qualified project operations](docs/SELECTIVE-SETUP.md#qwen27-project-workflow).
 
-## System overview
+<a id="system-overview"></a>
+## How it works
+
+You give Codex a task. Codex breaks off a small, clearly bounded piece and asks
+LAB to handle it on your computer. LAB checks the chosen model, allowed files,
+resource limits and instructions through the `companion_contract_submit` MCP
+entry point, then saves a job. Advice goes directly to the
+model. Implementation uses OpenHands to ask for permitted edits and tests in an
+isolated container. LAB brings the result and evidence back; Codex checks them
+before accepting any work. Codex supervision can use cloud services even when
+model inference and task files stay local.
 
 ```mermaid
 flowchart TD
-    U["User request"] --> C["[A] Codex supervision"]
-    C --> R["[A] LAB policy and routing"]
-    R -->|"codex_direct handoff"| C
-    R --> D[("[A] Companion SQLite<br/>jobs, results, review state")]
-    W["[A] Controller and serial worker"] <-->|"read, claim, update"| D
-    W --> H["[A] OpenHands SDK<br/>restricted task tools"]
-    H -->|"inference mailbox"| W
-    W -->|"advisory or relayed inference"| O["[A] Ollama backend"]
-    O --> Q["[A] Selected Qwen27 model"]
-    W -.->|"alternative backend only"| S["[D/U] Strata adapter<br/>runtime DISABLED and blocked"]
-    W --> E["[A] Evidence and protected checks"]
-    E --> C
-    C -->|"trusted review and finalization"| D
-    K["[A/U] Dock<br/>human checks pending"] <-->|"status and controls"| D
-    W --> A["[A] Usage receipts and accounting utility"]
-    C -.->|"explicit session metadata import"| A
+    C["Codex supervisor<br/>Cloud / local MCP client"]
+    M["LAB Python MCP<br/>Policy, context and budgets"]
+    W["LAB controller + worker<br/>Trusted host"]
+    DB[("SQLite<br/>Jobs, state, reviews")]
+    K["Companion dock"]
+    I["Host inference transport<br/>Exact identity and limits"]
+    subgraph Box["Networkless sandbox"]
+        H["OpenHands SDK + Relay"]
+        T["Permitted editor / tests"]
+        H <-->|"tool requests / results"| T
+    end
+    O["Ollama: qualified<br/>OR Strata: disabled"]
+    E["LAB artifacts + protected checks"]
+    V["Codex independent review"]
+    C -->|"bounded task via stdio"| M
+    M -->|"admitted job via durable store"| W
+    W <-->|"read, claim, update"| DB
+    K <-->|"Python API: status and controls"| DB
+    W <-->|"advisory or relayed model messages"| I
+    W <-->|"implementation files, mailbox and evidence"| H
+    I <-->|"model messages / text and tool calls"| O
+    W -->|"results and evidence"| E
+    E -->|"MCP result refs / file artifacts"| V
+    V -->|"hash-bound review via trusted LAB CLI"| DB
 ```
 
-**Legend:** `[A]` active and exercised; `[D]` implemented/configured but disabled;
-`[O]` optional or conditional; `[U]` untested or blocked. Dashed connections are
-conditional alternatives or explicit collection, not permission grants. SQLite
-stores records; the controller/worker reads and changes them. It does not dispatch
-work independently. See the guide for the exact [transport boundary](docs/WORKFLOW.md#trust-boundaries-and-data-movement)
-and [accounting limitations](docs/WORKFLOW.md#accounting-and-observability).
+**Backend status:** Ollama has scoped live-verified paths. Strata is implemented
+but disabled and unqualified; it cannot be selected for execution here. Only one
+inference backend is used for a job. The container is nonroot, has no host mounts, and exchanges JSON mailbox files
+through fixed trusted Docker transport. The host worker constructs and
+validates model requests; SQLite only persists records. Advisory jobs do not use
+OpenHands. The dock reads and changes the companion store through Python; a
+separate optional [usage collector and dashboard](docs/WORKFLOW.md#accounting-and-observability)
+read local/cloud usage metadata into `usage.sqlite3`. They do not dispatch jobs.
+The [source map](docs/WORKFLOW.md#source-map) identifies each component and its tests.
+
+```mermaid
+sequenceDiagram
+    participant C as Codex
+    participant L as LAB worker/store
+    participant H as OpenHands sandbox
+    participant P as Selected local backend
+    C->>L: MCP bounded contract, persist job
+    L->>L: Controller claims, check identity and limits
+    alt Advisory
+        L->>P: Bounded model messages
+        P-->>L: Advice and available usage
+    else Implementation
+        L->>H: Declared files and protected checks
+        H-->>L: Model messages through JSON mailbox
+        L->>P: Host-side inference request
+        P-->>L: Text or structured tool calls
+        L-->>H: Validated response through mailbox
+        H->>H: Permitted tools, results feed next bounded turn
+        H-->>L: Candidate edits and test evidence
+        L->>L: Collect and independently verify candidate
+    end
+    L-->>C: Result, artifacts, identity and review state
+    C->>L: Independent review and explicit acceptance decision
+```
+
+The sequence describes the implemented route, **not Strata live acceptance**.
+Ollama/Qwen27 and Qwen35 have specific accepted OpenHands cases; Strata stage A
+is blocked by missing runtime/assets, so stages B/C have not run. Errors and
+cancellation retain evidence and uncertain inference ownership. See the deeper
+[workflow, lifecycle and trust views](docs/WORKFLOW.md) and
+[current qualification](docs/SELECTIVE-IMPLEMENTATION-REPORT.md#strata-upgrade--2026-10-12).
 
 ## Current project deployment
 
@@ -49,7 +102,7 @@ are an example qualification, not a mandatory model for other users.
 OpenHands SDK/tools 1.53.0 is exercised through the restricted, networkless
 container/mailbox path. **No OpenHands web UI is installed.** The optional Strata
 adapter exists, but its runtime remains disabled and unqualified. No Strata
-service address is verified. Eleven human checks remain unperformed in the
+service address is verified. Full human acceptance remains outstanding in the
 [manual ledger](docs/release-testing/selective-execution-issue-draft.md).
 Operating token savings are **not established**.
 

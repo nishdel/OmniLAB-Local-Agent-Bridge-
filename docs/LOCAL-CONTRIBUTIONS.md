@@ -264,3 +264,29 @@ the run. This was advisory documentation work, not a fresh OpenHands runtime tes
 Codex performed architectural verification, accounting, publication safety and
 GitHub operations; those authority-sensitive tasks were not delegated.
 All usage is documentation/publication investment, not measured operating savings.
+
+
+## Strata upgrade advisory — 2026-10-12
+
+One bounded test-suggestion job used the unchanged close-out installation,
+source base `a9a4bad`, exact Ollama 0.40.2 / Qwen27 digest `aaee06c39dcf...`,
+65,536 context, 1,536 output ceiling, 28 GPU layers and draft 4. The existing
+LAB durable worker held its serial reservation in a separate data directory.
+Usage was **258 input / 318 output**, cached input unavailable; one inference,
+no retry. The original model answer is retained privately.
+
+**Accepted after Codex correction:** identity-change, unmatched-result, image
+and uncertain-disconnect suggestions matched the source and regression cases.
+The selector suggestion incorrectly implied every explicit Strata selection
+needs a prefix; contracts can use separate backend/model fields. Codex corrected
+that distinction, recorded hash-bound review coverage and finalized the run.
+No model-authored code patch was integrated. Architecture, identity/security
+implementation and final review were direct Codex work because those decisions
+are supervisor-owned. This advisory is not Strata or OpenHands qualification.
+
+Exact run/job/receipt IDs are retained in private `advisory-dispatch.json` and
+`advisory-review.json`, correlated by task key `strata-test-suggestions`. Model total 220.592 s,
+including 57.899 s loading; durable worker interval 225.162 s. Samples observed
+minimum available host RAM 7,723,597,824 bytes and peak total GPU use 10,277 MiB,
+within the unchanged ceilings. Reservation released; cached and cancelled usage
+are not invented. This is implementation overhead, with no savings comparison.

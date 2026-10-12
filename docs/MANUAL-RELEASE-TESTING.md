@@ -1,6 +1,12 @@
 # Manual release testing
 
-Test definitions live here; **execution results live only in the release-testing issue's single status table**. The checked-in issue-body draft is a starting document, not an execution ledger. Do not tick historical documentation checkboxes or add a second completion checklist.
+Test definitions live here. Published release acceptance uses the release-testing
+issue's single status table. For the owner's currently authorized, unpublished
+selective-execution session, use only the existing
+[eleven-row table](release-testing/selective-execution-issue-draft.md). Do not create
+another ledger or publish an issue. Transfer its observations to that single issue
+table if publication is later authorized. Historical drafts remain historical;
+do not tick their checkboxes or infer acceptance from preparation.
 
 Use disposable sample content and a test account/profile. Review screenshots and diagnostics before sharing; remove usernames, private filenames/paths, content, credentials, tokens and identifiers that grant access. Report public package names, hashes, OS/device details and synthetic labels only.
 
@@ -31,6 +37,84 @@ ID | Test | Expected result | Tested | Result | Issue registered | Tester / date
 Core tests are deliberately small. Conditional tests activate for the named changed feature, supported platform, installed hardware, or release risk. Missing a required environment means Blocked once assessed, not an automatic N/A. The owner records the applicability decision and reason. Unselected inherited requirements remain open; they are not waived by a core pass.
 
 ## Setup and launch (Windows owner handoff)
+
+### Current Qwen27 disposable display kit — 2026-10-10
+
+Start with the displayed-model/backend/usage row, **only its non-disruptive idle
+portion**. The owner-prepared private kit reuses installed dependencies and wheel
+SHA-256 `df9b041c8198213b9237078e39fe71ff18e7c6e55112c771ee7d516f88db2429`
+(`0.5.0.dev0`). All 88 runtime files match the installed package and committed
+source `a9a4bad6eaa2761d3a3648854f83664a94bc119d`. This retained close-out package
+is distinct from publication wheel
+`e74e640d402f4c0a558ccad2c805897707149d6ed4fdf3e0ecc9a6aef4bb4f41`;
+its older documentation metadata was not rebuilt for this session.
+The private kit's `identity.json` records configuration, dependency lock,
+definition and fixture hashes, interpreter path and empty run ID. It is
+preparation metadata, not another result ledger. No installation is needed.
+
+The exact existing tag is `qwen3.8:27b`, digest
+`aaee06c39dcf2437cde036998d960e1fc1494b8191be7cc9657d01e509097813`.
+Profile: Ollama 0.40.2, Q4_K_M, 28 GPU layers, MTP draft 4, context capacity
+65,536, maximum output 1,536 per response, temperature 0, thinking false,
+no truncation/context shift, keep-alive 120 seconds. See
+[accepted binding and operations](SELECTIVE-SETUP.md) for full weight/template
+identities, restricted OpenHands SDK 1.53.0 transport and resource limits.
+Inventory identity, quantization, version and template were rechecked through
+metadata requests only; loading/inference evidence is reused, not rerun.
+
+`manual-qwen27.toml` preserves the accepted selective model profile and safety
+limits. Isolation changes only `source_root` / `selective.project_root` to the
+synthetic Git fixture, `data_dir` to `manual-state`, `codex_home` to an empty
+directory, and disables `selective.enabled` / `selective.implementation_enabled`
+for preparation. Strata and pilots remain disabled. The queue is paused with
+one empty run, no jobs, controller, callback session or credentials. Active project
+configuration/routing remain unchanged; another repository is not activated.
+
+Do not copy 65,536/1,536 into legacy top-level `num_ctx` / `max_output_tokens`:
+those interfaces have different validation limits. Qualified values belong to
+`selective.model_profiles[].limits` and `.provider`. The historical GPT-OSS
+profile below is not a substitute.
+
+Open PowerShell in the supplied kit and run only:
+
+```powershell
+.\open-dock.ps1
+```
+
+This reviewed launcher verifies configuration/wheel hashes, refuses environment
+overrides, prints the prepared Ollama/Qwen binding, and invokes the existing
+interface with the exact installed interpreter/configuration from the manifest:
+
+```powershell
+& $Lab -I -B -m localagentbridge --config $KitConfig companion dock
+```
+
+Observe `qwen3.8:27b` in the selector; selecting that same list entry shows
+Q4_K_M metadata. The empty run correctly displays `unselected | ready`,
+`Local in unavailable / out unavailable`, zero queued/finished jobs and
+`queue paused`. The selector is the future default; the title describes jobs.
+No backend label or measured usage receipt exists in Details before a job.
+The launcher's configured-backend label is not proof of a dock backend display.
+
+Return the observed selector/status/usage and any error, with actual tester/date;
+a cropped, sanitized screenshot is optional. Wait for review before advancing.
+A successful idle observation alone is **Partially / Not tested** for the grouped
+row. Receipt display, persistence and C01/C02 criteria remain outstanding.
+Record supported failure/blocker evidence as Fail/Blocked instead.
+
+No start/submit command belongs to this first step. Later M03 execution needs a
+separately reviewed task/admission check using the qualified selective path in
+[operations](SELECTIVE-SETUP.md), not the historical submission below.
+Do not enable this display kit just to advance a checklist. Callback approval,
+genuinely clean Windows, owned isolation/recovery probes and predeclared
+resource/pilot criteria remain separate prerequisites. Close the kit with its
+tray's **Quit dock** when instructed; this does not control the project runtime.
+
+### Historical GPT-OSS setup and submission example
+
+The older profile/commands below are retained for historical candidates.
+**They are not the current Qwen27 test path.** Do not install or submit from
+this example during the prepared Qwen27 session.
 
 The owner supplies one **test kit** containing the exact wheel from the issue,
 matching requirements.lock.txt, examples/companion-task.json renamed task.json,
@@ -111,9 +195,13 @@ by the owner; never paste its local paths or raw metadata into a public issue.
 
 **Prerequisite:** Existing Ollama and model inventory; no download/delete permission implied.
 
-1. Open the model list; confirm the existing GPT-OSS preference and exact qwen3:14b-q4_K_M entry where installed.
-2. Select the existing GPT-OSS tag, choose Save default, and reopen the dock.
+1. Open the model list; confirm the candidate's exact model. For the current kit this is `qwen3.8:27b` (Q4_K_M), backed by its recorded full digest.
+2. When the persistence portion is reached, select that exact existing tag, choose Save default, and reopen only the test kit's dock.
 3. Check that the default persists only in this test data directory; record absent entries without substituting a similarly named model.
+
+Historical candidates used the GPT-OSS preference and, where installed,
+`qwen3:14b-q4_K_M`. Those names do not replace the current binding.
+The first idle-display observation alone does not complete these steps.
 
 **Expected:** Exact tags appear; selected default persists.
 
@@ -122,7 +210,7 @@ by the owner; never paste its local paths or raw metadata into a public issue.
 
 **Prerequisite:** Prepared synthetic task, disposable Git fixture with an existing HEAD, available selected model.
 
-1. Run the create/submit/controller commands above once; watch queued and local generation states.
+1. After candidate-specific preparation and execution gates are cleared, run its approved create/submit/controller sequence once; watch queued and local generation states. The historical GPT-OSS sequence is not valid for the current Qwen27 display-only kit.
 2. When local work ends, inspect status and the saved result/evidence.
 3. Confirm the review is pending/waiting_for_codex and the run is not automatically verified. Do not approve or finalize it just to obtain a green status.
 

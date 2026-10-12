@@ -15,6 +15,9 @@ def add_parser(commands):
     actions.add_parser('inventory',help='List installed models and advertised capabilities; no inference')
     select = actions.add_parser('select',help='Save an exact installed model default for future jobs')
     select.add_argument('model')
+    provider = actions.add_parser('provider-status',help='Inspect exact backend readiness and identity without inference')
+    provider.add_argument('--backend', choices=['ollama','strata'], required=True)
+    provider.add_argument('--model')
     actions.add_parser('create',help='Create a run for configured source_root at current Git HEAD')
     submit = actions.add_parser('submit',help='Durably submit a bounded task JSON; returns without inference')
     submit.add_argument('--run',required=True)
@@ -75,6 +78,9 @@ def run(args, config):
     if action.startswith('contract-'):
         from .selective_cli import run as selective_run
         result = selective_run(args, config, store)
+    elif action=='provider-status':
+        from .selection import provider_status
+        result = asyncio.run(provider_status(config,args.backend,args.model))
     elif action=='inventory':
         result = store.annotate_inventory(asyncio.run(discover(config)),config.endpoint)
     elif action=='select':

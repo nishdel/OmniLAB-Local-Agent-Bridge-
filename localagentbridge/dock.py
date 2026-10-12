@@ -212,8 +212,8 @@ class CompanionDock:
             size=selected.get('size')
             size=f'{size/2**30:.2f} GiB' if isinstance(size,(int,float)) else 'size unavailable'
             details=selected.get('details') or {}
-            self.message.set(f"{size}  |  {details.get('quantization_level','quantization unavailable')}  |  "
-                             f"{selected['validation']}  |  capabilities: {', '.join(selected.get('capabilities') or []) or 'unknown'}")
+            self.message.set(f"{selected.get('backend','ollama')}  |  {size}  |  {details.get('quantization_level','quantization unavailable')}  |  "
+                             f"{selected['validation']}  |  capabilities: {', '.join(selected.get('capabilities') or []) or 'unknown'}  |  {selected.get('reason') or ''}")
 
     def refresh(self):
         if self.closed:
@@ -232,7 +232,7 @@ class CompanionDock:
                     self.inventory_running=False
                     self.model_choice['values']=[r['name'] for r in value]
                     self.model_choice.set(self.store.setting('default_model') or self.config.adaptive.preferred_model or self.config.model)
-                    self.message.set(f'{len(value)} installed models. '+('Select a model; jobs revalidate inventory on submission.' if value else 'Install a suitable Ollama model first.'))
+                    self.message.set(f'{len(value)} model choices. '+('Select a qualified choice; jobs revalidate identity on submission.' if value else 'Install a suitable Ollama model first.'))
                 elif kind=='inventory_error':
                     self.inventory=[]
                     self.inventory_running=False

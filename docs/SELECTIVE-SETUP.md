@@ -94,29 +94,140 @@ accepted patches, model assets and history. Never reset or clean the checkout.
 
 ### Independent Strata status
 
-The inspected upstream remains
-[fb58e0dbc8399662c0e47c76578c6e878b14f6cf](https://github.com/Niko1221/Strata/tree/fb58e0dbc8399662c0e47c76578c6e878b14f6cf).
-[Models](https://github.com/Niko1221/Strata/blob/fb58e0dbc8399662c0e47c76578c6e878b14f6cf/docs/MODELS.md)
-supports Flash-Next variants, not the dense qualified Qwen27 combination.
-The bounded path/process/loopback checks found source/approval records, not an
-installed runtime or complete compatible weights. No installed commit, loaded
-weight identity, effective settings, tool round trip or safe fit is established.
-The proposed Coder package is a different model and needs its own qualification;
-no assets were downloaded or duplicated.
+As of **2026-10-12**, Strata is implemented but **disabled and not live-qualified**.
+Current upstream inspected: [7695859aa13afb248bdb4d36f9b2e95707db079d](https://github.com/Niko1221/Strata/tree/7695859aa13afb248bdb4d36f9b2e95707db079d),
+including `serve/server.py`, `serve/frontend.py`, `serve/runconfig.py`, setup,
+requirements, model/install guidance and cancellation/context/tool tests.
+Latest release metadata inspected: **0.1.43**. Earlier 0.1.41 evidence below
+remains historical, not proof of an installed runtime.
 
-Strata code is MIT; proposed Coder weights declare Apache-2.0. The standard
-CUDA 13 engine's driver requirement is not met by the recorded 560.94 driver;
-the documented CUDA 12 alternative remains unqualified. These facts do not
-authorize driver changes. See the retained setup detail below.
+The official [model guide](https://github.com/Niko1221/Strata/blob/7695859aa13afb248bdb4d36f9b2e95707db079d/docs/MODELS.md)
+limits this engine to Flash-Next variants. The locally installed
+`qwen3.6:35b` is GGUF **qwen35moe**, 35,505,251,456 parameters, Q4_K_M,
+256 experts / 8 active, with MTP. Its parent identifies the 35B-A3B model;
+manifest digest is `a7eb95c53bcf96b4bdd008d0fab4a5dac88047d9c1a7a9ab88ed453423fbd87c`.
+It is not the supported Flash-Next Coder asset. Neither this model nor dense
+Qwen27 may be silently reused as Strata weights. `/v1/models` lists aliases,
+and the completion `model` field can echo a request; neither proves loaded identity.
 
-The disabled example `http://127.0.0.1:8080` is a configuration example, **not an
-available service address**. There is no verified Strata start/stop command on
-this machine because no launchable installation was found. Before enabling it,
-trusted orchestration must verify installed architecture/assets/hash/template,
-effective runtime configuration, loopback-only sockets, and process/config binding.
-Keep lifecycle and Strata MCP/control tools outside model control. The adapter
-rejects aliases without a verified weight binding, unloaded services and broad
-listeners. Its blocker does not disable Ollama/OpenHands.
+No executable, complete compatible assets or serving config was found in the
+bounded known application/project/model locations. Loopback 8080/8081/8000
+checks found no Strata service. These are bounded observations, not a disk-wide
+absence claim; 8080 in the example is not a verified endpoint (upstream's direct
+server default is 8095). The RTX 3060 has 12,288 MiB VRAM, host RAM is
+34,139,435,008 bytes and NVIDIA driver is 560.94. Standard CUDA 13 requires
+580+; the CUDA 12 route remains experimental and untested here.
+
+#### Configuration, diagnostics and exact selection
+
+Use the existing `selective.providers.strata` table with an explicit loopback
+**origin** (no `/v1` suffix), `enabled`, optional `api_key_env`, `temperature`,
+and `enable_thinking` (default false). Authentication stays in the host process;
+no key enters the container. Existing Ollama settings remain unchanged.
+
+```text
+python -m localagentbridge --config LOCAL.toml companion provider-status --backend strata
+python -m localagentbridge --config LOCAL.toml companion provider-status --backend strata --model EXACT_ALIAS
+python -m localagentbridge --config LOCAL.toml companion inventory
+python -m localagentbridge --config LOCAL.toml companion select strata::EXACT_ALIAS
+```
+
+A configured Strata profile appears in the existing selector as
+`strata::EXACT_ALIAS`, including a diagnostic reason when disabled or unavailable.
+Only a loaded, identity-verified, reviewed qualified profile can be saved.
+`installed`, `compatible`, `qualified`, `enabled` and `selectable` are distinct
+status fields; unknown installation is null. These flags apply to the configured
+runtime binding, not all files on disk. No runnable profile is supplied by this
+repository. A disabled placeholder is never an executable choice.
+
+The saved key persists in the existing companion database. An explicit job
+`--model strata::EXACT_ALIAS` wins over it. A contract can instead specify
+`backend="strata"`, `model="EXACT_ALIAS"` and its exact identity. Qualification
+and scoped approvals still run through normal LAB admission. Models are never
+substituted; failed admission records a reason and returns control to Codex.
+
+#### Trusted serving binding
+
+The existing adapter now requires `binding.family="coder"`, `config_path`,
+`config_sha256`, `model_path`, `build_info`, exact server `process` and
+`engine_process` identities, `server_argv`, `engine_argv`, `source_commit`,
+`template_sha256`, `context_tokens`, `model_metadata` and `artifacts`.
+Process records use `process_control.identity`. Only the reviewed Coder
+`model_metadata` tuple is admitted: model `Qwen3.8-Flash-Next-GSQ-RCO-Coder`,
+format `GGUF` or `Strata pack`, quantization `IQ1_M`, expert_count 256.
+The supervisor must check actual model headers and the complete packing manifest;
+these labels alone are not compatibility evidence.
+
+Each artifact records path, size, mtime_ns, SHA-256, role and
+`verified_by_supervisor=true`. Include every weight shard/generated pack input,
+tokenizer/template and runtime source/dependency artifact; required roles are
+weights, engine, server, tokenizer and template. Independently hash the complete
+manifest before approving it. `identity` is `task_contract.digest` of
+`config_sha256`, `source_commit`, `template_sha256`, `model_metadata` and the
+ordered artifact entries restricted to path/size/sha256/role. It is local trusted
+configuration, not a signature or remote attestation. Changed size/mtime invalidates
+large weights; smaller runtime assets are rehashed with bounded buffers. A hostile
+host administrator can defeat filesystem metadata checks and is outside this boundary.
+
+Binding checks compare the actual listening process and child engine, exact argv,
+config, loaded path, template and context both before inference and before returning
+a response. Config must explicitly encode engine args (including effective options),
+use one slot and loopback only, with MCP/monitor/before-load/auto-load/vision/replicas
+and context fitting off. Runtime restart requires a freshly reviewed process binding.
+No runtime load, lifecycle, settings or tool-execution endpoint is called by LAB.
+
+SDK text blocks and structured calls/results use non-streaming Chat Completions;
+images and unmatched tool results fail. Text-only SSE is bounded even without a
+newline. Streaming tools are explicitly unsupported because the current SDK path
+does not require them. Token/context/output/attempt limits remain enforced, optional
+usage stays unavailable, and uncertain disconnects retain the inference reservation.
+A complete HTTP rejection before generation can release it; timeout/disconnect
+alone cannot. Tests exercise the transport with fixtures, not a real SDK/Strata loop.
+
+#### Concrete optional installation approval package
+
+**No approval granted and nothing installed by this upgrade.** The proposed
+single route avoids changing the working driver: isolated **Strata 0.1.43 CUDA 12**
+from the [official release](https://github.com/Niko1221/Strata/releases/tag/v0.1.43),
+server source at the commit above, and the pinned Coder assets below. This is an
+experimental compatibility attempt, not a claim that driver 560.94 or the current
+RAM reserve will pass loading.
+
+| Component | Exact source/version | Download bytes |
+|---|---|---:|
+| Windows x64 CUDA 12 engine | `strata-windows-x64-cuda12.zip`, 0.1.43; SHA-256 `344998f7b91af0b028e8e5241db39bbc5abd9c93a0a33d6dbc33108bb8a837fb` | 200,294,528 |
+| Strata source export | `7695859aa13afb248bdb4d36f9b2e95707db079d`, raw blobs | 48,247,685 |
+| Existing pinned helper source manifest | llama.cpp `3cf03257f219afbe7334045ff7c6a06ac68c627d`, raw blobs | 172,252,331 |
+| Coder two IQ1_M shards | [ISTA-DASLab pinned revision](https://huggingface.co/ISTA-DASLab/Qwen3.8-Flash-Next-GSQ-RCO-Coder-GGUF/tree/5348543e0147355ac9cbcb031184a3546350988e) | 58,408,584,928 |
+| MTP tensor inputs | [Qwen pinned revision](https://huggingface.co/Qwen/Qwen3.8-Flash-Next/tree/de4b8e4d43b917e7706784d8bb445c9af86a3540), existing 31-tensor manifest | 5,214,301,696 |
+| Pinned CPython 3.13 base/CUDA 12 wheels | Existing SHA-256 dependency manifest, official PyPI/NVIDIA wheels; no global Python changes | 620,622,204 |
+| **Total planned payload** | Excludes HTTP overhead; stop for approval if dependencies/assets change | **64,664,303,372** |
+
+The existing dependency manifest pins the upstream requirements plus CUDA 12
+libraries; retain it rather than resolving latest packages. Code is MIT; Coder
+weights declare Apache-2.0. Estimated retained disk is **90–95 GB**, preparation
+peak about **100 GB**; reserve **120 GiB on D:**. Generated pack sizes, expansion
+of the new engine archive and peak RAM remain unmeasured. Upstream estimates
+about 23.4 GB of Coder expert storage, with low-RAM mmap mode on a 32 GB / 12 GB
+machine. This is not proof that LAB's unchanged 6 GiB pre-admission, 2/3 GiB
+hard/sustained reserve and 11,776 MiB GPU ceiling fit model-loading peaks.
+
+Proposed placement: core launcher/engine under `%LOCALAPPDATA%/StrataLAB/0.1.43`
+on C:, with source, isolated venv/dependencies, models, cache, pack, logs and evidence
+under the dedicated `LocalAI/StrataLAB/0.1.43` directory on D:. No administrator privileges,
+PATH edits, drivers, services, firewall rules, web application or cloud inference.
+Do not run the one-click installer: even its check/setup route may bootstrap
+Python/dependencies and download models. Reuse approved Python and explicit
+pinned artifacts only. Initial context 16,384, output at most 1,536, one request,
+vision/MCP off; safe startup/identity first, then bounded advisory and SDK fixture.
+Stop when resource or compatibility gates fail; never raise them to get a pass.
+
+Rollback stops only the recorded owned process tree, disables Strata admission,
+and archives/removes only the newly created approved directories after resolving
+and checking their paths. Preserve all LAB/Ollama configuration, models, databases
+and qualification evidence. A driver upgrade is excluded and would need its own
+specific approval. Approving this package permits preparation and bounded
+qualification, not general enablement or a release.
 
 ## Retained preparation and historical protocol
 
@@ -194,7 +305,7 @@ That is 58,408,584,928 bytes of GGUF downloads. Pinned MTP tensor ranges add
 5,214,301,696 bytes. The complete standard-runtime/source/dependency payload is
 64,439,597,563 bytes; the experimental CUDA 12 alternative is 64,652,937,028 bytes.
 Preparation additionally materializes experts.bin and other packs. The current
-manifest estimates 90â€“95 GB retained, approximately 100 GB peak, and reserves
+manifest estimates 90–95 GB retained, approximately 100 GB peak, and reserves
 120 GiB; actual allocation requires approved preparation. These are storage
 estimates, not proof of RAM fit. No model payload was downloaded or locally
 hash-verified. See the blocker report for every pinned source/artifact and rollback.
@@ -215,17 +326,10 @@ and headroom together. The default example's zero-valued memory plan intentional
 fails admission. Actual fit, eGPU transfer behavior, stable tool calling and quality
 remain unmeasured. Desktop-GPU figures do not predict this Dell eGPU connection.
 
-For exact identity configure a trusted provider binding with family=coder,
-identity, config_path/config_sha256, model_path/build_info, process identity and
-artifact records. Each artifact records path, size, mtime_ns, SHA-256 and
-verified_by_supervisor after independently hashing the installed bytes. The
-identity is the canonical task_contract.digest of config_sha256 plus the artifact
-path/size/hash list. Record the server's process_control.identity(), verify its
-command names that configuration and that it owns the listening socket. LAB
-rechecks process identity, socket, config hash, metadata and artifact stat records
-at admission. It does not rehash tens of GB on every request. This binding trusts
-the operator-controlled serving installation; a restarted/reconfigured server
-requires a fresh binding. An echoed request name is never sufficient.
+The original binding format described in the 2026-10-08 report is superseded.
+Use the [current trusted serving binding](#trusted-serving-binding), including
+server/engine arguments, complete artifact roles, source/template hashes and
+model metadata. Old bindings do not establish the current exact identity.
 
 Existing manual compute controls remain effective. The initial Strata resource
 profile requires an explicit Maximum cap, plus the separate identity, context and

@@ -10,7 +10,20 @@ claimed. Use [manual definitions](../MANUAL-RELEASE-TESTING.md) and the
 Candidate: codex/selective-local-execution; accepted deployment checkpoint
 bec07f63bc8a0991576d7392353f1a541615eeeb plus the recorded close-out commits. Rechecked 2026-10-10: Windows 10 19045, 32 GB RAM,
 RTX 3060 12,288 MiB, driver 560.94; internal GTX reports Code 31.
-Human acceptance: Passed 0 / Failed 0 / Blocked 0 / Not tested 11 / N/A 0.
+Human acceptance: Passed 0 / Failed 0 / Blocked 0 / Incomplete 2 / Not tested 9 / N/A 0.
+
+Manual session prepared 2026-10-10 for runtime source
+`a9a4bad6eaa2761d3a3648854f83664a94bc119d`, retained wheel SHA-256
+`df9b041c8198213b9237078e39fe71ff18e7c6e55112c771ee7d516f88db2429`.
+All 88 runtime files match the installed package and that source. The private
+kit's `identity.json` records isolated configuration, fixture and definition
+hashes; no inference or human interaction occurred during preparation.
+Actual tester/date and observation evidence are pending. This existing table
+is the sole result location for the authorized unpublished session; issue
+publication remains unauthorized. Start with the
+[current Qwen27 idle-display procedure](../MANUAL-RELEASE-TESTING.md#current-qwen27-disposable-display-kit--2026-10-10).
+All eleven result rows and their full criteria remain unchanged.
+
 The current 27B configuration independently passed the frozen UTC repository task.
 The later bounded batch also accepted Qwen35 fixture and UTC; Gemma accepted
 its fixture but exhausted the UTC output allowance. No human acceptance row has passed. See
@@ -34,8 +47,8 @@ Net operating token savings are not established; partial cancelled usage is unkn
 
 | Test | Tested? | Result | Issue registered | Evidence/notes |
 |---|---|---|---|---|
-| Package identity, launch, upgrade and rollback (M01, C05) | No | Not tested | — | Final installed candidate checked locally; fresh Windows/human launch remains required. |
-| Displayed model/backend, usage and absence (M02, C01, C02) | No | Not tested | — | Confirm exact selected model/backend and measured versus unavailable usage against the job receipt. Keep missing values unknown. Strata disabled: Q-15. |
+| Package identity, launch, upgrade and rollback (M01, C05) | Partially (owner) | Incomplete | — | Owner confirmed the widget opens (reported 2026-10-12); package/upgrade/rollback criteria remain. Final installed candidate checked locally; fresh Windows/human launch remains required. |
+| Displayed model/backend, usage and absence (M02, C01, C02) | Partially (owner) | Incomplete | Q-21 (local) | Owner confirmed some options can be selected; exact identity, receipts and unavailable counters not observed. Confirm exact selected model/backend and measured versus unavailable usage against the job receipt. Keep missing values unknown. Strata disabled: Q-15. |
 | Explicit model override and restart persistence | No | Not tested | — | Select a default, submit an explicit override, then restart dock/controller after work resolves. Verify the override affects that job and the saved default persists; no silent substitution. |
 | Idle -> running -> awaiting review -> completed (M03) | No | Not tested | — | Observe all four dock states and elapsed time; completed requires trusted review/finalization. Hidden widget checks do not establish human acceptance. |
 | Keyboard, focus, DPI and readability (M04, M05) | No | Not tested | — | Human/native acceptance still required. |
@@ -233,3 +246,20 @@ patch preserved. Pilots/general routing inactive; human verification still pendi
 - Q-15 (current): Optional Strata has no runnable compatible installation/assets in the bounded inventory. The inspected Flash-Next upstream does not qualify dense Qwen27; separate weights/runtime/driver compatibility and safe admission remain unresolved. No large download, driver/network change or live Strata acceptance is claimed.
 
 - Q-20 (close-out): Usage identity bindings and missing/duplicate/conflict checks now pass. Historical generation-only baseline and shared hybrid supervision do not provide complete matched costs. No new comparison was run; net savings remain unknown. Mixed controller usage is retained explicitly. This local entry is not a published issue.
+
+
+## Strata upgrade retest scope — 2026-10-12
+
+Q-21 (local entry, not a published issue): Strata choices require an exact
+configured profile and binding; unavailable/unqualified choices show a reason
+and cannot be saved. Retest the existing model/backend row for `strata::ALIAS`,
+installed/compatible/qualified/enabled distinctions and identity mismatch errors.
+Use the existing persistence row to verify saved provider plus model after a
+restart and an explicit different per-job override. Retest progress/error/cancel
+rows against durable receipts. No Strata live runtime exists in this candidate's
+inventory; fixture tests do not pass these human checks. No existing criterion
+or conditional approval requirement is waived.
+
+The owner's limited observation above passes no complete row. Automated protocol,
+selector and cancellation results belong to the upgrade report. Graphical Mermaid
+inspection is tracked there separately from the eleven widget acceptance rows.

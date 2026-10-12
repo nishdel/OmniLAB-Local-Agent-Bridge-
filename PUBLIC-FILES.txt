@@ -197,6 +197,7 @@ localagentbridge/executor_assets/requirements.txt
 localagentbridge/executor_assets/runner.py
 localagentbridge/executor_assets/transport.py
 localagentbridge/inference.py
+localagentbridge/strata_identity.py
 localagentbridge/integration.py
 localagentbridge/measurements.py
 localagentbridge/ollama_advisory.py
@@ -212,6 +213,7 @@ scripts/prepare_selective_pilot.py
 tests/test_selective_contracts.py
 tests/test_selective_flows.py
 tests/test_selective_providers.py
+tests/test_strata_upgrade.py
 tests/test_selective_sandbox.py
 tests/test_selective_integration.py
 tests/test_selective_process.py

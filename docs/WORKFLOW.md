@@ -1,7 +1,7 @@
 # End-to-end supervised local workflow
 
 This guide describes the implementation checkpoint, including retained v0.4.1 and
-v0.5 interfaces. The [README overview](../README.md#system-overview) is the canonical
+v0.5 interfaces. The [README overview](../README.md#how-it-works) is the canonical
 system diagram. The diagrams below each explain a different view; arrows describe
 requests, observations or record updates, not grants of authority.
 
@@ -67,17 +67,17 @@ Output, attempts and repairs remain bounded; larger tasks are split.
 
 ```mermaid
 sequenceDiagram
-    participant C as Codex supervisor [A]
-    participant L as LAB host worker/store [A]
-    participant H as OpenHands SDK/Relay [A]
-    participant P as Ollama/Qwen27 [A]
-    participant T as Restricted task tools [A]
-    participant V as Protected verifier [A]
-    C->>L: Approved contract, context, base and acceptance
-    L->>L: Persist job, claim, reserve, verify identity/resources
+    participant C as Codex
+    participant L as LAB host
+    participant H as OpenHands
+    participant P as Ollama/Qwen27
+    participant T as Task tools
+    participant V as Verifier
+    C->>L: Contract, context and protected checks
+    L->>L: Persist, claim, verify identity/limits
     L->>H: Seed declared files in owned container
-    loop Bounded requests and repair cycles
-        H->>H: SDK POST to container loopback Relay
+    loop Bounded model/tool turns
+        H->>H: SDK POST to loopback Relay
         H-->>L: request.json read by trusted Docker transport
         L->>L: Persist inference intent, check limits
         L->>P: Host loopback inference request
@@ -87,12 +87,12 @@ sequenceDiagram
         H->>T: Contract-permitted action
         T-->>H: Bounded observation or rejection
     end
-    L->>H: Freeze and collect candidate, commands and evidence
-    L->>V: Independently run baseline and candidate checks
+    L->>H: Freeze and collect candidate/evidence
+    L->>V: Protected baseline/candidate checks
     V-->>L: Check receipts and candidate hash
     L-->>C: Evidence handoff, awaiting review
     alt Independently accepted
-        C->>L: Review with hash and coverage, explicit integration
+        C->>L: Hash-bound review and integration
         C->>L: Final validation and run finalization
     else Local correction within remaining budget
         C->>L: Linked correction job, retain original attempt
@@ -136,10 +136,10 @@ flowchart TD
     D -->|"delivered"| AD["events.state: awaiting_decision"]
     AD -->|"trusted decision"| V
     D -.->|"retryable failure"| RT["events.state: retry"]
-    RT -.->|"eligible retry"| D
-    D -.->|"delivery blocked / unknown"| U["blocked / uncertain"]
-    U -.->|"reconcile: not_delivered"| E
-    U -.->|"reconcile: delivered"| AD
+    RT -.->|"retry"| D
+    D -.->|"blocked / unknown"| U["blocked / uncertain"]
+    U -.->|"not delivered"| E
+    U -.->|"delivered"| AD
     V --> N["runs.state: validating"]
     N -->|"accepted jobs, checks, integration"| C["runs.state: completed"]
     N -->|"unsuccessful finalization"| Z["runs.state: blocked"]
@@ -186,39 +186,28 @@ reconciliation; see [recovery](RECOVERY.md) and [operations](SELECTIVE-SETUP.md)
 ## Trust boundaries and data movement
 
 ```mermaid
-flowchart TB
-    subgraph Cloud["Cloud supervision"]
-        C["[A] Codex: plan, inspect, accept"]
-    end
-    subgraph Host["Trusted local orchestration"]
-        L["[A] LAB worker and Docker transport"]
-        CFG["Private config and immutable source snapshot"]
-        E["Collected evidence and independent check receipts"]
-        CFG --> L
-        L --> E
-    end
-    subgraph Box["Restricted execution container: no network or host mounts"]
-        H["[A] OpenHands SDK + container-local Relay"]
-        T["[A] Permitted editor / exact test argv"]
-        W["Writable declared task files"]
-        P["Protected acceptance inputs and baselines"]
-        H -->|"proposed action"| T
-        T -->|"allowed writes"| W
+flowchart TD
+    C["[A] Codex supervisor<br/>Cloud services"]
+        CFG["Private config<br/>Immutable LAB runtime"]
+        L["[A] Trusted host LAB<br/>Fixed Docker transport"]
+        E["Evidence and independent<br/>verification receipts"]
+        CFG -->|"policy and pins"| L
+        L -->|"candidate and checks"| E
+    subgraph Box["Restricted container"]
+        H["[A] OpenHands SDK<br/>Container-local Relay"]
+        T["[A] Editor and exact test argv"]
+        W["Declared writable files"]
+        P["Protected tests and baselines"]
+        H <-->|"tool requests / observations"| T
+        T -->|"permitted writes"| W
         P -->|"read only"| T
-        T -->|"bounded observation"| H
     end
-    subgraph Inference["Local inference outside tool sandbox"]
-        O["[A] Host-loopback Ollama → Qwen27"]
-        S["[D/U] Alternative Strata runtime<br/>DISABLED / unqualified"]
-    end
-    C -->|"bounded approved contract"| L
-    E -->|"diff, tests, identity, usage"| C
-    L -->|"seed / collect; fixed Docker transport"| H
-    H -->|"mailbox request read by host"| L
-    L -->|"response written to mailbox"| H
-    L -->|"HTTP 127.0.0.1:11434"| O
-    O -->|"response and counters"| L
-    L -.->|"only after separate qualification"| S
+    O["[A] Host Ollama / Qwen27"]
+    S["[D/U] Alternative Strata<br/>Disabled and unqualified"]
+    C <-->|"bounded contract / review evidence"| L
+    L <-->|"files and JSON mailbox<br/>fixed Docker transport"| H
+    L <-->|"host loopback HTTP<br/>model messages / response"| O
+    L -.->|"requires separate qualification"| S
 ```
 
 The SDK posts to `http://127.0.0.1:8765/v1/chat/completions` **inside the
@@ -390,6 +379,10 @@ two error-recovery cycles, two supervisor-authorized attempts, zero transport
 retries, 15-second test commands, 16 KiB outputs and a 30-minute attempt ceiling.
 These are ceilings, not claims of actual usage.
 
+Current Strata protocol/selection changes and current upstream inspection are recorded in
+[the upgrade report](SELECTIVE-IMPLEMENTATION-REPORT.md#strata-upgrade--2026-10-12).
+The following 2026-10-10 profile remains historical.
+
 Strata has an implemented adapter but **no qualified runnable installation or
 compatible loaded weights** in the bounded inventory. The inspected upstream
 commit `fb58e0dbc8399662c0e47c76578c6e878b14f6cf` targets Flash-Next variants;
@@ -431,13 +424,13 @@ check is evidence; publication does not execute rollback or restart services.
 
 The close-out's clean source validation recorded **591 passed / 1 skipped**.
 Its **180 extracted-wheel checks overlap** that suite and are not added to it.
-The runtime/test source identity is unchanged by this documentation pass, so
-those runtime results are reused, not claimed as a fresh full regression.
-Current documentation/link/diagram/lint/source-audit results belong to the
-publication addendum in [qualification](OPENHANDS-STRONGER-QUALIFICATION.md).
+Those are historical close-out results. The 2026-10-12 Strata adapter pass
+changes runtime source and has a fresh regression: **614 passed / 1 skipped**.
+See the [current implementation report](SELECTIVE-IMPLEMENTATION-REPORT.md#strata-upgrade--2026-10-12)
+for package, diagram and publication checks.
 
 The [manual ledger](release-testing/selective-execution-issue-draft.md) has exactly
-**11 human rows**, all still untested: package/launch/rollback; model/backend/usage;
+**11 human rows**, none fully accepted (the owner confirmed launch and some selections only): package/launch/rollback; model/backend/usage;
 override persistence; idle → running → awaiting review → completed; keyboard/focus/
 DPI; hide/reopen/cancel; retained workflow controls; conditional managed callbacks;
 OpenHands isolation/tool round trip; stale/forged acceptance and recovery;
@@ -447,23 +440,33 @@ does not mark those human checks passed. Preserve its
 
 ## Source map
 
+The README's host inference adapter executes inside `selective.execute` /
+`implementation`, not a separate inference service. `DockerSandbox.read/respond`
+performs fixed host-side transport; the SDK's `Relay` uses container loopback
+only. The trusted review arrow is CLI `TaskStore.review`, never an MCP/model
+acceptance tool. `CompanionDock.refresh_models` separately reads backend metadata;
+`select_default` stores the exact future choice, while `pause/cancel` update
+control state. The older telemetry widget reads `telemetry.Store` through
+`dashboard_state.snapshot`; it is separate from the job dock.
+
+
 Each link identifies implementation, not authority for a local agent. Tests are
 automated unless the linked qualification/ledger explicitly says otherwise.
 
-| Component | Responsibility | Source file/symbol | Test/evidence |
+| Diagram component | Responsibility | Actual module/function | Validation evidence |
 |---|---|---|---|
-| Entry points | MCP registration; CLI parsing and dispatch | [server.py](../localagentbridge/server.py) `create_server`; [companion_cli.py](../localagentbridge/companion_cli.py) `add_parser/run`; [selective_cli.py](../localagentbridge/selective_cli.py) `add/run` | [MCP](../tests/test_selective_mcp.py), [CLI workflows](../tests/test_companion_workflow_cli.py) |
+| Entry points | MCP registration; CLI parsing and dispatch | [server.py](../localagentbridge/server.py) `create_server/companion_contract_submit/companion_contract_status`; [companion_cli.py](../localagentbridge/companion_cli.py) `add_parser/run`; [selective_cli.py](../localagentbridge/selective_cli.py) `add/run` | [MCP](../tests/test_selective_mcp.py), [CLI workflows](../tests/test_companion_workflow_cli.py) |
 | Context and policy | Contract validation, skill constraints, lane selection | [task_contract.py](../localagentbridge/task_contract.py) `Contract/selected_skills/route`; [catalog.py](../localagentbridge/catalog.py) | [Contracts](../tests/test_selective_contracts.py) |
 | Exact defaults/overrides | Project/backend/model profile resolution | [local_profile.py](../localagentbridge/local_profile.py) `resolve_contract`; [config.py](../localagentbridge/config.py) `load_config` | [Profile tests](../tests/test_local_profile.py) |
 | Retained workflows | Roles, budgets, checkpoints and restart receipts | [workflow_store.py](../localagentbridge/workflow_store.py) `WorkflowStore`; [workflow_recovery.py](../localagentbridge/workflow_recovery.py); [companion_workflows.py](../localagentbridge/companion_workflows.py) | [Workflow preservation](../tests/test_companion_workflows.py), [feature matrix](FEATURE-PRESERVATION.md) |
-| Durable scheduling | Locks, controller/worker, queue, results and outbox | [companion.py](../localagentbridge/companion.py) `serve`; [companion_store.py](../localagentbridge/companion_store.py) `CompanionStore` | [Companion](../tests/test_companion.py), [process recovery](../tests/test_companion_recovery.py) |
+| Durable scheduling | Locks, controller/worker, queue, results and outbox | [companion.py](../localagentbridge/companion.py) `serve/ensure_worker/worker`; [companion_store.py](../localagentbridge/companion_store.py) `CompanionStore` | [Companion](../tests/test_companion.py), [process recovery](../tests/test_companion_recovery.py) |
 | Selective state/ownership | Review guards, axes, reservation and audit | [task_store.py](../localagentbridge/task_store.py) `TaskStore/review_guard`; [process_control.py](../localagentbridge/process_control.py) | [Process tests](../tests/test_selective_process.py), [flows](../tests/test_selective_flows.py) |
 | Admission/execution | Context construction, provider checks, bounded implementation and recovery | [selective.py](../localagentbridge/selective.py) `prepare/execute/implementation`; [selective_resources.py](../localagentbridge/selective_resources.py) | [Flows](../tests/test_selective_flows.py), [bounded tests](../tests/test_selective_bounded.py) |
-| Inference and identity | Ollama/Strata requests, loaded identity/settings validation | [inference.py](../localagentbridge/inference.py) `ChatProvider`; [runtime_profile.py](../localagentbridge/runtime_profile.py) | [Providers](../tests/test_selective_providers.py), [live qualification](OPENHANDS-STRONGER-QUALIFICATION.md) |
+| Inference and identity | Ollama/Strata requests, loaded identity/settings validation | [inference.py](../localagentbridge/inference.py) `ChatProvider.inspect/chat`; [strata_identity.py](../localagentbridge/strata_identity.py) `verify_binding`; [runtime_profile.py](../localagentbridge/runtime_profile.py) | [Providers](../tests/test_selective_providers.py), [Strata fixtures](../tests/test_strata_upgrade.py), [live qualification](OPENHANDS-STRONGER-QUALIFICATION.md) |
 | Sandbox and transport | Owned containers, SDK mailbox, path/tool bounds | [sandbox.py](../localagentbridge/sandbox.py) `DockerSandbox`; [runner.py](../localagentbridge/executor_assets/runner.py) `Relay`; [transport.py](../localagentbridge/executor_assets/transport.py); [bounded.py](../localagentbridge/executor_assets/bounded.py) | [Sandbox](../tests/test_selective_sandbox.py), [bounded qualification](OPENHANDS-BOUNDED-QUALIFICATION.md) |
 | Independent integration | Protected verification, base/dependency checks, guarded writes | [integration.py](../localagentbridge/integration.py) `integrate` | [Integration](../tests/test_selective_integration.py), [acceptance](../tests/test_companion_acceptance.py) |
 | Local/cloud accounting | Receipt persistence, cumulative import, attribution and reporting | [measurements.py](../localagentbridge/measurements.py) `local_usage`; [codex_usage.py](../localagentbridge/codex_usage.py) `RolloutReader`; [usage_report.py](../localagentbridge/usage_report.py) `bind_usage/investment/operating_savings` | [Attribution tests](../tests/test_usage_report.py), [usage tests](../tests/test_v2_usage.py) |
-| Dock | Store snapshots, derived status, counters and user controls | [dock.py](../localagentbridge/dock.py) `presentation/job_usage/CompanionDock` | [Companion tests](../tests/test_companion.py), [unperformed human checks](release-testing/selective-execution-issue-draft.md) |
+| Dock | Store snapshots, provider/model choices, derived status, counters and user controls | [dock.py](../localagentbridge/dock.py) `presentation/job_usage/CompanionDock` | [Companion tests](../tests/test_companion.py), [incomplete human checks](release-testing/selective-execution-issue-draft.md) |
 
 See [architecture](ARCHITECTURE.md) for retained MCP/adaptive internals,
 [safety](../SECURITY.md), [troubleshooting](TROUBLESHOOTING.md),

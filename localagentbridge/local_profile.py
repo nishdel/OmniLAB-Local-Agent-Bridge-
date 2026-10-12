@@ -10,7 +10,18 @@ def resolve_contract(config, value, selected_model=None):
     root = policy.get('project_root')
     if root and Path(raw['repository']).resolve() != Path(root).resolve():
         raise ValueError('Personal local profile is scoped to its configured project')
+    from .selection import selection_pair
     explicit_model = raw.get('model')
+    if explicit_model and explicit_model.startswith('strata::'):
+        if raw.get('backend', 'strata') != 'strata':
+            raise ValueError('Explicit model and backend conflict')
+        raw['backend'], raw['model'] = selection_pair(explicit_model)
+    if not explicit_model and selected_model:
+        selected_backend, selected_name = selection_pair(selected_model)
+        if 'backend' not in raw:
+            raw['backend'], raw['model'] = selected_backend, selected_name
+            explicit_model = selected_name
+
     raw.setdefault('backend', defaults.get('backend', 'ollama'))
     if not explicit_model:
         if raw['backend'] != defaults.get('backend','ollama'):

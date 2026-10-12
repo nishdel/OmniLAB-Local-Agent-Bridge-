@@ -108,6 +108,8 @@ class ChatProvider:
         self.backend, self.settings, self.transport = backend, settings, transport
         if not settings.get('enabled', backend == 'ollama'):
             raise ProviderError('Provider is disabled')
+        if not settings.get('endpoint'):
+            raise ProviderError('Configure an explicit loopback provider endpoint')
         self.origin = local_origin(settings['endpoint'])
 
     def client(self, deadline=15):
@@ -156,97 +158,111 @@ class ChatProvider:
                             identity_verified=bool(row.get('digest')), context_tokens=max(lengths, default=0),
                             tools_advertised='tools' in caps, cancellation='disconnect_unconfirmed',
                             protocol='chat_completions', usage='optional', model=model, backend=self.backend)
-            health = await client.get(self.origin + '/health')
-            health.raise_for_status()
-            health = health.json()
+            health = await self.metadata(client, '/health')
             if not isinstance(health, dict) or health.get('service') != 'strata':
                 raise ProviderError('Not the supported Strata health protocol')
-            listing = await client.get(self.origin + '/v1/models')
-            listing.raise_for_status()
-            inventory = listing.json()
+            inventory = await self.metadata(client, '/v1/models')
             rows = inventory.get('data') if isinstance(inventory, dict) else None
             if not isinstance(rows, list) or not all(isinstance(r, dict) for r in rows):
                 raise ProviderError('Malformed Strata inventory')
             row = next((r for r in rows if r.get('id') == model), None)
             if not row:
                 raise ProviderError('Requested Strata model/alias is not listed; no substitution')
-            props = await client.get(self.origin + '/props')
-            props.raise_for_status()
-            props = props.json()
-            if not isinstance(props, dict) or not isinstance(props.get('chat_template_caps', {}), dict):
+            props = await self.metadata(client, '/props')
+            if (not isinstance(props, dict) or not isinstance(props.get('chat_template_caps', {}), dict)
+                    or not isinstance(props.get('chat_template', ''), str)
+                    or not isinstance(props.get('default_generation_settings', {}), dict)
+                    or type(props.get('chat_template_caps', {}).get('supports_tool_calls', False)) is not bool):
                 raise ProviderError('Malformed Strata serving metadata')
             binding = self.settings.get('binding', {})
             verified = self.verify_binding(binding, health, props)
             ctx = health.get('max_context')
             if type(ctx) is not int or ctx < 1:
                 raise ProviderError('Strata context capacity unavailable')
-            return dict(ready=health.get('loaded') is True, identity=binding.get('identity') if verified else None,
+            return dict(ready=health.get('loaded') is True, reason=None if health.get('loaded') is True else 'Strata weights are not loaded; explicit approved startup is required', identity=binding.get('identity') if verified else None,
                         identity_verified=verified, identity_uncertainty=None if verified else 'Names/aliases do not identify weights; verified local serving binding required',
                         context_tokens=ctx, tools_advertised=bool(props.get('chat_template_caps', {}).get('supports_tool_calls')),
                         cancellation='disconnect_unconfirmed', protocol='chat_completions',
-                        usage='optional', model=model, backend=self.backend, serving_model=health.get('model'))
+                        usage='optional', model=model, backend=self.backend, serving_model=health.get('model'),
+                        build_info=props.get('build_info'), template_sha256=hashlib.sha256(props.get('chat_template', '').encode()).hexdigest(),
+                        tools_qualified=False, streaming='advisory_text_only',
+                        effective_context_tokens=props.get('default_generation_settings', {}).get('n_ctx'))
 
     def verify_binding(self, binding, health, props):
-        # Operator-provided binding is trusted controller configuration, never a request/model field.
-        # Hash config/artifacts and compare the observed model path/build on every admission.
-        if not binding or binding.get('family') != 'coder':
-            return False
-        required = ('identity', 'config_path', 'config_sha256', 'model_path', 'build_info', 'artifacts', 'process')
-        if any(not binding.get(k) for k in required):
-            return False
-        if props.get('model_path') != binding['model_path'] or props.get('build_info') != binding['build_info']:
-            return False
-        from .process_control import alive
-        import psutil
-        process = binding['process']
-        if not alive(process):
-            return False
-        running = psutil.Process(process['pid'])
-        config_path = str(Path(binding['config_path']).resolve())
-        if config_path not in [str(Path(arg).resolve()) for arg in running.cmdline() if arg.endswith('.json')]:
-            return False
-        listeners = [c for c in running.net_connections(kind='tcp') if c.status == psutil.CONN_LISTEN
-                     and c.laddr.port == urlsplit(self.origin).port]
-        if not listeners or any(not ipaddress.ip_address(c.laddr.ip).is_loopback for c in listeners):
-            return False
-        config_bytes = Path(binding['config_path']).read_bytes()
-        if hashlib.sha256(config_bytes).hexdigest() != binding['config_sha256']:
-            return False
-        cfg = json.loads(config_bytes)
-        host = str(cfg.get('host', '127.0.0.1'))
-        if ':' in host and not host.startswith('['):
-            host = '['+host+']'
-        local_origin('http://' + host + ':' + str(urlsplit(self.origin).port))
-        args = cfg.get('args', [])
-        if (cfg.get('model_name') != health.get('model') or cfg.get('mcp_servers') or
-                cfg.get('mcp') or cfg.get('api_monitor') or binding['model_path'] not in args):
-            return False
-        # Artifact hashes must have been independently checked by the operator, not inferred
-        # from response model names. Recheck on-disk sizes/mtime against that signed-off record.
-        for artifact in binding['artifacts']:
-            path = Path(artifact['path'])
-            stat = path.stat()
-            if stat.st_size != artifact['size'] or stat.st_mtime_ns != artifact['mtime_ns']:
-                return False
-            if not artifact.get('sha256') or not artifact.get('verified_by_supervisor'):
-                return False
-        from .task_contract import digest
-        expected = digest({'config_sha256': binding['config_sha256'],
-                           'artifacts': [{k: a[k] for k in ('path', 'size', 'sha256')} for a in binding['artifacts']]})
-        return binding['identity'] == expected
+        from .strata_identity import verify_binding
+        return verify_binding(binding, health, props, self.origin)
+
+    async def list_models(self):
+        if self.backend != 'strata':
+            raise ProviderError('Use Ollama installed inventory for this backend')
+        async with self.client() as client:
+            value = await self.metadata(client, '/v1/models')
+        rows = value.get('data')
+        if not isinstance(rows, list) or not all(isinstance(r, dict) and isinstance(r.get('id'), str)
+                and 0 < len(r['id']) <= 160 for r in rows):
+            raise ProviderError('Malformed Strata inventory')
+        names = [r['id'] for r in rows]
+        if len(set(names)) != len(names):
+            raise ProviderError('Duplicate Strata aliases')
+        return names
+
+    async def metadata(self, client, path):
+        try:
+            async with client.stream('GET', self.origin + path) as response:
+                response.raise_for_status()
+                raw = bytearray()
+                async for chunk in response.aiter_bytes():
+                    raw.extend(chunk)
+                    if len(raw) > 1024 * 1024:
+                        raise ProviderError('Strata metadata exceeds 1 MiB')
+            value = json.loads(raw)
+            if not isinstance(value, dict):
+                raise ValueError()
+            return value
+        except httpx.ConnectError as error:
+            raise ProviderError('Strata is unreachable at ' + self.origin +
+                '; start the approved runtime with complete compatible weights; no fallback used') from error
+        except httpx.HTTPStatusError as error:
+            status = error.response.status_code
+            hint = {401: 'check api_key_env', 403: 'check local access policy',
+                    404: 'unsupported serving API', 503: 'engine unavailable or not ready'}.get(status, 'inspect the owned service')
+            raise ProviderError(f'Strata metadata HTTP {status}: {hint}') from error
+        except (ValueError, UnicodeError) as error:
+            if isinstance(error, ProviderError):
+                raise
+            raise ProviderError('Malformed Strata metadata JSON') from error
 
     async def chat(self, model, messages, limits, *, tools=(), stream=False):
         for attempt in range(limits.transport_retries + 1):
+            self.request_dispatched = False
             try:
-                return await self._chat(model, messages, limits, tools=tools, stream=stream)
-            except httpx.ConnectError:
+                async with asyncio.timeout(limits.inference_deadline_seconds or limits.attempt_seconds):
+                    return await self._chat(model, messages, limits, tools=tools, stream=stream)
+            except httpx.ConnectError as error:
+                error.termination_confirmed = True  # Connection never established.
                 if attempt >= limits.transport_retries:
                     raise
                 await asyncio.sleep(.1)
+            except (ProviderError, httpx.HTTPError, TimeoutError) as error:
+                if not self.request_dispatched:
+                    error.termination_confirmed = True
+                raise
         raise ProviderError('Transport retry budget exhausted')
 
     async def _chat(self, model, messages, limits, *, tools=(), stream=False):
         self.last_usage = None
+        strata_before = None
+        if self.backend == 'strata':
+            strata_before = await self.inspect(model)
+            if not strata_before['ready'] or not strata_before['identity_verified']:
+                error = ProviderError(strata_before.get('reason') or strata_before.get('identity_uncertainty') or 'Strata serving identity is unverified')
+                error.termination_confirmed = True
+                raise error
+            if limits.context_tokens > strata_before['context_tokens']:
+                raise ProviderError('Strata loaded context is smaller than the contract')
+            if tools and not strata_before['tools_advertised']:
+                raise ProviderError('Strata template does not support tool calls')
+            messages = strata_messages(messages)
         if self.backend == 'ollama':
             messages = json.loads(json.dumps(messages))
             for message in messages:
@@ -259,6 +275,9 @@ class ChatProvider:
                        stream=stream, temperature=self.settings.get('temperature', 0))
         if self.settings.get('reasoning_effort') is not None:
             payload['reasoning_effort'] = self.settings['reasoning_effort']
+        if self.backend == 'strata':
+            payload['chat_template_kwargs'] = {'enable_thinking': self.settings.get('enable_thinking', False)}
+            payload['strata_mcp'] = False
         if tools:
             payload['tools'] = list(tools)
             payload['tool_choice'] = 'auto'
@@ -317,14 +336,18 @@ class ChatProvider:
             raise error
         async with self.client(limits.inference_deadline_seconds) as client:
             if not stream:
+                self.request_dispatched = True
                 async with client.stream('POST', self.origin + ('/api/chat' if native else '/v1/chat/completions'), json=payload) as response:
-                    if native and response.is_error:
+                    if (native or self.backend == 'strata') and response.is_error:
                         detail = bytearray()
                         async for chunk in response.aiter_bytes():
                             detail.extend(chunk[:4096-len(detail)])
                             if len(detail) >= 4096:
                                 break
-                        error = ProviderError('Provider HTTP ' + str(response.status_code) + ': ' + detail.decode(errors='replace'))
+                        error = ProviderError('Provider HTTP ' + str(response.status_code) + ': ' +
+                            ({400:'invalid request/context overflow',404:'missing model or API',409:'model busy',
+                              413:'request too large',422:'unsupported request',503:'engine unavailable; inspect weights and owned service'}
+                             .get(response.status_code,'request rejected') if self.backend == 'strata' else detail.decode(errors='replace')))
                         error.termination_confirmed = response.status_code in (400, 404, 413, 422)
                         raise error
                     response.raise_for_status()
@@ -342,9 +365,10 @@ class ChatProvider:
                 if tools:
                     raise ProviderError('Streaming tool calls are not qualified; use non-streaming')
                 parts, reasoning, finish, usage, count, done = [], [], None, None, 0, False
+                self.request_dispatched = True
                 async with client.stream('POST', self.origin + '/v1/chat/completions', json=payload) as response:
                     response.raise_for_status()
-                    async for line in response.aiter_lines():
+                    async for line in bounded_sse_lines(response, limits.output_bytes):
                         count += len(line.encode())
                         if count > limits.output_bytes:
                             raise ProviderError('Output byte budget exceeded')
@@ -388,6 +412,8 @@ class ChatProvider:
                     'reasoning_content': ''.join(reasoning)}, 'finish_reason': finish}], 'usage': usage}
         if isinstance(result, dict):
             u = result if native else result.get('usage') or {}
+            if not isinstance(u, dict):
+                raise ProviderError('Malformed usage counters')
             self.last_usage = {'input_tokens':counter(u.get('prompt_eval_count' if native else 'prompt_tokens')),
                                'output_tokens':counter(u.get('eval_count' if native else 'completion_tokens')),
                                'cached_input_tokens':None}
@@ -415,6 +441,19 @@ class ChatProvider:
             answer = validate_completion(result, tools=tools, max_bytes=limits.output_bytes)
             answer['context_accounting'] = accounting | {'actual_input_tokens': answer['usage']['input_tokens']}
             answer['provider_timing_ns'] = provider_timing
+            if answer['usage']['output_tokens'] is not None and answer['usage']['output_tokens'] > limits.output_tokens:
+                raise ProviderError('Provider exceeded response output limit')
+            if strata_before is not None:
+                after = await self.inspect(model)
+                if not after['ready'] or not after['identity_verified'] or any(after.get(k) != strata_before.get(k)
+                        for k in ('identity', 'context_tokens', 'template_sha256', 'build_info', 'serving_model')):
+                    raise ProviderError('Strata loaded runtime changed during inference; response withheld')
+                answer['loaded_context_tokens'] = after['context_tokens']
+                answer['effective_runtime'] = {k: after[k] for k in
+                    ('backend','model','serving_model','identity','build_info','template_sha256','context_tokens')}
+                answer['effective_runtime']['request_settings'] = {k: payload[k] for k in
+                    ('max_tokens','temperature','chat_template_kwargs','strata_mcp','stream')}
+
             if self.backend == 'ollama' and self.settings.get('verify_loaded_context'):
                 # Inspect after the completed inference, before forwarding any tool
                 # call to the SDK. Advertised maximum context is not loaded context.
@@ -450,3 +489,76 @@ class ChatProvider:
         except ProviderError as error:
             error.termination_confirmed = True  # Complete HTTP response, including length stop.
             raise
+
+
+async def bounded_sse_lines(response, maximum):
+    """Bound bytes before buffering a potentially unterminated SSE line."""
+    pending = bytearray()
+    total = 0
+    async for chunk in response.aiter_bytes():
+        total += len(chunk)
+        if total > maximum:
+            raise ProviderError('Output byte budget exceeded')
+        pending.extend(chunk)
+        while b'\n' in pending:
+            line, _, rest = pending.partition(b'\n')
+            pending = bytearray(rest)
+            try:
+                yield line.rstrip(b'\r').decode('utf-8')
+            except UnicodeError as error:
+                raise ProviderError('Invalid UTF-8 completion stream') from error
+    if pending:
+        try:
+            yield pending.decode('utf-8')
+        except UnicodeError as error:
+            raise ProviderError('Invalid UTF-8 completion stream') from error
+
+
+def strata_messages(messages):
+    """SDK text-only Chat Completions history. No images, files or runtime tools."""
+    value = json.loads(json.dumps(messages))
+    pending = set()
+    if not isinstance(value, list) or not value:
+        raise ProviderError('Strata requires a nonempty message list')
+    for message in value:
+        if not isinstance(message, dict):
+            raise ProviderError('Invalid Strata message')
+        role = message.get('role')
+        if role not in ('system', 'user', 'assistant', 'tool'):
+            raise ProviderError('Unsupported Strata message role')
+        content = message.get('content')
+        if isinstance(content, list):
+            if any(not isinstance(p, dict) or p.get('type') != 'text' or not isinstance(p.get('text'), str) for p in content):
+                raise ProviderError('Only SDK text content blocks are supported for Strata')
+            message['content'] = '\n'.join(p['text'] for p in content)
+        elif content is not None and not isinstance(content, str):
+            raise ProviderError('Invalid Strata message content')
+        if role == 'tool':
+            key = message.get('tool_call_id')
+            if key not in pending:
+                raise ProviderError('Unmatched or duplicate tool result')
+            pending.remove(key)
+        else:
+            if pending:
+                raise ProviderError('Missing tool result before the next model turn')
+            calls = message.get('tool_calls') or []
+            if calls and role != 'assistant':
+                raise ProviderError('Tool calls require an assistant message')
+            if not isinstance(calls, list):
+                raise ProviderError('Invalid tool call history')
+            for call in calls:
+                if not isinstance(call, dict) or not isinstance(call.get('function'), dict):
+                    raise ProviderError('Invalid tool call history')
+                key = call.get('id')
+                fn = call.get('function', {})
+                if not isinstance(key, str) or not key or key in pending or call.get('type') != 'function':
+                    raise ProviderError('Invalid tool call history')
+                try:
+                    if not isinstance(json.loads(fn['arguments']), dict):
+                        raise ValueError()
+                except (KeyError, ValueError, TypeError) as error:
+                    raise ProviderError('Invalid tool arguments in history') from error
+                pending.add(key)
+    if pending:
+        raise ProviderError('Missing tool result at end of history')
+    return value

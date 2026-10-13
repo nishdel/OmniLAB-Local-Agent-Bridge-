@@ -6,6 +6,7 @@ recursive-include .github *.md *.yml
 recursive-include localagentbridge *.py *.toml
 recursive-include localagentbridge/executor_assets Dockerfile *.txt
 recursive-include docs *.md *.json *.png
+recursive-include docs/qualification *.patch *.txt
 recursive-include examples *.toml *.json
 recursive-include profiles *.toml
 recursive-include tests *.py *.json

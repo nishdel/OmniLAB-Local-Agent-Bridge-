@@ -84,14 +84,15 @@ sequenceDiagram
     C->>L: Independent review and explicit acceptance decision
 ```
 
-The sequence describes the implemented route, **not Strata live acceptance**.
-Ollama/Qwen27 and Qwen35 have specific accepted OpenHands cases; Strata stage A
-remains blocked: the approved direct-GGUF pack now passes validation, but the
-pinned server can retry generation internally despite LAB's zero-retry budget.
-No server was started; stages B/C have not run. Errors and
-cancellation retain evidence and uncertain inference ownership. See the deeper
-[workflow, lifecycle and trust views](docs/WORKFLOW.md) and
-[current qualification](docs/SELECTIVE-IMPLEMENTATION-REPORT.md#direct-gguf-amendment-outcome--2026-10-13).
+The sequence describes the implemented route, **not complete Strata qualification**.
+Ollama/Qwen27 and Qwen35 have specific accepted OpenHands cases. With **Strata
+0.1.43 engine with LAB-specific serving patch**, one exact-identity Stage-A probe
+and one durable LAB advisory passed. The unchanged RAM guard then stopped the
+owned runtime; the OpenHands fixture and deliberate live safety checks did not
+run. A subsequent cancellation-reporting correction is offline-tested only.
+Strata remains disabled for general routing. Test settings were restored;
+active LAB/Ollama was unchanged. See the [current qualification](docs/SELECTIVE-IMPLEMENTATION-REPORT.md#serving-patch-qualification--2026-10-13)
+and [workflow, lifecycle and trust views](docs/WORKFLOW.md).
 
 ## Current project deployment
 

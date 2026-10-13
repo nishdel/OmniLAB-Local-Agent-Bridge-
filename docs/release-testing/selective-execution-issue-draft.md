@@ -18,7 +18,9 @@ Historical manual kit prepared 2026-10-10 for runtime source
 All 88 runtime files match the installed package and that source. The private
 kit's `identity.json` records isolated configuration, fixture and definition
 hashes; no inference or human interaction occurred during preparation.
-Actual tester/date and observation evidence are pending. This existing table
+Actual tester/date and observation evidence are pending. Automated patched-Strata
+A/B results do not verify dock selection, persistence, displayed identity, progress,
+errors or cancellation; those existing rows remain incomplete/untested. This existing table
 is the sole result location for the authorized unpublished session; issue
 publication remains unauthorized. The current e5c6337 isolated runtime uses the
 [Strata follow-up guided session](../MANUAL-RELEASE-TESTING.md#strata-follow-up-one-guided-owner-session--2026-10-13);
@@ -244,18 +246,18 @@ wheel/sdist, upgrade, lint/docs/audit/diff and cleanup records are private in
 openhands-moe-20261010. Model identities, original checkouts and accepted Qwen27
 patch preserved. Pilots/general routing inactive; human verification still pending.
 
-- Q-15 (current, local entry): The approved direct-GGUF amendment passed preparation and independent dense/index/tokenizer/expert/shard checks in the 7cbaa11 follow-up. The old RAM-failed pack remains untouched. Startup stopped before inference because the pinned server can silently retry non-finite generation and restart a dead engine, conflicting with zero retries/first-failure stop. A/B/C and live failure/cancellation remain unrun; Maximum was conditionally authorized but never applied. Active LAB/Ollama and all human rows are unchanged. See the [current report](../SELECTIVE-IMPLEMENTATION-REPORT.md#direct-gguf-amendment-outcome--2026-10-13).
+- Q-15 (current, local entry): The live-tested serving patch passed 34 offline checks and 49 unchanged upstream regressions; the final cancellation-reporting correction passed 41 offline checks and remains untested live. Exact-identity Stage A and one MCP/durable LAB → Strata advisory passed; subsequent available RAM below 3 GiB for 15 seconds stopped the owned runtime. C and deliberate live failure/cancellation checks were not run. All owned identities/listener and reservation are now reconciled; test Maximum restored to absent/Medium, active LAB/Ollama unchanged. No general activation or human acceptance. See the [current report](../SELECTIVE-IMPLEMENTATION-REPORT.md#serving-patch-qualification--2026-10-13).
 
 - Q-20 (close-out): Usage identity bindings and missing/duplicate/conflict checks now pass. Historical generation-only baseline and shared hybrid supervision do not provide complete matched costs. No new comparison was run; net savings remain unknown. Mixed controller usage is retained explicitly. This local entry is not a published issue.
 
 
 ## Approved Strata follow-up — 2026-10-13
 
-The [current preparation/qualification report](../SELECTIVE-IMPLEMENTATION-REPORT.md#direct-gguf-amendment-outcome--2026-10-13)
+The [current preparation/qualification report](../SELECTIVE-IMPLEMENTATION-REPORT.md#serving-patch-qualification--2026-10-13)
 supersedes older claims that installation approval is absent. The new isolated
 LAB runtime matches e5c6337; the active a9a4bad deployment remains unchanged.
-All approved raw assets and the fresh direct-GGUF pack are verified. The pinned
-server retry-policy gate now blocks startup; the old RAM stop remains historical. The
+All approved raw assets and the direct-GGUF pack are verified. Patched serving
+passed A/B; subsequent RAM pressure stopped it before C and live safety tests. The
 private idle-display kit has selective execution disabled, a paused empty store
 and no controller or inference. Live progress/errors/cancellation and Strata
 selection/persistence require later readiness and qualification; no cosmetic

@@ -17,7 +17,7 @@ Codex registration. Generic distribution defaults remain unchanged.
 |---|---|---|
 | Ollama | Existing 0.40.2 service, loopback `http://127.0.0.1:11434` | Exact Qwen identity and native options checked before admission; loaded digest/context and runner flags checked before returning tool calls |
 | OpenHands | Existing SDK/tools 1.53.0 in immutable Docker image below | Networkless mailbox executor; real editor/terminal tasks and protected independent acceptance |
-| Strata | Pinned isolated runtime/assets and independently verified direct-GGUF pack | Disabled; serving retry policy blocks startup and live qualification |
+| Strata | Pinned isolated runtime/assets and independently verified direct-GGUF pack | Disabled; patched A/B passed, then RAM guard stopped runtime; C unrun |
 | Dock | Existing native Tk companion, same durable store as the jobs | Automated presentation/window checks; human interaction remains untested |
 
 Qwen tag: `qwen3.8:27b`; full manifest identity:
@@ -94,7 +94,9 @@ accepted patches, model assets and history. Never reset or clean the checkout.
 
 ### Independent Strata status
 
-As of **2026-10-13**, Strata is implemented but **disabled and not live-qualified**.
+As of **2026-10-13**, Strata remains **disabled for general routing**. The approved
+serving patch passed one live inference and one LAB advisory; a later RAM guard
+stop blocks OpenHands qualification and deliberate live safety checks.
 Current upstream inspected: [7695859aa13afb248bdb4d36f9b2e95707db079d](https://github.com/Niko1221/Strata/tree/7695859aa13afb248bdb4d36f9b2e95707db079d),
 including `serve/server.py`, `serve/frontend.py`, `serve/runconfig.py`, setup,
 requirements, model/install guidance and cancellation/context/tool tests.
@@ -115,14 +117,55 @@ Following the owner's approval, the pinned 0.1.43 CUDA 12 runtime, dependencies
 and all raw model/MTP inputs are installed and hash-verified. A small cuBLAS
 operation passed on the existing driver. The original expert-copy RAM failure
 remains quarantined. The approved direct-GGUF retry now passes independent pack
-validation. **Startup stopped at a source-verified server retry-policy conflict**
-with the zero-retry requirement; no loaded identity, advisory or implementation
-inference exists. See the
-[current measured report](SELECTIVE-IMPLEMENTATION-REPORT.md#direct-gguf-amendment-outcome--2026-10-13).
-Port 8080 remains a planned loopback endpoint, not a verified service (upstream's
-direct server default is 8095). Hardware remains RTX 3060 12,288 MiB,
-34,139,435,008 bytes RAM and driver 560.94. No driver change was attempted;
-the small CUDA pass does not qualify model inference.
+validation. The separately reviewed serving-only patch then passed A and B on
+loopback port 8080 with exact loaded GGUF/PLE identity. Sustained available RAM
+below 3 GiB stopped the owned runtime before C; the service is now off. See the
+[current measured report](SELECTIVE-IMPLEMENTATION-REPORT.md#serving-patch-qualification--2026-10-13). Hardware and driver remain unchanged.
+
+#### Reproducing and rolling back the approved serving patch
+
+The final [patch](qualification/strata-serving.patch), including explicit cancellation
+errors, is offline-tested only. The [preceding tested patch](qualification/strata-serving-tested.patch)
+provided the A/B results; the RAM stop prevented another live start. Both change only `serve/server.py`
+from base `7695859aa13afb248bdb4d36f9b2e95707db079d`. The
+[helper](../scripts/strata_serving_patch.py) requires that file's exact upstream
+hash and an absent destination outside the original source tree:
+
+```text
+python scripts/strata_serving_patch.py UPSTREAM_SOURCE FRESH_SERVING_COPY --evidence EVIDENCE_DIRECTORY
+```
+
+This only copies local source and writes patch/provenance records; it never
+loads an engine or downloads anything. Preserve the [upstream MIT notice](qualification/STRATA-LICENSE.txt).
+Use the already installed pinned dependencies for offline tests, with the
+process-local `LAB_STRATA_SERVING_SOURCE` pointing at that separate copy:
+
+```text
+python -m pytest tests/test_strata_serving_patch.py -q
+```
+
+Without that optional local source/dependency input, the ordinary public suite
+checks unknown-base rejection and explicitly skips the external offline cases.
+The qualification launcher prepended the reviewed source copy before importing
+`serve.server`, checked its exact hash/import path, allowed one start, and bound
+all resulting serving bytes plus the launcher/config. Native engine, weights and
+original source were unchanged. The patch/base/result hashes remain separate
+in the trusted binding's model metadata and artifact manifest.
+
+Qualification config additionally sets `reasoning_close_retry=false`,
+`reasoning_loop_recovery=false`, `reasoning_budget_tokens=0`, `tool_call_recovery=false`,
+`codex_compaction_cache=false`, `codex_thread_titles=false`, no disk sessions,
+no replicas/lazy load and the unchanged native/mmap/loopback limits. LAB transport
+and SDK retries remain zero. Tool-loop turns following successful responses
+remain normally budgeted; failed responses are never replayed.
+
+Rollback: stop only recorded owned processes, verify their exit/listener and
+reconcile any uncertain reservation, restore the saved test cap/config, and
+retain the separate patched copy as evidence. Original upstream bytes remain
+available; **do not launch them as a rollback test**, because they restore the
+known replay/restart conflict. Active LAB/Ollama never points at this copy.
+The current live RAM stop requires a new reviewed decision before another start;
+this reproduction command is not renewed inference authorization.
 
 #### Configuration, diagnostics and exact selection
 
@@ -278,13 +321,14 @@ and retains/quarantines only the new pack; active LAB/Ollama files stay intact.
 No administrator, global environment, service, firewall or driver change.
 
 The owner also approved **Maximum only in the isolated qualification store after
-A passes**, with original-setting capture/restoration. That prerequisite did not
-pass, so the effective cap remained Medium and its telemetry database was never
-created. B/C still require the existing supervisor-controlled fixture, a measured
+A passes**, with original-setting capture/restoration. At the historical
+direct-pack checkpoint A had not passed, so Medium remained unchanged. The later
+serving amendment passed A, used Maximum for B, then restored the absent/Medium
+setting after the RAM stop. B/C still require the existing supervisor-controlled fixture, a measured
 Strata memory plan and all admission gates. This does not authorize higher
 physical/context/output limits, pre-qualification, active-default changes or
-general Strata routing. A new decision concerns only the serving change needed
-to prevent hidden generation retries and engine restarts; neither was applied.
+general Strata routing. The serving change has now been approved and tested;
+the remaining decision concerns measured RAM growth, as recorded above.
 
 ## Retained preparation and historical protocol
 

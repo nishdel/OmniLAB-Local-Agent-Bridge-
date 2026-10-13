@@ -314,3 +314,21 @@ so the intended stage-B advisory and stage-C implementation were not dispatched.
 No model-authored changes or Codex repairs to a model candidate exist in this
 amendment. Documentation/evidence updates are direct Codex work; another backend
 was not substituted. See the [outcome](SELECTIVE-IMPLEMENTATION-REPORT.md#direct-gguf-amendment-outcome--2026-10-13).
+
+## Patched Strata advisory — 2026-10-13
+
+Codex directly owned serving/security changes, resource admission and independent
+acceptance. After A passed, one real MCP/durable LAB advisory used the exact
+Strata 0.1.43 engine with LAB-specific serving patch. It suggested a test proving
+that a failed response cannot dispatch a partial tool call. Codex checked the
+suggestion against the adapter and passing error/partial-tool tests and accepted
+it without correction. It is useful bounded test advice, not model-authored code.
+The already written patch and tests remain Codex-authored; no OpenHands candidate
+or Codex repair to a local candidate exists.
+
+The job/attempt, binding, sole added server request and reported counters are
+correlated in private evidence: **122 input / 34 output / 0 cached tokens**,
+66.107 s including MCP submission, 56.801 s worker/admission interval. These
+intervals overlap. The later RAM stop blocked C and further live safety checks;
+no alternate provider, automatic restart or cloud inference was substituted.
+See the [measured outcome](SELECTIVE-IMPLEMENTATION-REPORT.md#serving-patch-qualification--2026-10-13). No token-savings claim is made.

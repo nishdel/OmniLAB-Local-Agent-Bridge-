@@ -231,3 +231,10 @@ localagentbridge/usage_report.py
 tests/test_local_profile.py
 tests/test_usage_report.py
 tests/test_timestamp_utc.py
+scripts/strata_serving_patch.py
+tests/test_strata_serving_patch.py
+docs/qualification/strata-serving.patch
+docs/qualification/strata-serving-provenance.json
+docs/qualification/STRATA-LICENSE.txt
+docs/qualification/strata-serving-tested.patch
+docs/qualification/strata-serving-tested-provenance.json

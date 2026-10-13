@@ -380,10 +380,12 @@ retries, 15-second test commands, 16 KiB outputs and a 30-minute attempt ceiling
 These are ceilings, not claims of actual usage.
 
 Current Strata protocol/selection changes and current upstream inspection are recorded in
-[the upgrade report](SELECTIVE-IMPLEMENTATION-REPORT.md#approved-strata-preparation--2026-10-13).
-The following 2026-10-10 profile remains historical.
+[the upgrade report](SELECTIVE-IMPLEMENTATION-REPORT.md#serving-patch-qualification--2026-10-13).
+The patched 0.1.43 runtime passed a bounded inference and durable LAB advisory,
+then the RAM guard stopped it. OpenHands/Strata remains unqualified and disabled.
+The following 2026-10-10 inventory remains historical.
 
-Strata has an implemented adapter but **no qualified runnable installation or
+That historical inventory had an implemented adapter but **no qualified runnable installation or
 compatible loaded weights** in the bounded inventory. The inspected upstream
 commit `fb58e0dbc8399662c0e47c76578c6e878b14f6cf` targets Flash-Next variants;
 it does not qualify dense Qwen27. The standard engine 0.1.41 CUDA 13 driver
@@ -426,7 +428,7 @@ The close-out's clean source validation recorded **591 passed / 1 skipped**.
 Its **180 extracted-wheel checks overlap** that suite and are not added to it.
 Those are historical close-out results. The historical 2026-10-12 Strata adapter pass
 changed runtime source and recorded: **614 passed / 1 skipped**.
-See the [current implementation report](SELECTIVE-IMPLEMENTATION-REPORT.md#approved-strata-preparation--2026-10-13)
+See the [current implementation report](SELECTIVE-IMPLEMENTATION-REPORT.md#serving-patch-qualification--2026-10-13)
 for package, diagram and publication checks.
 
 The [manual ledger](release-testing/selective-execution-issue-draft.md) has exactly
@@ -462,7 +464,8 @@ automated unless the linked qualification/ledger explicitly says otherwise.
 | Durable scheduling | Locks, controller/worker, queue, results and outbox | [companion.py](../localagentbridge/companion.py) `serve/ensure_worker/worker`; [companion_store.py](../localagentbridge/companion_store.py) `CompanionStore` | [Companion](../tests/test_companion.py), [process recovery](../tests/test_companion_recovery.py) |
 | Selective state/ownership | Review guards, axes, reservation and audit | [task_store.py](../localagentbridge/task_store.py) `TaskStore/review_guard`; [process_control.py](../localagentbridge/process_control.py) | [Process tests](../tests/test_selective_process.py), [flows](../tests/test_selective_flows.py) |
 | Admission/execution | Context construction, provider checks, bounded implementation and recovery | [selective.py](../localagentbridge/selective.py) `prepare/execute/implementation`; [selective_resources.py](../localagentbridge/selective_resources.py) | [Flows](../tests/test_selective_flows.py), [bounded tests](../tests/test_selective_bounded.py) |
-| Inference and identity | Ollama/Strata requests, loaded identity/settings validation | [inference.py](../localagentbridge/inference.py) `ChatProvider.inspect/chat`; [strata_identity.py](../localagentbridge/strata_identity.py) `verify_binding`; [runtime_profile.py](../localagentbridge/runtime_profile.py) | [Providers](../tests/test_selective_providers.py), [Strata fixtures](../tests/test_strata_upgrade.py), [Ollama live qualification](OPENHANDS-STRONGER-QUALIFICATION.md), [Strata preparation RAM stop; no live inference](SELECTIVE-IMPLEMENTATION-REPORT.md#approved-strata-preparation--2026-10-13) |
+| Inference and identity | Ollama/Strata requests, loaded identity/settings validation | [inference.py](../localagentbridge/inference.py) `ChatProvider.inspect/chat`; [strata_identity.py](../localagentbridge/strata_identity.py) `verify_binding`; [runtime_profile.py](../localagentbridge/runtime_profile.py) | [Providers](../tests/test_selective_providers.py), [Strata fixtures](../tests/test_strata_upgrade.py), [Ollama live qualification](OPENHANDS-STRONGER-QUALIFICATION.md), [Patched Strata A/B success; subsequent RAM stop](SELECTIVE-IMPLEMENTATION-REPORT.md#serving-patch-qualification--2026-10-13) |
+| Qualification-only serving patch | One initial engine start; reject non-finite and cancelled responses; no automatic reload | Upstream `serve/server.py` `StrataEngine.__init__/restart`, `Service.ensure_loaded/run`, reproduced by [strata_serving_patch.py](../scripts/strata_serving_patch.py) and [exact patch](qualification/strata-serving.patch) | [Offline counted lifecycle/protocol tests](../tests/test_strata_serving_patch.py); [two exact revisions and live scope](SELECTIVE-IMPLEMENTATION-REPORT.md#serving-patch-qualification--2026-10-13) |
 | Sandbox and transport | Owned containers, SDK mailbox, path/tool bounds | [sandbox.py](../localagentbridge/sandbox.py) `DockerSandbox`; [runner.py](../localagentbridge/executor_assets/runner.py) `Relay`; [transport.py](../localagentbridge/executor_assets/transport.py); [bounded.py](../localagentbridge/executor_assets/bounded.py) | [Sandbox](../tests/test_selective_sandbox.py), [bounded qualification](OPENHANDS-BOUNDED-QUALIFICATION.md) |
 | Independent integration | Protected verification, base/dependency checks, guarded writes | [integration.py](../localagentbridge/integration.py) `integrate` | [Integration](../tests/test_selective_integration.py), [acceptance](../tests/test_companion_acceptance.py) |
 | Local/cloud accounting | Receipt persistence, cumulative import, attribution and reporting | [measurements.py](../localagentbridge/measurements.py) `local_usage`; [codex_usage.py](../localagentbridge/codex_usage.py) `RolloutReader`; [usage_report.py](../localagentbridge/usage_report.py) `bind_usage/investment/operating_savings` | [Attribution tests](../tests/test_usage_report.py), [usage tests](../tests/test_v2_usage.py) |

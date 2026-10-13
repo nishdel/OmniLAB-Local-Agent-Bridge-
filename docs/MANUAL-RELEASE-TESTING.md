@@ -91,10 +91,11 @@ Use this single session order, stopping dependent steps at their actual gate:
 All M01–M06/C01–C06 criteria below remain in force. A clean Windows host, a live
 managed-review callback and a matched performance pilot retain their own named
 prerequisites; missing prerequisites leave those portions open. This sequence
-neither authorizes extra installation nor general Strata activation. The direct-GGUF pack is now independently verified, but the pinned serving
-retry policy blocks stage A/B/C and their dependent manual steps. The approved
-conditional test-store Maximum cap was not used. No human row passed; see the
-[current outcome](SELECTIVE-IMPLEMENTATION-REPORT.md#direct-gguf-amendment-outcome--2026-10-13).
+neither authorizes extra installation nor general Strata activation. The approved
+serving patch passed A and one durable B advisory, then sustained RAM pressure
+stopped the runtime before C and deliberate live cancellation/failure checks.
+The conditional isolated Maximum cap was used and restored to absent/Medium.
+No human row passed; see the [current outcome](SELECTIVE-IMPLEMENTATION-REPORT.md#serving-patch-qualification--2026-10-13).
 
 <a id="current-qwen27-disposable-display-kit--2026-10-10"></a>
 ### Historical Qwen27 disposable display kit — 2026-10-10

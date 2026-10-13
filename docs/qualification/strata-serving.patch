@@ -1,0 +1,391 @@
+--- a/serve/server.py
++++ b/serve/server.py
+@@ -315,11 +315,14 @@
+     EngineDied, so the request ends with an error and the next one starts the engine again."""
+ 
+ 
++class GenerationCancelled(ValueError):
++    """An incomplete response must not be encoded as a successful stop."""
++
++
+ class EngineNonFinite(ValueError):
+     """#879: the engine's DONE (or a slot's BDONE) said `nonfinite`: a window's logits held a NaN or an infinity.  The
+     engine wrote none of that window's tokens and drops every cached state that may carry the poison, so its next
+-    request reads the prompt from token 0.  Service.run sends a request that had produced nothing yet once more, and
+-    ends one that had started (as "length").  A ValueError, so a stream that has started reports it as an error event."""
++    request reads the prompt from token 0.  LAB qualification rejects the first failure, including partial output.  A ValueError, so a stream that has started reports it as an error event."""
+ 
+ 
+ class SessionRefused(ValueError):
+@@ -596,6 +599,10 @@
+     (`temperature=F top_p=F top_k=N seed=N`, the engine's own spelling).  An absent temperature keeps the
+     engine's default, which is greedy; `temperature=0` means the same thing, so it is not forwarded.
+     """
++    # LAB qualification: a process owns one initial native-engine start only.
++    _lab_start_lock = threading.Lock()
++    _lab_start_claimed = False
++
+     silence_s = ENGINE_SILENCE_S         # #481: main() sets the config's engine_silence_s (survives restart())
+     silent_note = None                   # #481: why the server ended a silent engine (death_note says it)
+     gpu_busy = None                      # #1317: () -> bool, "the GPU is working" (the telemetry's reading); a GPU at work is not frozen
+@@ -622,6 +629,12 @@
+ 
+     def __init__(self, exe: str, args: list[str], cwd: str | None = None, log: str | None = None,
+                  env: dict | None = None, lazy: bool = False, cpus: list[int] | None = None):
++        if lazy:
++            raise EngineDied("LAB qualification forbids lazy engine starts")
++        with StrataEngine._lab_start_lock:
++            if StrataEngine._lab_start_claimed:
++                raise EngineDied("LAB qualification engine start already consumed; automatic restart disabled")
++            StrataEngine._lab_start_claimed = True
+         self.spawn = (exe, list(args), cwd, log, env, False, cpus)   # to start it again after it died (issue #27)
+         self.session_save_reclaim = '--session-save-reclaim' in args
+         paths = {k: v for k, v in zip(args, args[1:]) if k in ("--native", "--pack")}
+@@ -878,39 +891,7 @@
+                 out.put(None)
+ 
+     def restart(self, tries: int = 3):
+-        """Start the engine again (the same command) after it died; the new process has its own line queue.
+-        close() ends and waits for the old process first (EngineStuck when it cannot be ended).  A start that still
+-        exits before READY - a dead engine's VRAM can take a while to come back, notably on ROCm - is retried
+-        (PR #637)."""
+-        info = dict(self.info)
+-        self.starting = True                     # prepare() answers 503 "starting" meanwhile (#344)
+-        try:
+-            self.close()
+-            for i in range(tries):
+-                # #344: not alive until READY - __init__ sets max_context to 0 and blocks until the engine says
+-                # READY, and a request that saw alive() in that window skipped load() and failed with "context
+-                # (0)".  __init__ clears `ended` itself once READY (before its pump thread can set it again).
+-                self.ended = True
+-                try:
+-                    self.__init__(*self.spawn)
+-                    break
+-                except RuntimeError:
+-                    try:
+-                        self.proc.wait(timeout=60)
+-                    except (subprocess.TimeoutExpired, OSError):
+-                        pass
+-                    if i == tries - 1:
+-                        raise
+-                    print(f"[strata] the engine did not start (try {i + 1} of {tries}); again in "
+-                          f"{self.RESTART_RETRY_S:g} s", flush=True)
+-                    time.sleep(self.RESTART_RETRY_S)
+-        finally:
+-            self.starting = False
+-            # a lazy first start never reached the post-READY __init__ where slot_cv is made (#1527)
+-            if "slot_cv" in self.__dict__:
+-                with self.slot_cv:               # #1012: wake the requests that waited through it: they go on with the
+-                    self.slot_cv.notify_all()    # new engine, or (it did not start) end with a clean EngineDied
+-        self.info = {**info, **self.info}
++        raise EngineDied("LAB qualification: automatic restart disabled; supervisor decision required")
+ 
+     def _parse_done(self, line):
+         f = line.split()
+@@ -1740,10 +1721,14 @@
+                     except queue.Empty:
+                         raise self._silent("the engine did not finish the request after it was stopped (STOP) "
+                                            f"within {allow:.0f} s") from None
+-                    if line is None or line.startswith("ERR"):
+-                        break
++                    if line is None:
++                        raise EngineDied("the engine died while draining the response")
++                    if line.startswith("ERR"):
++                        raise ValueError(line[4:].strip())
+                     if line.startswith("DONE"):
+                         self._parse_done(line)
++                        if self.last.get("finish") == "nonfinite":
++                            raise EngineNonFinite("the engine logits became non-finite during STOP/drain")
+                         break
+                     if not self.can_stop:
+                         heard = time.monotonic()
+@@ -1791,7 +1776,7 @@
+         self.silent_note = ("The engine and the server lost step (issue #481; a very slow PC can raise "
+                             "\"engine_silence_s\" in the config, 0 = wait forever). If it happens again, please add "
+                             "the end of the engine log to github.com/Niko1221/Strata/issues/481.")
+-        self.ended = True                               # not alive from now: the next request restarts it
++        self.ended = True                               # not alive from now: automatic restart disabled
+         proc = self.proc
+         try:
+             proc.kill()
+@@ -1824,7 +1809,7 @@
+         want = "SAVED" if action == "save" else "RESTORED"
+ 
+         def out_of_step(line: str) -> EngineDied:
+-            self.ended = True                               # not alive from now: the next request restarts it
++            self.ended = True                               # not alive from now: automatic restart disabled
+             try:
+                 self.proc.kill()
+                 self.proc.wait(timeout=20)
+@@ -2998,54 +2983,10 @@
+             return None
+ 
+     def ensure_loaded(self):
+-        """Start the engine if it is not running (unloaded, or it died - issue #27), after the before_load hook and
+-        the free-VRAM check.  The caller holds self.fifo."""
++        # A failed/unloaded engine cannot be resurrected by requests or controls.
+         if self.loaded() and not self._vision_down():
+             return
+-        if self.before_load:
+-            cmd = self.before_load
+-            print(f"[strata] before loading: {cmd if isinstance(cmd, str) else ' '.join(map(str, cmd))}", flush=True)
+-            try:
+-                subprocess.run(cmd, shell=isinstance(cmd, str), timeout=120, stdin=subprocess.DEVNULL)
+-            except (OSError, subprocess.SubprocessError) as e:
+-                print(f"[strata] the before_load command failed ({e}); loading anyway", flush=True)
+-        if self.min_free_vram_mib:
+-            free = self.free_vram_mib()
+-            deadline = time.time() + 15                 # memory another process just gave back can take a moment
+-            while free is not None and free < self.min_free_vram_mib and time.time() < deadline:
+-                time.sleep(0.5)
+-                free = self.free_vram_mib()
+-            if free is not None and free < self.min_free_vram_mib:
+-                raise GpuBusy(f"the GPU is in use by another program: {free} MiB of VRAM free, the model needs "
+-                              f"{self.min_free_vram_mib} (min_free_vram_mib) - it stays unloaded until that is free")
+-        vision_started = False
+-        if self._vision_down():                         # first, as at a start: a GPU encoder takes its VRAM before
+-            print("[strata] starting the vision encoder ...", flush=True)   # the engine sizes its cache
+-            try:
+-                self.vision.restart()
+-            except Exception as e:
+-                raise EngineDied(f"the vision encoder failed to start: {e}") from e
+-            vision_started = True
+-        if self.loaded():
+-            return
+-        if getattr(self.engine, "unloaded", False):
+-            print("[strata] loading the model again (it was unloaded) ...", flush=True)
+-        else:
+-            code = self.engine.exit_code() if hasattr(self.engine, "exit_code") else None
+-            print(f"[strata] the engine had stopped (exit code {code}); starting it again "
+-                  "(a minute or two) ...", flush=True)
+-        try:
+-            self.engine.restart()
+-        except Exception:
+-            if vision_started:
+-                self.vision.unload()
+-            raise
+-        print("[strata] the engine is running again", flush=True)
+-        if self.vram_reserve is not None and hasattr(self.engine, "vram"):   # #533: the reserve asked for last
+-            try:
+-                self.engine.vram(self.vram_reserve)
+-            except (ValueError, EngineDied) as e:
+-                print(f"[strata] the VRAM reserve ({self.vram_reserve} MiB) was not applied: {e}", flush=True)
++        raise EngineDied("LAB qualification engine unavailable; automatic restart disabled")
+ 
+     vram_wait_s = 300.0                                  # #533: how long POST /v1/vram waits for a running request
+ 
+@@ -3083,7 +3024,7 @@
+         """The server window's line for an engine that died (or was ended, #481) in the middle of a request."""
+         note = self.engine.death_note() if hasattr(self.engine, "death_note") else ""
+         log = getattr(self.engine, "log_path", None)
+-        print(f"[strata] {e}. {note} The next request starts the engine again."
++        print(f"[strata] {e}. {note} Automatic restart disabled."
+               f"{' Its log: ' + log if log else ''}", flush=True)
+ 
+     def load(self):
+@@ -3138,7 +3079,7 @@
+             if self.vision is not None and hasattr(self.vision, "unload"):
+                 self.vision.unload()
+             print(f"[strata] model unloaded{f' after {idle_for:.0f} s idle' if idle_for else ''}; "
+-                  "the next request loads it again", flush=True)
++                  "automatic reload disabled", flush=True)
+             return "unloaded"
+         finally:
+             self.fifo.release()
+@@ -3373,7 +3314,7 @@
+         images = self.vision is not None
+         return {
+             "service": "strata", "model": self.model,
+-            "loaded": self.loaded(), "auto_load": hasattr(self.engine, "restart"),
++            "loaded": self.loaded(), "auto_load": False,
+             "structured_output": {"formats": ["json_object", "json_schema"], "method": "prompt_and_validate",
+                                   "constrained_decoding": False, "stream_buffered": True},
+             "engine": (getattr(self.engine, "info", {}) or {}).get("version"),
+@@ -3717,7 +3658,6 @@
+             opening, force = parser.feed(force), None
+         tail = ""                                       # the last characters written (the newlines before a call)
+         answered, close_retried = False, False          # #1053: content or a call came out; the thinking was closed
+-        nf_retried = False                              # #879: the request was sent again after non-finite logits
+         timings, before = None, None                    # this request's timings; the engine's `last` before it
+         recovery_count, reasoning_text, repeat_coverage = 0, "", 0.0
+         looped, next_loop_check = False, LOOP_CHECK_EVERY       # #728: reasoning that repeats whole passages
+@@ -3761,9 +3701,7 @@
+                 if not got:                              # cancelled while queued
+                     with self.status_lock:
+                         self.status["queued"] -= 1
+-                    yield "done", {"finish": "cancel", "completion_tokens": 0, "reused": 0, "timings": None,
+-                                   "reasoning_tokens": 0, "reasoning_recoveries": 0}
+-                    return
++                    raise GenerationCancelled("generation cancelled while queued; no response completed")
+             with turn:
+                 try:
+                     with self.status_lock:
+@@ -3806,12 +3744,10 @@
+                         yield "event", ev
+                     while True:
+                         segment_before = getattr(self.engine, "last", None)
+-                        segments_before = len(segments)     # (#879: a pass sent again leaves no segment)
+                         gen = self.engine.generate(prompt, max_new - n, sampling, cancel, embeddings=emb) if emb \
+                             else self.engine.generate(prompt, max_new - n, sampling, cancel)
+                         recover_prompt = None
+                         seg, wrap, leaving = [], False, False   # this pass's tokens; the budget is reached; closed
+-                        nonfinite = False               # #879: the engine ended this pass on non-finite logits
+                         opens = False                   # the thinking is over: write the forced call's opening
+                         try:
+                             # A value the frontend holds back (a tool call's array or object argument is sent
+@@ -3889,7 +3825,8 @@
+                                         opens = True
+                                         break
+                         except EngineNonFinite:
+-                            nonfinite = True
++                            finish = "error"
++                            raise  # Including partial output: no replay or successful completion.
+                         except EngineDied as e:
+                             finish = "error"
+                             self._say_died(e)
+@@ -3906,36 +3843,20 @@
+                                 gen.close()             # STOP+drain to THIS request's DONE while still holding the
+                                 #                         fifo, so a stop-token break can't leave the shared engine
+                                 #                         queue mid-drain for the next request to read as its own DONE
++                            except ValueError:
++                                finish = "error"
++                                raise
+                             except EngineSilent as e:   # #481: the STOP was never acknowledged: the engine is ended
+                                 finish = "error"
+                                 self._say_died(e)
+                                 if not leaving and not cancel.is_set():
+                                     raise
++                            except EngineDied:
++                                finish = "error"
++                                raise
+                             segment_done = getattr(self.engine, "last", None)
+                             if segment_done is not None and segment_done is not segment_before:
+                                 segments.append(dict(segment_done))
+-                        if nonfinite and not cancel.is_set():
+-                            # #879: the engine emitted none of the poisoned window's tokens and reads its next prompt
+-                            # from token 0.  Nothing sent yet: the same request once more, unseen by the client
+-                            if n == 0 and not nf_retried:
+-                                nf_retried = True
+-                                # the retry reads from token 0: its DONE, not this one's, says what was reused
+-                                del segments[segments_before:]
+-                                print("[strata] the engine's logits became non-finite before the first token (#879); it "
+-                                      "dropped its cached state: sending the request again once", flush=True)
+-                                continue
+-                            if n == 0:
+-                                finish = "error"
+-                                print("[strata] the engine's logits became non-finite again on the retry (#879): the "
+-                                      "request ends with an error", flush=True)
+-                                raise EngineNonFinite("the model's output became non-finite (NaN) twice in a row "
+-                                                      "(#879); the engine has dropped its cached state - send the "
+-                                                      "request again")
+-                            print(f"[strata] the engine's logits became non-finite after {n} tokens (#879): the reply "
+-                                  "ends here as \"length\"; the engine dropped its cached state, so the next request "
+-                                  "reads its prompt from the start", flush=True)
+-                            finish = "length"
+-                            break
+                         if recover_prompt is not None and not cancel.is_set() and n < max_new:
+                             recovery_count += 1
+                             # Only the two settings that keep the same words coming are raised (temperature to at
+@@ -4103,6 +4024,8 @@
+         finally:
+             if emb:
+                 Path(emb).unlink(missing_ok=True)
++        if finish == "cancel" or cancel.is_set():
++            raise GenerationCancelled("generation cancelled; incomplete response discarded")
+         for ev in cut(parser.finish(finish)):
+             yield "event", ev
+         if parser.rescued or parser.refused:
+@@ -4900,7 +4823,7 @@
+                     self._json(404 if records is None else 200,
+                                {"error": {"message": "request no longer retained"}} if records is None else
+                                records if request_id else {"requests": records, "retention": 100, "persistent": False,
+-                                                          "loaded": svc.loaded(), "auto_load": hasattr(svc.engine, "restart")})
++                                                          "loaded": svc.loaded(), "auto_load": False})
+                 return
+             if path == "/settings":
+                 if self._authorized():
+@@ -5076,8 +4999,7 @@
+                         code, body = svc.slot_action(path[len("/slots/"):], (query.get("action") or [""])[0],
+                                                      req.get("filename"))
+                     except EngineDied as e:                  # EngineSilent included: the engine was ended
+-                        code, body = 500, {"error": {"code": 500, "message": str(e) + "; the next request starts "
+-                                                     "the engine again", "type": "server_error"}}
++                        code, body = 500, {"error": {"code": 500, "message": str(e) + "; automatic restart disabled", "type": "server_error"}}
+                     self._json(code, body)
+                 elif path == "/v1/chat/completions":
+                     self._openai(req)
+@@ -5087,7 +5009,7 @@
+                     self._count_tokens(req)
+                 else:
+                     self._json(404, {"error": {"message": "not found"}})
+-            except EngineNonFinite as e:                    # #879, twice: not the request's fault
++            except (EngineNonFinite, GenerationCancelled) as e:                    # #879, twice: not the request's fault
+                 print(f"[strata] 503: {e}", flush=True)
+                 self._json(503, responses_error_body(str(e), "server_error") if path == "/v1/responses"
+                            else {"error": {"type": "server_error", "message": str(e)}})
+@@ -5116,7 +5038,7 @@
+                                   "message": f"the request is malformed ({type(e).__name__}: {e})"}}
+                 self._json(400, responses_error_body(body["error"]["message"]) if path == "/v1/responses" else body)
+             except EngineDied as e:                          # before the answer started (not streamed)
+-                self._json(503, {"error": {"type": "server_error", "message": f"{e}; the next request restarts it"}})
++                self._json(503, {"error": {"type": "server_error", "message": f"{e}; automatic restart disabled"}})
+             except EngineStuck as e:                         # an unload or restart that could not end the engine
+                 self._json(503, {"error": {"type": "server_error", "message": str(e)}})
+ 
+@@ -5153,7 +5075,7 @@
+                      "total_slots": max(1, int(getattr(svc.engine, "batch", 0) or 0)),   # #1004: the batch slots
+                      "model_alias": svc.model, "chat_template": svc.template.source,
+                      "chat_template_caps": svc.template.caps,
+-                     "modalities": {"vision": svc.vision is not None}, "models_autoload": hasattr(svc.engine, "restart"),
++                     "modalities": {"vision": svc.vision is not None}, "models_autoload": False,
+                      "is_sleeping": not svc.loaded()}
+             if getattr(svc.engine, "model_path", None):
+                 props["model_path"] = svc.engine.model_path
+@@ -5389,7 +5311,7 @@
+                 cancel.set()                                 # client went away: stop the engine
+                 chunks.close()
+             except EngineDied as e:                          # mid-stream: say so, then end the stream properly
+-                err = {"error": {"type": "server_error", "message": f"{e}; the next request restarts it"}}
++                err = {"error": {"type": "server_error", "message": f"{e}; automatic restart disabled"}}
+                 self._note(error=err["error"])
+                 self.wfile.write(b"data: " + json.dumps(err).encode() + b"\n\ndata: [DONE]\n\n")
+             except StructuredOutputError as e:
+@@ -5458,9 +5380,9 @@
+                     return self._json(502, responses_error_body(str(e), "server_error",
+                                                                 code="structured_output_failed"))
+                 except EngineDied as e:
+-                    return self._json(503, responses_error_body(f"{e}; the next request restarts it", "server_error",
++                    return self._json(503, responses_error_body(f"{e}; automatic restart disabled", "server_error",
+                                                                 code="server_error"))
+-                except EngineNonFinite as e:                 # #879, twice: not the request's fault
++                except (EngineNonFinite, GenerationCancelled) as e:                 # #879, twice: not the request's fault
+                     return self._json(503, responses_error_body(str(e), "server_error", code="server_error"))
+                 except ValueError as e:                      # the engine's ERR line
+                     return self._json(500, responses_error_body(str(e), "server_error", code="server_error"))
+@@ -5491,7 +5413,7 @@
+                 cancel.set()                                 # client went away: stop the engine
+                 items.close()
+             except EngineDied as e:                          # mid-stream: response.failed, then the stream ends
+-                self._responses_failed(asm, f"{e}; the next request restarts it", "server_error", send)
++                self._responses_failed(asm, f"{e}; automatic restart disabled", "server_error", send)
+             except StructuredOutputError as e:
+                 self._responses_failed(asm, str(e), "structured_output_failed", send)
+             except ValueError as e:                          # the engine's ERR after the stream started
+@@ -5608,7 +5530,7 @@
+                 cancel.set()
+                 events.close()
+             except EngineDied as e:                          # mid-stream: Anthropic's error event
+-                err = {"type": "error", "error": {"type": "api_error", "message": f"{e}; the next request restarts it"}}
++                err = {"type": "error", "error": {"type": "api_error", "message": f"{e}; automatic restart disabled"}}
+                 self._note(error=err["error"])
+                 self.wfile.write(b"event: error\ndata: " + json.dumps(err).encode() + b"\n\n")
+             except ValueError as e:                          # the engine's ERR after the stream started
+@@ -6169,7 +6091,7 @@
+                          "memory (also \"api_monitor\": true in the config; off by default)")
+     ap.add_argument("--idle-unload", type=float, default=None, metavar="SECONDS",
+                     help="unload the model after this many seconds without requests, so other programs (games, other "
+-                         "model servers) can use the VRAM; the next request loads it again (also \"idle_unload_s\" "
++                         "model servers) can use the VRAM; automatic reload disabled (also \"idle_unload_s\" "
+                          "in the config; default: never)")
+     ap.add_argument("--min-free-vram-mib", type=int, default=None,
+                     help="load an unloaded model only when this much VRAM is free, else answer 503 (also "

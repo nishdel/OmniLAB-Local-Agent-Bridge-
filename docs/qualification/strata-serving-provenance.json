@@ -1,0 +1,10 @@
+{
+  "runtime_label": "Strata 0.1.43 engine with LAB-specific serving patch",
+  "upstream_base_commit": "7695859aa13afb248bdb4d36f9b2e95707db079d",
+  "upstream_server_sha256": "55ee9d1160f0da457cabe6f9dfea9884296b6d70fd3d14abd4ed42e6f79dd72b",
+  "patch_sha256": "3a0ca878f80c66e26c26b429e00db71ccb3c9febcc34056728602ee996d05190",
+  "patched_server_sha256": "670a36ec733fadfd0880035180e1345483ea21576a90b3501b807d68209d39f0",
+  "changed_files": [
+    "serve/server.py"
+  ]
+}

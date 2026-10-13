@@ -1,6 +1,173 @@
 # Selective local execution implementation report
 
+## Serving-patch qualification — 2026-10-13
+
+**A and B passed with the LAB-specific serving patch. The unchanged RAM guard
+then stopped the owned runtime; C and deliberate live safety checks did not run.**
+This demonstrates one bounded inference and one durable LAB advisory, not a
+qualified OpenHands/Strata implementation path or safe general Strata routing.
+The latest owner amendment was applied from clean local/remote **e5a3a7e**;
+no newer work or uncommitted edits were reset. Active **a9a4bad/Ollama** remains
+unchanged. Main is still **f6df420**, latest release **v0.4.1**; work is published
+only on the development branch and draft PR #1.
+
+| Component | Implemented | Fresh live verification | Enabled | Published where | Remaining work |
+|---|---|---|---|---|---|
+| LAB v0.5 / dock | Existing orchestration and controls preserved | 89 frozen e5c6337 package files match checkout runtime; no new human UI checks | Active a9a4bad/Ollama | Development branch / draft PR #1 | Human ledger and merge gates |
+| Strata serving | One-file fail-fast patch over pinned source | One native 0.1.43 CUDA 12 start; exact imports/processes/weights checked | Test-only, now stopped | Sanitized patch/tests below; private runtime | Resolve RAM growth before another attempt |
+| LAB → Strata advisory | Existing MCP/store/worker/adapter | One correlated advisory succeeded and Codex accepted its text | Test-only provider restored to disabled | Development report / PR | This is bounded advisory evidence only |
+| OpenHands → Strata | Existing restricted SDK/mailbox adapter | C not dispatched after RAM stop | Disabled/unqualified | Existing development code | Memory admission, protected fixture and review |
+| Ollama / OpenHands | Existing qualified paths | No new inference; Qwen27/Qwen35 fixture and UTC results reused | Existing project configuration | Active installation and earlier reports | No new performance/qualification claim |
+
+### Exact modified identity and offline review
+
+Runtime label: **Strata 0.1.43 engine with LAB-specific serving patch**.
+Two exact patch revisions are distinguished below; only the first was loaded.
+Native engine, dependencies, model data and original upstream bytes were not
+modified. The separate source copy contains 2,976 source files; only
+`serve/server.py` differs. Full upstream MIT attribution is retained in
+[STRATA-LICENSE.txt](qualification/STRATA-LICENSE.txt).
+
+- Upstream base: `7695859aa13afb248bdb4d36f9b2e95707db079d`.
+- Original server SHA-256: `55ee9d1160f0da457cabe6f9dfea9884296b6d70fd3d14abd4ed42e6f79dd72b`.
+- [Live-tested patch](qualification/strata-serving-tested.patch) SHA-256: `f680795863739a005113a96ea3d6ce496a40222b9b9e3f50b20e65e27e0199f2`.
+- Resulting server SHA-256: `87072ef429bcfbf009ba9989bcd09f578b4f4b88d008b2b05377cbb506f86078`.
+- [Live-tested provenance](qualification/strata-serving-tested-provenance.json),
+  [strict reproduction helper](../scripts/strata_serving_patch.py) and
+  [offline tests](../tests/test_strata_serving_patch.py).
+- Qualification launcher SHA-256: `151815d1e065bd2f08a4903b875651e0e6609e451d1c3b2c66c79d08bc49df4f`;
+  effective config SHA-256: `8f5b843910db86f142940d5195950afa7c1953c481cd290adf0e0bb624cc07be`. Private manifests retain exact paths,
+  argv, process creation times and all 286 binding artifacts. The binding includes
+  base commit and patch/result hashes separately; the engine's stock version
+  string is not presented as unmodified serving-source identity.
+
+**Final offline correction:** post-run protocol review found upstream's
+`cancel` → `stop` mapping. Although LAB disconnects withheld those responses,
+that mapping could present a server-side cancellation as normal completion.
+The final [patch](qualification/strata-serving.patch) rejects queued/mid-response
+cancellation with explicit JSON/SSE errors before finalizing partial content or
+tool calls, retaining cancellation history and cleanup. Its SHA-256 is
+`3a0ca878f80c66e26c26b429e00db71ccb3c9febcc34056728602ee996d05190`; resulting server SHA-256 is `670a36ec733fadfd0880035180e1345483ea21576a90b3501b807d68209d39f0`, recorded in
+[final provenance](qualification/strata-serving-provenance.json). A second isolated
+source copy preserves the exact earlier live-tested bytes. The final 286-artifact
+candidate manifest is disabled, has no live process identities, and cannot pass
+admission. **No live start followed this correction** because the RAM stop had
+already occurred; A/B evidence below applies to the preceding exact patch only.
+
+The patch rejects the first non-finite result, including partial output and
+`DONE nonfinite` received during STOP/drain. Native detection remains enabled.
+A locked process-wide allowance permits one initial native start; `restart` and
+`ensure_loaded` refuse resurrection. HTTP errors, SSE errors/`response.failed`,
+cleanup and cancellation remain; failed partial tool calls are withheld by LAB.
+Qualification config explicitly disables reasoning-close retry, reasoning-loop
+recovery, tool-call recovery, lazy loading, replicas, runtime MCP, vision,
+API monitor, context fitting and prompt/conversation caching. No native code changed.
+LAB transport retries and SDK `num_retries` are zero; SDK streaming remains false.
+Successful budgeted tool-loop turns are separate requests, not failure retries.
+
+The live-tested revision passed **34 offline tests** (21.33 s), including normal and first/mid-response
+failures across Chat Completions, Responses and Messages, streaming/non-streaming,
+LAB rejection, partial tools, cancelled/disconnected requests, real Python child
+startup failure/death and counted no-respawn checks. **49 unchanged upstream
+regressions passed** (31.03 s), including tools, usage, disconnect and silence
+cleanup. Upstream tests expecting replay/restart are intentionally replaced by
+the new assertions, not falsely reported as unchanged passes. These fake-engine
+results are distinct from live model qualification. No weights were corrupted. The final correction passed **41 offline tests**
+(35.35 s), including cancellation errors over all six HTTP route/stream combinations
+and zero-start queued cancellation. The same **49 unchanged upstream regressions passed again** (31.14 s)
+against that final copy; validation results below distinguish revisions.
+
+### Preparation, stages and measured stop
+
+Zero downloads and **no repeated packing**. The two isolated source copies add
+**96,484,158 logical / 107,637,904 allocated bytes** on D:. The existing
+1,485,311,220-byte direct pack is reused, not additional disk in this amendment.
+A private pre-packaging evidence snapshot measured 233,868,038 logical bytes;
+final validation/evidence allocation is recorded in the close-out manifest.
+Fresh full verification checked all
+6,840 existing source/dependency/model/MTP files in 403.245 s. The existing direct
+pack was independently rechecked in 17.058 s: all dense bytes/index rows, tokenizer,
+48 expert rows and references to both approved shards. The quarantined incomplete
+pack stayed untouched. Actual native process open files/mappings contained both
+approved GGUF shards; the engine log selected second-shard PLE and mmap experts
+with no `experts.bin`. Actual CUDA libraries and serving import path were checked.
+
+| Stage / check | Actual result |
+|---|---|
+| A startup | One engine start; ready in **52.7 s**, context 16,384; exact native/PLE files and 286-artifact binding verified |
+| A bounded inference | **Passed**, `READY`; max 64 output tokens, 120 s request / 600 s attempt, no replay. 36.139 s including identity checks; provider 20 input / 2 output tokens, 0 cached |
+| B LAB advisory | **Passed** through real `companion_contract_submit` MCP → durable job → existing independent worker → Strata. 66.107 s including submission; 56.801 s worker/admission interval; 122 input / 34 output tokens, 0 cached |
+| B correlation/review | One additional server request; job/attempt, exact binding, server/engine identity, timestamps and token counters agree. Codex accepted one relevant test suggestion without correction; no model-authored code |
+| C restricted OpenHands fixture | **Not dispatched**: RAM stop invalidated its prerequisite. No candidate edits, tool round trip or protected acceptance result |
+| Deliberate live failure / cancellation | **Not run** after the unexpected resource stop; offline tests are separate. Guard-triggered termination is not a completed cancellation qualification |
+
+| Fresh live interval | Peak summed owned-process RSS | Minimum available host RAM | Peak whole GPU |
+|---|---:|---:|---:|
+| Startup through readiness | 7,273,971,712 bytes | 15,550,148,608 bytes | 9,790 MiB |
+| A request and identity checks | 11,766,378,496 bytes | 10,854,604,800 bytes | 9,970 MiB |
+| B / subsequent guard stop | **20,046,356,480 bytes (18.67 GiB)** | **2,512,232,448 bytes (2.34 GiB)** | **10,036 MiB** |
+
+Samples cover the whole owned server tree and host/GPU. Available RAM stayed
+below 3 GiB for **15.606 s**, triggering the unchanged sustained-pressure guard
+at **661.5 s after launch**, after the successful advisory had completed.
+The hard 2 GiB floor and 11,776 MiB GPU ceiling were not crossed. Startup 600 s,
+request 120 s, one inference, 2,048 MiB engine VRAM reserve, native/mmap mode,
+loopback-only endpoint and all other limits were retained. No other process was
+terminated or model unloaded to create headroom.
+
+Before B, the isolated cap changed from absent/**Medium** to **Maximum** as
+already approved. A-based Strata admission planning reserved **31,789 MiB** of
+32,557.9 MiB, including measured runtime rounded up with an extra GiB, a separate
+GiB for context, 512 MiB LAB, 2 GiB Docker-host allowance, 2 GiB sandbox and 3 GiB
+headroom. **That plan proved insufficient as mmap residency grew during B**;
+it is not valid C admission evidence and is no longer enabled. B/C resolved
+budgets were recorded before dispatch: **8 steps, 1,536 output tokens / 16 KiB,
+16,384 context, 120 s/request, 600 s/attempt, 1 attempt, 0 transport retries,
+0 self-repair cycles, 15 s tests, 2 GiB/no-swap sandbox and 2 CPUs**. None increased.
+
+### Restoration and remaining decision
+
+The test store shares neither mutable settings nor admission state with the
+active installation. Its original absent cap row was restored (effective Medium),
+and original config bytes restored, disabling its Strata provider and removing
+the temporary memory plan. The completed advisory and review evidence remain.
+No test inference reservation remains. The first shutdown snapshot still showed
+two children exiting; later independent PID/create-time checks confirmed all
+owned identities gone and port 8080 absent. Shared Ollama, active configuration,
+settings, job states and defaults remained unchanged. Docker was unavailable and
+was not started; no OpenHands web application or other installation occurred.
+
+Another live start needs a **new decision following this measured RAM failure**:
+a source-reviewed way to bound native mmap working-set growth within the same
+physical limits, or a separately approved hardware/resource change. Neither is
+implemented or presumed viable here. Do not restart unchanged, tune repeatedly,
+raise limits, disable guards or enable routing. The existing B/C and isolated
+Maximum approvals need no duplicate permission if a new approved plan satisfies
+their prerequisites. Keep the reusable verified pack and original source.
+
+### Final source validation and publication checks
+
+Final source regression: **655 passed / 1 skipped**, 731.64 s; the skip is
+Windows developer-mode symlink support. This includes the 41 final optional
+Strata tests. The earlier 648/1 run (716.82 s) used the live-tested patch and is
+retained as earlier evidence, not added to the final count. The 49 upstream
+checks are a separate external suite; repeated runs are not additive coverage.
+Ruff, generated documentation, 46 Markdown files, 343 local links, 64 anchors,
+43 source-map symbols and the 239-file public-source audit passed. Both published
+patches apply cleanly to the exact base; the helper reproduces final bytes.
+
+Wheel/sdist inspection, separate non-editable install, v0.4.1 retention checks,
+archive identities and exact published-commit CI are recorded in the private
+close-out and [draft PR #1](https://github.com/nishdel/OmniLAB-Local-Agent-Bridge-/pull/1).
+Installed checks overlap the source suite. No private configuration, database,
+raw session log, weight or personal path is included in the published material.
+All eight README/workflow Mermaid blocks are unchanged; prior eight local and
+six GitHub renders are reused evidence, with **no fresh visual-render claim**.
+The eleven human checks remain two incomplete and nine untested.
+
 ## Direct-GGUF amendment outcome — 2026-10-13
+
+Historical preparation/retry-policy stop; superseded by the serving-patch qualification above.
 
 **Preparation passed; stage A stopped at a source-verified retry-policy
 incompatibility before server startup. Strata remains disabled and unqualified.**

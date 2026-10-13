@@ -21,6 +21,7 @@ def context_accounting(payload, limits):
     reserve output separately, and add the explicitly requested safety margin.
     Actual template/token counts are provider observations after dispatch.
     """
+    from .task_contract import digest
     size = lambda value: len(json.dumps(value, ensure_ascii=False).encode())
     by_role = {}
     for message in payload.get('messages', []):
@@ -36,7 +37,7 @@ def context_accounting(payload, limits):
         'safety_tokens': limits.context_safety_tokens, 'required_capacity_bound': required,
         'effective_context_tokens': limits.context_tokens, 'admitted': required <= limits.context_tokens,
         'classification': 'admitted' if required <= limits.context_tokens else 'conservative_admission_rejection',
-        'history_compacted': False, 'actual_input_tokens': None}
+        'history_compacted': False, 'actual_input_tokens': None, 'request_sha256': digest(payload)}
 
 
 def local_origin(value):
@@ -243,16 +244,45 @@ class ChatProvider:
                 if attempt >= limits.transport_retries:
                     raise
                 await asyncio.sleep(.1)
+            except asyncio.CancelledError as error:
+                if self.settings.get('exact_accounting') and not self.request_dispatched:
+                    error.termination_confirmed = True  # Cancelled model-free admission, no inference to reconcile.
+                raise
             except (ProviderError, httpx.HTTPError, TimeoutError) as error:
                 if not self.request_dispatched:
                     error.termination_confirmed = True
                 raise
         raise ProviderError('Transport retry budget exhausted')
 
+    def validate_mailbox(self, body, limits):
+        """Exact mode must not silently drop SDK features before normalization."""
+        if not self.settings.get('exact_accounting'):
+            return
+        allowed = {'model', 'messages', 'tools', 'stream', 'max_tokens', 'max_completion_tokens'}
+        if (set(body) - allowed or any(body[k] != limits.output_tokens for k in
+                                      ('max_tokens', 'max_completion_tokens') if k in body)):
+            self.last_usage = None
+            self.last_accounting = {'method': 'strata_pinned_exact_v1', 'admitted': False,
+                'classification': 'unsupported_sdk_feature', 'actual_input_tokens': None}
+            error = ProviderError('Unsupported SDK request feature/output setting for exact accounting')
+            error.termination_confirmed = True
+            raise error
+
     async def _chat(self, model, messages, limits, *, tools=(), stream=False):
         self.last_usage = None
+        self.last_accounting = None
+        # Caller-owned history/tools and settings cannot mutate the admitted
+        # snapshot while tokenizer/HTTP awaits yield control to another task.
+        messages, tools = json.loads(json.dumps([messages, tools], ensure_ascii=False))
+        limits = limits.model_copy(deep=True)
+        settings_identity = hashlib.sha256(json.dumps(self.settings, sort_keys=True).encode()).hexdigest()
         strata_before = None
         if self.backend == 'strata':
+            if self.settings.get('exact_accounting'):
+                for message in messages:
+                    content = message.get('content')
+                    if isinstance(content, list) and any(set(p) != {'type', 'text'} for p in content if isinstance(p, dict)):
+                        raise ProviderError('Unsupported exact accounting content block feature')
             strata_before = await self.inspect(model)
             if not strata_before['ready'] or not strata_before['identity_verified']:
                 error = ProviderError(strata_before.get('reason') or strata_before.get('identity_uncertainty') or 'Strata serving identity is unverified')
@@ -329,15 +359,39 @@ class ChatProvider:
         # Strata's MCP execution is never requested. OpenHands owns tool execution.
         accounting = context_accounting(payload, limits)
         self.last_accounting = accounting
+        wire = json.dumps(payload, ensure_ascii=False).encode('utf-8')
+        if self.settings.get('exact_accounting'):
+            from .strata_accounting import count_request, exact_accounting, MAX_REQUEST_BYTES
+            try:
+                if self.backend != 'strata' or len(wire) > MAX_REQUEST_BYTES:
+                    raise ValueError('Unsupported provider or serialized request byte limit exceeded')
+                evidence = await count_request(self.settings['exact_accounting'], self.settings,
+                                               json.loads(wire), strata_before)
+                accounting = exact_accounting(accounting, evidence, limits, strata_before)
+                if settings_identity != hashlib.sha256(json.dumps(self.settings, sort_keys=True).encode()).hexdigest():
+                    raise ValueError('Provider settings changed during counting')
+                current = await self.inspect(model)
+                if current != strata_before:
+                    raise ValueError('Serving identity/settings changed during counting')
+                self.last_accounting = accounting
+            except Exception as failure:
+                accounting = accounting | {'admitted': False, 'classification': 'exact_counting_unavailable',
+                    'method': 'strata_pinned_exact_v1', 'rejection_reason': str(failure)}
+                self.last_accounting = accounting
+                error = ProviderError('Exact context accounting failed closed: ' + str(failure))
+                error.context_accounting = accounting
+                raise error from failure
         if not accounting['admitted']:
-            error = ProviderError('Conservative whole-prompt context admission failed')
+            error = ProviderError('Exact whole-prompt context admission failed' if accounting['exact_tokenizer']
+                                  else 'Conservative whole-prompt context admission failed')
             error.context_accounting = accounting
             error.termination_confirmed = True  # No generation dispatched for this request.
             raise error
         async with self.client(limits.inference_deadline_seconds) as client:
             if not stream:
                 self.request_dispatched = True
-                async with client.stream('POST', self.origin + ('/api/chat' if native else '/v1/chat/completions'), json=payload) as response:
+                async with client.stream('POST', self.origin + ('/api/chat' if native else '/v1/chat/completions'),
+                                         content=wire, headers={'Content-Type': 'application/json'}) as response:
                     if (native or self.backend == 'strata') and response.is_error:
                         detail = bytearray()
                         async for chunk in response.aiter_bytes():

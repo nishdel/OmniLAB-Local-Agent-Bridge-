@@ -241,3 +241,8 @@ docs/qualification/strata-serving-tested-provenance.json
 docs/qualification/strata-file-release-evidence.json
 scripts/strata_session_gate.py
 tests/test_strata_session_gate.py
+localagentbridge/strata_accounting.py
+localagentbridge/strata_count_worker.py
+scripts/check_strata_prompt_parity.py
+tests/test_strata_accounting.py
+tests/test_strata_accounting_parity.py

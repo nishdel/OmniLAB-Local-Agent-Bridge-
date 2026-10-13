@@ -3,6 +3,32 @@
 See the [complete workflow and source map](WORKFLOW.md) for entry points, actual
 stored states, transport, data locations and accounting boundaries.
 
+## Opt-in pinned Strata context accounting
+
+Exact admission is implemented and [offline-verified](SELECTIVE-IMPLEMENTATION-REPORT.md#exact-context-accounting--2026-10-13).
+It does not enable Strata or qualify the memory plan. Only a trusted model profile
+may set `context_accounting = { mode = "strata_pinned_exact_v1", manifest_path =
+"<supervisor-selected absolute local path>", manifest_sha256 = "<reviewed SHA-256>" }`.
+Do not copy placeholder paths/hashes into an active configuration. Keep the setting
+absent until the supervisor binds the actual model/profile, config, source,
+tokenizer/template, dependencies and patched runtime to the reviewed manifest.
+There is no task/model-supplied count and no fallback after exact counting fails.
+
+The request still reserves configured output and LAB safety plus Strata's eight
+context tokens, against the minimum contract/runtime context and 16,384 ceiling.
+The complete serialized payload retains the 1,000,000-byte mailbox bound. Streaming,
+images, forced tools and unaccounted SDK features fail closed in exact mode.
+One bounded helper uses the already approved Python/tokenizer assets; it cannot
+load weights, start an engine/listener, fetch assets or spawn children. Windows
+containment includes the interpreter redirector. Helper memory is released each
+turn, and each complete retained history is re-counted. Revert by removing the
+profile's opt-in setting; conservative admission then applies. No active profile
+was changed during implementation.
+
+The prior RAM screens are not reduced. Add 0.5 GiB provisional counter/IPC allowance
+and retain the exclusive-session and memory-growth prerequisites in the report.
+Offline fit neither spends nor renews startup authorization.
+
 ## Qwen27 project workflow
 
 Activation status: enabled and live-tested for this project after independent technical acceptance. Documentation and small-fix categories use supervised local-first routing; test generation remains a scoped supervisor decision. Both broad pilots remain disabled.

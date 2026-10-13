@@ -87,14 +87,17 @@ sequenceDiagram
 The sequence describes the implemented route, **not complete Strata qualification**.
 Ollama/Qwen27 and Qwen35 have specific accepted OpenHands cases. The **Strata 0.1.43
 engine with LAB-specific serving patch**, final revision plus engine-only
-`STRATA_FILE_RELEASE=1`, now passed a fresh bounded probe and durable LAB advisory.
+`STRATA_FILE_RELEASE=1`, previously passed a bounded probe and durable LAB advisory.
 Native mapped-page release was verified active, but idle RAM stayed below the
 6 GiB admission requirement. A competing inference process later triggered the
 whole-GPU guard during observation. OpenHands/Strata and deliberate live
 failure/cancellation checks remain unqualified; general Strata routing is disabled.
-The [model-free readiness audit](docs/SELECTIVE-IMPLEMENTATION-REPORT.md#next-session-readiness-decision--2026-10-13)
-withholds another startup: the complete memory envelope and SDK context admission
-remain unresolved; store-local reservations do not provide machine-wide exclusivity.
+The [opt-in exact-accounting prerequisite](docs/SELECTIVE-IMPLEMENTATION-REPORT.md#exact-context-accounting--2026-10-13)
+is implemented and offline-verified through LAB's durable mailbox/provider path.
+The saved SDK fixture needs 7,408 tokens including output and Strata's reserve;
+each complete later request is counted again. This does not qualify memory fit or
+OpenHands/Strata execution. The complete memory envelope and exclusive-session
+procedure still block another startup; store-local reservations are not machine-wide locks.
 Test settings were restored and active LAB/Ollama preserved. See the
 [current qualification](docs/SELECTIVE-IMPLEMENTATION-REPORT.md#windows-mapped-page-release-trial--2026-10-13)
 and [workflow, lifecycle and trust views](docs/WORKFLOW.md).

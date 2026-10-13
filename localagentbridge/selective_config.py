@@ -53,7 +53,7 @@ def validate_policy(value):
     profiles = value.get('model_profiles', [])
     seen = set()
     for profile in profiles:
-        if set(profile) - {'model','backend','identity','limits','provider'} or not all(profile.get(k) for k in ('model','backend','identity','limits')):
+        if set(profile) - {'model','backend','identity','limits','provider','context_accounting'} or not all(profile.get(k) for k in ('model','backend','identity','limits')):
             raise ValueError('Invalid qualified model profile')
         key = (profile['backend'],profile['model'])
         if key in seen:
@@ -61,6 +61,11 @@ def validate_policy(value):
         seen.add(key)
         from .task_contract import TaskLimits
         TaskLimits.model_validate(profile['limits'])
+        if 'context_accounting' in profile:
+            from .strata_accounting import validate_selection
+            if profile['backend'] != 'strata':
+                raise ValueError('Exact accounting is only supported for a pinned Strata profile')
+            validate_selection(profile['context_accounting'])
         validate_policy({'providers':{profile['backend']:profile.get('provider',{})}})
     if defaults and (defaults['backend'], defaults['model']) not in seen:
         raise ValueError('Default requires a qualified model profile')

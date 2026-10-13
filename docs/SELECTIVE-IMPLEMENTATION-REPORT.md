@@ -1,8 +1,178 @@
 # Selective local execution implementation report
 
+## Exact context accounting — 2026-10-13
+
+**Exact-accounting prerequisite implemented and offline-verified. Strata remains
+experimental and disabled.** Local and remote starting HEAD were both
+`5201055bba2775f421f46dfbfbf28a0dc9c570ec`, with a clean development worktree and
+open draft PR #1. Direct Codex work was explicitly requested. No inference,
+engine, Strata listener, controller or Docker startup was performed. The active
+a9a4bad runtime's 88 files and configuration were preserved; no installation,
+serving patch, model, dependency, default, admission state or physical limit changed.
+
+### Delivered admission and independent proof
+
+`model_profiles[].context_accounting` opts one supervisor-selected Strata profile
+into `strata_pinned_exact_v1`; absent configuration keeps the conservative path.
+The policy accepts only a local manifest path plus SHA-256, never a task-supplied
+count or loading path. `local_profile.provider_settings` carries the selected
+profile identity into normal `ChatProvider` admission. SDK features that LAB does
+not account for are rejected before dispatch, including response-format options,
+images, forced tools, streaming and unknown message/block/schema fields.
+
+The short-lived model-free helper imports verified upstream prompt preparation
+and the extracted tokenizer, without constructing an Engine. Read-only asset
+guards, network/process/write guards, a 30-second counting deadline and Windows
+job containment cover the Python venv redirector and child. The tokenizer loads
+once for each complete request and is released at helper exit: no prompt/history
+cache or long-lived asset cache. This intentionally pays initialization cost each
+turn so the counter does not stay resident alongside generation. Missing assets,
+unsupported settings, counting errors and stale evidence fail closed.
+
+Provenance binds upstream `7695859aa13afb248bdb4d36f9b2e95707db079d`, separate LAB
+patch `3a0ca878f80c66e26c26b429e00db71ccb3c9febcc34056728602ee996d05190`, server
+`670a36ec733fadfd0880035180e1345483ea21576a90b3501b807d68209d39f0`, template
+`12827f24b742ea4e80cdc12dbcf9622227056b9f797252a3149263d4f9aaadce`, tokenizer/source
+file hashes, interpreter, Jinja2 3.1.6, regex 2026.9.10 and MarkupSafe 3.0.3.
+The trusted runtime binding must cover those same assets and model/profile/config
+identity. Counter/helper revisions, request/settings hashes and reserve details
+are recorded separately from future provider-reported usage.
+
+| Saved fixture measurement | Value | Meaning |
+|---|---:|---|
+| Normalized serialized request | 25,951 bytes | Complete system/history/tools/settings; independent 1,000,000-byte mailbox/request ceiling remains |
+| Historical conservative capacity | 27,487 | Serialized bytes + 1,536 output + zero configured LAB safety |
+| Genuine pinned input count | 5,864 | Complete server-prepared token IDs, including template prefixes and literal control-token handling |
+| Historical input + output | 7,400 | Correct subtotal; omitted the server's independent eight-token context reserve |
+| Required exact capacity | **7,408 / 16,384** | 5,864 input + 1,536 output + zero LAB safety + eight server reserve |
+
+The zero LAB safety value is the existing qualification contract, not a reduction;
+nonzero safety is independently preserved and tested. Effective context is the
+minimum of contract, verified runtime capacities and 16,384. Exact counting does
+not change output, byte, tool-result, memory, step, retry or runtime gates. The
+immutable serialized request sent over HTTP is the same snapshot admitted; caller
+mutation, changed settings/runtime or stale count hashes cannot substitute another
+request. Every complete tool-loop turn is rechecked, without truncation or repair.
+
+The original SDK fixture and its evidence remain unchanged. A fresh isolated
+durable job took that envelope through the actual mailbox loop, normalization,
+counting, mock-only provider transport, evidence and reservation cleanup. It
+finished awaiting independent review, with no production qualification record.
+Its executor and live identity were explicit fakes: this is **not** fresh SDK or
+native execution. A separate oracle invoked the pinned HTTP handler's actual
+`_openai` path up to captured generation input, with fake lifecycle and no listener;
+the complete token IDs matched. Eight growing tool-history turns also matched,
+including Unicode, escaped JSON, literal control tokens, calls/results and retained
+reasoning. Public synthetic tests cover just-below/exact/above capacity, reserves,
+unsupported/untrusted requests, missing assets, changed identities/settings,
+stale payload/counts, byte limits and rejected-job lifecycle with zero generation
+requests for the rejected turn. Preflight counts are not observed usage or savings.
+
+### Counter cost and remaining activation gate
+
+Three final normal counter calls took **3.68–3.75 seconds**; peak summed owned
+process working sets were **189,009,920 bytes (180.25 MiB)**, with peak summed
+private commit 173,449,216 bytes (165.41 MiB). This includes the venv redirector,
+Python and owned console helper; it is a conservative process sum rather than
+unique physical consumption, sampled every 50 ms using Windows counters. Parent
+working-set delta was 2,748,416 bytes (2.62 MiB). All owned identities were gone
+after each bounded call. OS caches were not cleared. The independent handler's first/warm
+preparation took about 38/11/10 ms after asset initialization; normal admission
+does not claim those warm times because it starts a fresh helper per request.
+Private evidence retains process commit/working-set peaks and sampling limitations.
+
+Retain all physical guards and the previous memory-growth uncertainty. Add a
+**0.5 GiB counter/IPC allowance** to the provisional planning screens: **22.5 GiB
+pre-start** with Docker already resident, **11 GiB before implementation**, and
+**9 GiB plus the unconsumed 2 GiB sandbox allowance before later turns**. This is
+6.303 GiB more pre-start headroom than the earlier clean 16.197 GiB session. It is
+not a verified fit or permission to start. Exact token fit cannot establish
+native context/generation growth. The exclusive-session procedure below still
+requires operator-controlled admissions and fresh host measurements; no scheduler
+or lock claims control over older LAB stores or independent applications.
+
+Earlier final-patch A/B and the older f6807958 A/B remain historical evidence.
+OpenHands/Strata C and deliberate live failure/cancellation remain pending.
+Counter cancellation is model-free process cleanup, not a passed inference
+cancellation test. General routing stays disabled.
+
+### Bounded installation and memory explanation
+
+Targeted read-only metadata inventory, with file-ID deduplication and allocated
+sizes, measured **396,791,058 logical / 396,796,184 allocated bytes** in the core
+executable directory, and **88,253,379,121 / 88,283,867,904 bytes** in the D-drive
+Strata assets directory. Together these are **88.650 decimal GB / 82.562 GiB
+logical**, including retained archives, dependencies, source copies and the
+untouched incomplete pack. Exact paths and component/drive totals are private.
+Shared Ollama storage, Docker host virtual disks and LAB test/evidence packages
+are listed separately; guest image sizes are not added to their host disks.
+
+The approved payload receipts sum to **64,664,303,372 bytes** (64.664 decimal GB,
+60.223 GiB). Source export reused 1,003,943 cached bytes; model/range retries and
+HTTP overhead prevent treating that sum as measured network traffic. **90–95 GB
+retained / about 100 GB preparation peak / 120 GiB reserved free space** were
+planning quantities, not three measurements of a download. No downloads or
+cleanup occurred in this task.
+
+The configured and historically loaded Strata model is the pinned ISTA-DASLab
+**Qwen3.8-Flash-Next GSQ-RCO Coder**, IQ1_M, `qwen4exp`, 256 experts/10 active,
+with the required second-shard PLE data and separately retained MTP inputs/runtime
+conversion. It is not the Ollama dense `qwen3.8:27b` Q4_K_M (`qwen35`) or the
+installed `qwen3.6:35b` Q4_K_M (`qwen35moe`, 35B-A3B). Private records distinguish
+raw local manifest hashes, weight digests and historically provider-reported
+identities; an API model alias alone is never used as weight identity. Pinned
+upstream [model guidance](https://github.com/Niko1221/Strata/blob/7695859aa13afb248bdb4d36f9b2e95707db079d/docs/MODELS.md)
+recommends Coder for 32 GB RAM; this variant is already installed/configured.
+That model-only recommendation does not qualify the full protected LAB/SDK pipeline.
+
+The saved **14.6409 GiB** figure is the native process's sampled working-set peak
+(15,720,583,168 bytes), not total host RAM or a private-allocation-only figure.
+The OS peak was 14.6725 GiB; much of residency was nonprivate mapped pages.
+The sampled working-set peak was PID 3384 at **11:05:09.092 UTC**, during B;
+that extended diagnostic sample recorded **2.309 GiB** available RAM. This is a
+different sampling series from the guard's 2.414 GiB clean minimum below; neither
+is substituted for the other's guard timing or reinterpreted as a new pass.
+At the clean generation minimum only **2.414 GiB host RAM** remained, with whole
+GPU peak **10,234 MiB** before competition. The eventual 12,088 MiB guard stop
+followed another Ollama load. Thus 14.6 GiB itself was not the violated RAM cap:
+generation/loading peaks, remaining host headroom and the complete executor/
+history/sandbox requirement were the issue. Direct Ollama success uses different
+weights, quantization, placement and workload; it is not a controlled comparison.
+
+### Validation and owner handoff
+
+Fresh full regression: **650 passed, eight Tcl/Tk access failures, 42 skipped**;
+the eight native UI cases then all passed with access to the existing Tcl/Tk
+installation (no installation/change). Final focused admission/provider/lifecycle
+checks: **92 passed**, overlapping the full suite and including **one optional
+genuine pinned handler test across eight tool-loop requests and a no-tool request**. Private serving tests
+that create listeners were not enabled; public CI cannot run private tokenizer
+parity. Wheel/sdist contents and all **91 installed runtime files** were checked;
+isolated no-download installation and the retained v0.4.1 upgrade fixture passed.
+Installed-package tests overlap source tests and are reported separately. Ruff,
+46 Markdown files, local links/anchors, source-map symbols and the **247-file**
+publication allowlist passed. Private artifacts are excluded. The exact published
+commit's CI status is recorded at publication; older green runs are not substituted.
+
+The refreshed private idle kit uses an isolated package built from this candidate,
+with a separate empty/paused store and execution disabled. Its checked launcher
+prints the exact package/hash identity before opening the dock. The old e5c6337
+kit is preserved as historical evidence. Follow the [idle-only owner steps](MANUAL-RELEASE-TESTING.md#strata-follow-up-one-guided-owner-session--2026-10-13).
+All eleven human rows remain **two incomplete/nine untested**. Core LAB/README
+review, applicable human controls, reviewer approval and an owner scope decision
+are separate from Strata activation: fresh memory/exclusivity admission, separately
+authorized startup, C and deliberate live safety checks. No gate is waived and
+no merge, tag, release, default change or activation is performed. Mermaid blocks
+are unchanged; earlier rendering evidence is reused, not presented as fresh.
+
+Private evidence is retained in the development worktree's ignored
+`data/strata-accounting-20261013` directory: exact manifests, mailbox receipts,
+handler parity, cost measurements, bounded storage inventory, package identities
+and idle-kit checks. Nothing in that directory is public package/CI material.
+
 ## Next-session readiness decision — 2026-10-13
 
-**Decision C: do not spend another startup yet.** A lower-background session has
+**Historical 5201055 decision C: do not spend another startup yet.** A lower-background session has
 not demonstrated the required headroom, and the unchanged LAB context policy
 rejects the reconstructed SDK fixture before generation. Neither of the two
 inspected native memory options resolves these prerequisites. This is an offline

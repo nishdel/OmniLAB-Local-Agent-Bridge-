@@ -22,10 +22,18 @@ Actual tester/date and observation evidence are pending. Automated patched-Strat
 A/B results do not verify dock selection, persistence, displayed identity, progress,
 errors or cancellation; those existing rows remain incomplete/untested. This existing table
 is the sole result location for the authorized unpublished session; issue
-publication remains unauthorized. The current e5c6337 isolated runtime uses the
+publication remains unauthorized. The refreshed exact-accounting candidate uses the
 [Strata follow-up guided session](../MANUAL-RELEASE-TESTING.md#strata-follow-up-one-guided-owner-session--2026-10-13);
 the historical Qwen27 kit remains available as earlier evidence.
 All eleven result rows and their full criteria remain unchanged.
+
+Fresh offline evidence: complete saved SDK prompt accounting and eight-turn
+token-ID parity against the pinned server preparation; mock-only durable mailbox
+success and fail-closed lifecycle coverage. These are automated checks, not human
+observations or OpenHands/Strata qualification. The new idle-only kit has its own
+reviewed wheel/runtime identity, empty paused store and disabled execution. The
+e5c6337 kit remains historical. Core reviewer/human/scope gates and experimental
+Strata memory/exclusivity/C/live-safety gates remain separate; neither is waived.
 
 The current 27B configuration independently passed the frozen UTC repository task.
 The later bounded batch also accepted Qwen35 fixture and UTC; Gemma accepted

@@ -1,5 +1,11 @@
 # Local-agent contribution ledger
 
+The exact-context accounting implementation on 2026-10-13 used direct Codex work
+as explicitly required by the owner. No local delegation or inference occurred.
+The new counter and tests are Codex-authored; genuine tokenizer/handler parity is
+model-free evidence, not a local-agent implementation contribution. Existing
+local-first policy remains unchanged outside this task.
+
 The initial entries below use the existing direct Bridge with GPT-OSS 20B, thinking low, against
 base `cc88d4d` (preserved local v0.5 baseline). Only one inference ran at a time.
 The coordinating source was a separately hashed frozen snapshot, imported by

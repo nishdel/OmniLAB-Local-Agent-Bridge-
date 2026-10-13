@@ -40,11 +40,12 @@ Core tests are deliberately small. Conditional tests activate for the named chan
 
 ### Strata follow-up: one guided owner session — 2026-10-13
 
-Use the isolated test package identified in the [current implementation
-report](SELECTIVE-IMPLEMENTATION-REPORT.md#approved-strata-preparation--2026-10-13),
-not the active a9a4bad controller or the historical kit below. Its imported runtime
-matches e5c6337, wheel SHA-256
-`15ff00b806600d8f13db336d9d7109234cc65067e58bf1cb2ebbbf1610de1499`.
+Use the refreshed isolated test package identified in the [exact-accounting
+report](SELECTIVE-IMPLEMENTATION-REPORT.md#exact-context-accounting--2026-10-13),
+not the active a9a4bad controller or the historical kit below. Its private identity
+record binds every installed runtime file and the reviewed candidate wheel.
+The old e5c6337 kit/wheel (`15ff00b806600d8f13db336d9d7109234cc65067e58bf1cb2ebbbf1610de1499`)
+is preserved; it cannot validate this newer code.
 The supervisor supplies the private interpreter/configuration paths and the
 matching immutable identity record; no public instruction guesses those paths.
 The supplied private `manual-kit/open-dock.ps1` verifies runtime/configuration
@@ -64,7 +65,8 @@ Use this single session order, stopping dependent steps at their actual gate:
    records. Compare any displayed Strata state with provider-status diagnostics;
    physical files do not establish a serving binding. No runnable Strata profile
    exists yet, so an absent choice is expected and live identity stays untested.
-   Record tester/date.
+   Record tester/date. If the UI does not display a commit/build hash, record that
+   absence and retain the launcher's verified identity; do not invent a UI field.
 2. **Selection and persistence:** once a Strata profile is configured, inspect its
    unavailable reason and verify that it cannot silently substitute Ollama. Keep
    that portion pending while no profile exists. Save an available

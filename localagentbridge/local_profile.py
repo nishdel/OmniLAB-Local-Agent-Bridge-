@@ -55,5 +55,8 @@ def provider_settings(policy, contract):
             if contract.exact_identity != profile['identity']:
                 raise ValueError('Selected identity differs from the qualified profile')
             settings.update(profile.get('provider', {}))
+            if 'context_accounting' in profile:
+                settings['exact_accounting'] = deepcopy(profile['context_accounting'])
+                settings['_accounting_profile'] = {'model': profile['model'], 'identity': profile['identity']}
             break
     return settings

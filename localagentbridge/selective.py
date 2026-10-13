@@ -431,6 +431,7 @@ async def implementation(store, job, provider, contract, sandbox):
         atomic_json(intent_path, {'request_hash': digest(message), 'started': time.time(), 'request': body})
         started = time.time()
         try:
+            provider.validate_mailbox(body, contract.limits)
             answer = await provider.chat(contract.model, body['messages'], contract.limits, tools=tools)
         except Exception as error:
             from .measurements import local_usage

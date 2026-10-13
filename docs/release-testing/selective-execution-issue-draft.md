@@ -246,18 +246,20 @@ wheel/sdist, upgrade, lint/docs/audit/diff and cleanup records are private in
 openhands-moe-20261010. Model identities, original checkouts and accepted Qwen27
 patch preserved. Pilots/general routing inactive; human verification still pending.
 
-- Q-15 (current, local entry): The live-tested serving patch passed 34 offline checks and 49 unchanged upstream regressions; the final cancellation-reporting correction passed 41 offline checks and remains untested live. Exact-identity Stage A and one MCP/durable LAB → Strata advisory passed; subsequent available RAM below 3 GiB for 15 seconds stopped the owned runtime. C and deliberate live failure/cancellation checks were not run. All owned identities/listener and reservation are now reconciled; test Maximum restored to absent/Medium, active LAB/Ollama unchanged. No general activation or human acceptance. See the [current report](../SELECTIVE-IMPLEMENTATION-REPORT.md#serving-patch-qualification--2026-10-13).
+- Q-15 (current, local entry): Final serving patch 3a0ca878… with engine-only STRATA_FILE_RELEASE=1 passed 41 fresh offline checks, exact-identity A and one correlated MCP/durable LAB advisory. Native release activation is verified. Idle RAM 4.51–4.67 GiB remained below 6 GiB admission; the full sandbox/headroom allowance also did not fit. A competing inference process later preceded the 12,088 MiB whole-GPU guard stop during observation. C and deliberate live failure/cancellation checks were not run. Owned resources/reservation are reconciled; test cap/config restored and active LAB/Ollama preserved. Earlier f6807958… evidence remains historical. No general activation or human acceptance. See the [current report](../SELECTIVE-IMPLEMENTATION-REPORT.md#windows-mapped-page-release-trial--2026-10-13).
 
 - Q-20 (close-out): Usage identity bindings and missing/duplicate/conflict checks now pass. Historical generation-only baseline and shared hybrid supervision do not provide complete matched costs. No new comparison was run; net savings remain unknown. Mixed controller usage is retained explicitly. This local entry is not a published issue.
 
 
 ## Approved Strata follow-up — 2026-10-13
 
-The [current preparation/qualification report](../SELECTIVE-IMPLEMENTATION-REPORT.md#serving-patch-qualification--2026-10-13)
+The [current preparation/qualification report](../SELECTIVE-IMPLEMENTATION-REPORT.md#windows-mapped-page-release-trial--2026-10-13)
 supersedes older claims that installation approval is absent. The new isolated
 LAB runtime matches e5c6337; the active a9a4bad deployment remains unchanged.
-All approved raw assets and the direct-GGUF pack are verified. Patched serving
-passed A/B; subsequent RAM pressure stopped it before C and live safety tests. The
+All approved raw assets and the direct-GGUF pack remain verified. Final patched
+serving with mapped-page release passed fresh A/B; insufficient headroom blocked C,
+and a later competing-runtime GPU guard ended observation. Live safety tests
+remain unrun. The
 private idle-display kit has selective execution disabled, a paused empty store
 and no controller or inference. Live progress/errors/cancellation and Strata
 selection/persistence require later readiness and qualification; no cosmetic

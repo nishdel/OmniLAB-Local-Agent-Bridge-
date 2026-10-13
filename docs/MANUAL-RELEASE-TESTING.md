@@ -92,10 +92,11 @@ All M01–M06/C01–C06 criteria below remain in force. A clean Windows host, a 
 managed-review callback and a matched performance pilot retain their own named
 prerequisites; missing prerequisites leave those portions open. This sequence
 neither authorizes extra installation nor general Strata activation. The approved
-serving patch passed A and one durable B advisory, then sustained RAM pressure
-stopped the runtime before C and deliberate live cancellation/failure checks.
+final serving patch plus engine-only mapped-page release passed fresh A/B.
+Idle RAM remained below admission; a later competing-runtime GPU guard ended
+observation before C and deliberate live cancellation/failure checks.
 The conditional isolated Maximum cap was used and restored to absent/Medium.
-No human row passed; see the [current outcome](SELECTIVE-IMPLEMENTATION-REPORT.md#serving-patch-qualification--2026-10-13).
+No human row passed; see the [current outcome](SELECTIVE-IMPLEMENTATION-REPORT.md#windows-mapped-page-release-trial--2026-10-13).
 
 <a id="current-qwen27-disposable-display-kit--2026-10-10"></a>
 ### Historical Qwen27 disposable display kit — 2026-10-10

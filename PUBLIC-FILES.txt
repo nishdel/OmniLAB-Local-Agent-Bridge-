@@ -238,3 +238,4 @@ docs/qualification/strata-serving-provenance.json
 docs/qualification/STRATA-LICENSE.txt
 docs/qualification/strata-serving-tested.patch
 docs/qualification/strata-serving-tested-provenance.json
+docs/qualification/strata-file-release-evidence.json

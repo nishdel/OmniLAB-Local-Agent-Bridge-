@@ -17,7 +17,7 @@ Codex registration. Generic distribution defaults remain unchanged.
 |---|---|---|
 | Ollama | Existing 0.40.2 service, loopback `http://127.0.0.1:11434` | Exact Qwen identity and native options checked before admission; loaded digest/context and runner flags checked before returning tool calls |
 | OpenHands | Existing SDK/tools 1.53.0 in immutable Docker image below | Networkless mailbox executor; real editor/terminal tasks and protected independent acceptance |
-| Strata | Pinned isolated runtime/assets and independently verified direct-GGUF pack | Disabled; patched A/B passed, then RAM guard stopped runtime; C unrun |
+| Strata | Pinned isolated runtime/assets and independently verified direct-GGUF pack | Disabled; final patched A/B + mapped release passed; C lacks memory; later GPU guard stop |
 | Dock | Existing native Tk companion, same durable store as the jobs | Automated presentation/window checks; human interaction remains untested |
 
 Qwen tag: `qwen3.8:27b`; full manifest identity:
@@ -95,8 +95,9 @@ accepted patches, model assets and history. Never reset or clean the checkout.
 ### Independent Strata status
 
 As of **2026-10-13**, Strata remains **disabled for general routing**. The approved
-serving patch passed one live inference and one LAB advisory; a later RAM guard
-stop blocks OpenHands qualification and deliberate live safety checks.
+final serving patch with isolated `STRATA_FILE_RELEASE=1` passed fresh A/B. Native
+release is active but idle RAM is below 6 GiB admission; a later competing-runtime
+GPU guard stop ended observation. C and deliberate live safety checks remain open.
 Current upstream inspected: [7695859aa13afb248bdb4d36f9b2e95707db079d](https://github.com/Niko1221/Strata/tree/7695859aa13afb248bdb4d36f9b2e95707db079d),
 including `serve/server.py`, `serve/frontend.py`, `serve/runconfig.py`, setup,
 requirements, model/install guidance and cancellation/context/tool tests.
@@ -117,16 +118,18 @@ Following the owner's approval, the pinned 0.1.43 CUDA 12 runtime, dependencies
 and all raw model/MTP inputs are installed and hash-verified. A small cuBLAS
 operation passed on the existing driver. The original expert-copy RAM failure
 remains quarantined. The approved direct-GGUF retry now passes independent pack
-validation. The separately reviewed serving-only patch then passed A and B on
-loopback port 8080 with exact loaded GGUF/PLE identity. Sustained available RAM
-below 3 GiB stopped the owned runtime before C; the service is now off. See the
-[current measured report](SELECTIVE-IMPLEMENTATION-REPORT.md#serving-patch-qualification--2026-10-13). Hardware and driver remain unchanged.
+validation. The earlier serving revision passed A/B and hit the RAM guard. The
+final serving revision plus the approved mapped-page option now also passed A/B
+with exact loaded GGUF/PLE identity. Insufficient idle headroom prevented C, and a
+later competing inference triggered the GPU guard; the service is now off. See the
+[current measured report](SELECTIVE-IMPLEMENTATION-REPORT.md#windows-mapped-page-release-trial--2026-10-13). Hardware and driver remain unchanged.
 
 #### Reproducing and rolling back the approved serving patch
 
 The final [patch](qualification/strata-serving.patch), including explicit cancellation
-errors, is offline-tested only. The [preceding tested patch](qualification/strata-serving-tested.patch)
-provided the A/B results; the RAM stop prevented another live start. Both change only `serve/server.py`
+errors, passed fresh offline tests and bounded A/B with the release option. The
+[preceding tested patch](qualification/strata-serving-tested.patch) and earlier
+A/B/RAM-stop evidence remain separate. Both change only `serve/server.py`
 from base `7695859aa13afb248bdb4d36f9b2e95707db079d`. The
 [helper](../scripts/strata_serving_patch.py) requires that file's exact upstream
 hash and an absent destination outside the original source tree:
@@ -164,8 +167,33 @@ reconcile any uncertain reservation, restore the saved test cap/config, and
 retain the separate patched copy as evidence. Original upstream bytes remain
 available; **do not launch them as a rollback test**, because they restore the
 known replay/restart conflict. Active LAB/Ollama never points at this copy.
-The current live RAM stop requires a new reviewed decision before another start;
-this reproduction command is not renewed inference authorization.
+The single approved mapped-release startup has been consumed. Another live
+session needs a new decision after the GPU guard stop, with no competing inference
+and sufficient memory admission; this reproduction command is not renewed
+startup authorization. Existing conditional B/C/Maximum approvals remain valid.
+
+#### Approved mapped-page release experiment
+
+Use only the existing pinned final serving copy and 0.1.43 CUDA 12 executable.
+The supported qualification-only JSON change was:
+
+```json
+{"env": {"STRATA_FILE_RELEASE": "1"}}
+```
+
+Add that entry alongside the existing engine environment; do not replace its
+other entries or set it globally. Preserve native/mmap/PLE, context, draft,
+caches, placement and all limits. The option is read once by the native process.
+Verify the official archive/member identity, exact patched imports, child
+environment, native activation and continuously measured host/GPU headroom.
+The [sanitized evidence](qualification/strata-file-release-evidence.json) records
+support and the fresh run: a lower native working set did not provide a valid C
+memory plan. No external working-set trimming, cache clearing, engine rebuild,
+new downloads, repacking or automatic restart was used or authorized.
+Rollback restores the isolated LAB cap/config and ends only the owned process;
+the experiment's immutable configuration remains evidence. It never changes the
+active deployment or a global environment variable. Do not replay this trial
+without a new startup decision.
 
 #### Configuration, diagnostics and exact selection
 

@@ -1,6 +1,164 @@
 # Selective local execution implementation report
 
+## Windows mapped-page release trial — 2026-10-13
+
+**The installed release option works on this path, and fresh A/B passed on the
+final serving revision. It did not establish enough headroom for C.** The idle
+observation was interrupted by the unchanged whole-GPU guard after competing
+inference appeared. No further generation, restart or alternate configuration ran.
+
+Started from clean local and remote **1371bd1944825d55ea9ccec869a910ac2e761021**.
+The frozen e5c6337 LAB build still matches all 89 checkout runtime files; active
+**a9a4bad/LAB/Ollama**, its configuration, settings and job states were preserved.
+The original source, native engine, dependencies, weights, direct pack and earlier
+f6807958… evidence remain separate and unchanged. No download or packing occurred.
+
+| Check | Result | Exact runtime/configuration | Evidence | Remaining limit |
+|---|---|---|---|---|
+| Mitigation support/activation | Supported and active | Strata 0.1.43 CUDA 12; final serving patch **3a0ca878…**; engine-only `env.STRATA_FILE_RELEASE=1` | Official archive/member hash, compiled option/branch, native enabled flag, 3.73 GiB advised-release log | A working-set hint, not a memory cap or measured reclaimed-byte count |
+| A | Passed | Binding **9f69a2de…**, config **740c480f…**; unchanged native/mmap/PLE and limits | Startup **49.82 s**; `READY` in **39.017 s** including identity checks; 20 input / 2 output tokens | One maximum-64-token probe |
+| B | Passed and independently accepted | Real MCP → durable job → existing LAB worker → same Strata binding | **71.508 s** including submission; 61.780 s worker interval; 43.8 s provider generation; **122 input / 34 output / 0 cached** | One advisory; no implementation or tool-loop claim |
+| Executor | Ready before trial | Existing image `sha256:b0ec53df107bdbb7b9df9c397ee56d4f7f74bc49d6e6550b16ca6f23e5748090`, SDK/tools 1.53.0 | Actual storage limits, nonroot/networkless configuration, protected checks; expected baseline failure and supervisor-written fixture pass | These are environment checks, not model-authored implementation |
+| C | Not dispatched | No copied startup plan, qualification entry or increased limit | Pre-competition idle RAM **4.51–4.67 GiB**; last clean sample **4.54 GiB**, **1.46 GiB short** of admission | Even 2 GiB sandbox + 3 GiB headroom is short by **0.456 GiB**, before extra controller/context/native-growth allowance |
+| Idle/safety | Observation interrupted; deliberate failure and live cancellation unrun | Planned non-generating window 600 s, bounded by the approved 720 s maximum | **406.622 s** observed; whole GPU reached **12,088 MiB**, guard ceiling 11,776 MiB | Guard shutdown is not user cancellation or a passed failure test |
+| Cleanup | Confirmed | Test cap restored to absent/**Medium**; original LAB test-config bytes restored | All owned PID/create-time identities gone; listener and reservation absent; no unrelated process/model stopped | General Strata routing and human acceptance remain disabled/pending |
+
+Exact hashes, counters and limits are in the sanitized
+[trial evidence](qualification/strata-file-release-evidence.json). The runtime is
+**Strata 0.1.43 engine with LAB-specific serving patch**, not stock upstream serving.
+Final patch SHA-256 is
+`3a0ca878f80c66e26c26b429e00db71ccb3c9febcc34056728602ee996d05190`;
+server SHA-256 is
+`670a36ec733fadfd0880035180e1345483ea21576a90b3501b807d68209d39f0`.
+The older **f6807958…** A/B evidence below is historical. These fresh results
+are on the final cancellation-corrected revision, not an inference from that older run.
+
+### Source, binary and effective environment
+
+Inspected pinned upstream **7695859aa13afb248bdb4d36f9b2e95707db079d**:
+[DETAILS](https://github.com/Niko1221/Strata/blob/7695859aa13afb248bdb4d36f9b2e95707db079d/docs/DETAILS.md),
+[mapped-release measurements/limits](https://github.com/Niko1221/Strata/blob/7695859aa13afb248bdb4d36f9b2e95707db079d/bench/results/2026-10-04-windows-mapped-release/README.md),
+`src/core/expert_source.cpp::FileExpertSource::release`, and upload/refill/adaptive
+release call sites in `src/program/generate.cpp`. The direct-GGUF branch releases
+full interior pages of each expert's three mapped roles after the GPU copies
+finish. Shared boundary pages, temporary/private/pinned buffers remain. The
+upstream benchmark used different hardware, quantization and a prototype; its
+reported savings are not this machine's qualification result.
+
+The installed executable SHA-256 **5f359e2d…** matches the member of the previously
+approved official CUDA 12 archive **344998f7…** (asset 630974439). Read-only PE
+inspection found the option string, executable reference, option comparison,
+static enabled storage and `VirtualUnlock` import/call evidence. During the trial,
+read-only process-memory inspection confirmed the compiled release function's
+static flag was **1**; its native log reported **3.73 GiB of VRAM-held expert
+ranges advised for release**. This demonstrates native activation beyond an echoed
+variable, without claiming how many bytes Windows actually reclaimed.
+
+The earlier launcher allowed only selected inherited environment names, and its
+configuration omitted this option, so the prior run used the disabled default.
+The new JSON uses the supported `env` entry; `serve.server.child_env` passes it to
+the owned native child. No user/system environment changed. Native argv, context,
+draft, caches, placement and reserve stayed identical; only the diagnostic log
+path changed alongside this single engine setting. Actual child environment,
+configuration, source, executable, both loaded GGUF shards and second-shard PLE
+were bound separately in the private manifest. Patch/base/native identities were
+not bypassed. The effective trial configuration remains immutable evidence after
+its processes exit; active LAB never references it.
+
+### What the memory evidence does and does not show
+
+The previous run recorded RSS, host availability and GPU usage, but not native
+private versus nonprivate working sets or system commit. Native RSS grew from
+7.08 GB at readiness to 11.56 GB after A and 19.84 GB during B. Serving Python stayed
+near 190 MB. The prior full regression began **after** the engine was stopped;
+there is no evidence that it caused the earlier pressure. Earlier client/validation
+and background accounting was incomplete. RSS sums are not unique physical RAM,
+and those data alone neither prove a leak nor isolate expert mappings.
+
+Fresh Windows counters distinguish working set from private commit. Across this
+session, sampled native working set peaked at **14.641 GiB** (the OS-reported
+process peak was **14.673 GiB**), versus **18.479 GiB** sampled in the earlier run.
+Fresh native private working set peaked at **2.919 GiB**, nonprivate at **11.767 GiB**,
+and private commit at **13.026 GiB**; these separate peaks need not coincide.
+Before competing work, idle native working set was about **14.046 GiB**: **2.919 GiB
+private + 11.128 GiB nonprivate**. Nonprivate includes shared images as well as
+file-backed pages. This is evidence consistent with a bounded mapped-page effect,
+not a controlled comparison: Docker was running only in this trial and background
+load differed. The mitigation did not establish a safe full tool-loop plan.
+
+Before competition, minimum available RAM was **2.414 GiB**, and GPU peak was
+**10,234 MiB**. Low-RAM samples spanned **14.759 s** near B; the next recovered
+sample was at 17.432 s, so the exact crossing time between samples is unknown.
+The existing sampled sustained-pressure guard did not fire then. During 398.507 s
+of uncontaminated idle samples, availability ranged **4.507–4.671 GiB**, with a
+linear trend of **−7.71 MiB/min**, while native working set/commit were nearly flat.
+Idle stability does not prove SDK/tool-history or multi-turn workload stability.
+
+System commit peaked at **32.807 GiB** against a **65.795 GiB** limit. The monitor
+recorded process page faults (about **5.74 million** additional native faults,
+not a hard-fault count), process I/O and system disk activity (about **23.95 GiB**
+read across physical disks, not uniquely attributable to Strata). Monitor working
+set peaked at **77.10 MiB**, client/worker sums at **138.55 MiB**, and executor-host
+sums at **3.127 GiB**. Protected executor processes did not expose every private
+counter; unavailable portions remain unknown. Median diagnostic sampling work was
+0.775 s, maximum 1.472 s. These sums can double-count shared pages; host available
+RAM and system commit remain the relevant system-wide observations.
+
+A separate `llama-server.exe` appeared **5.24 s before** the GPU guard event;
+a subsequent Ollama query showed `qwen3:14b-q4_K_M` resident. Per-process GPU
+allocation was unavailable, so exact attribution of the GPU increment is unknown.
+The last whole-host sample reached **12,088 MiB GPU / 2.062 GiB available RAM**.
+The guard stopped only the owned Strata tree at **698.47 s after launch**; the
+observer ended at 406.622 s instead of completing 600 s. No competing process or
+model was unloaded, no cancellation test was substituted, and no restart occurred.
+
+### Admission, restoration and validation
+
+Docker Desktop was initially stopped. Its ordinary startup used the existing
+image without pull/build/reconfiguration. The actual SDK and protected acceptance
+fixture passed preflight; those two supervisor-only containers were removed.
+C nevertheless failed the memory prerequisites before dispatch. The full 2 GiB
+sandbox allowance plus 3 GiB headroom already exceeds the last clean idle available
+RAM by 489,582,592 bytes, before additional context/history, controller or future
+native residency growth. The old startup plan was not relabelled or re-enabled;
+no positive C plan, capability or model-category qualification was created.
+
+All original budgets remained: 6 GiB admission, 2 GiB hard / 3 GiB for 15 s RAM
+stops, 11,776 MiB GPU ceiling, 2,048 MiB engine reserve, startup 600 s, request
+120 s, attempt 600 s, context 16,384, response 1,536, 8 steps, 15 s tests,
+2 GiB/no-swap/2 CPU sandbox, zero failed-request retries/self-repair/restarts.
+B used 788 serialized prompt bytes (2,324 conservative tokens including reserved
+output); its actual 122 input tokens do not qualify a full SDK prompt.
+
+Only the isolated cap was raised after A. It and the original LAB test configuration
+were restored. Fresh checks confirmed all owned identities gone, port 8080 absent,
+no reservation, and the exact B candidate independently accepted without repair.
+Docker was returned to its prior stopped state after no running containers were
+found. Active a9a4bad package/configuration/settings/jobs remain unchanged. The
+native setting died with its owned process; the stopped trial's configuration and
+all previous evidence are retained. No general activation, merge, release or
+human acceptance is implied.
+
+Fresh final-patch offline checks: **41 passed in 35.08 s**. An initial generic-test
+environment lacked Jinja; reusing existing pinned dependencies corrected that
+preflight error without installation. A guard-script module-path error was also
+corrected **before** its native-start marker was consumed. Exactly one native
+engine started. Earlier 49 upstream checks are reused evidence, not a fresh run.
+Final regression, packaging/audit and exact published-commit CI results belong to
+this report's closeout and [draft PR #1](https://github.com/nishdel/OmniLAB-Local-Agent-Bridge-/pull/1).
+CI without the private Strata source explicitly skips the optional patch cases.
+All eight Mermaid blocks remain unchanged; prior eight local/six GitHub rendered
+views are reused, with no fresh visual claim. Eleven human rows remain pending.
+
+The remaining decision is a new session with no competing inference and sufficient
+measured memory for complete SDK/context growth, sandbox and headroom. This run
+does not approve another start, a tuning sweep or physical-limit changes. Existing
+conditional B/C/Maximum approvals need no duplicate permission once prerequisites
+and a newly authorized startup are satisfied.
+
 ## Serving-patch qualification — 2026-10-13
+
+Historical preceding serving trial; superseded by the mapped-page trial above.
 
 **A and B passed with the LAB-specific serving patch. The unchanged RAM guard
 then stopped the owned runtime; C and deliberate live safety checks did not run.**

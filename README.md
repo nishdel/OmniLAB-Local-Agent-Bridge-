@@ -85,13 +85,15 @@ sequenceDiagram
 ```
 
 The sequence describes the implemented route, **not complete Strata qualification**.
-Ollama/Qwen27 and Qwen35 have specific accepted OpenHands cases. With **Strata
-0.1.43 engine with LAB-specific serving patch**, one exact-identity Stage-A probe
-and one durable LAB advisory passed. The unchanged RAM guard then stopped the
-owned runtime; the OpenHands fixture and deliberate live safety checks did not
-run. A subsequent cancellation-reporting correction is offline-tested only.
-Strata remains disabled for general routing. Test settings were restored;
-active LAB/Ollama was unchanged. See the [current qualification](docs/SELECTIVE-IMPLEMENTATION-REPORT.md#serving-patch-qualification--2026-10-13)
+Ollama/Qwen27 and Qwen35 have specific accepted OpenHands cases. The **Strata 0.1.43
+engine with LAB-specific serving patch**, final revision plus engine-only
+`STRATA_FILE_RELEASE=1`, now passed a fresh bounded probe and durable LAB advisory.
+Native mapped-page release was verified active, but idle RAM stayed below the
+6 GiB admission requirement. A competing inference process later triggered the
+whole-GPU guard during observation. OpenHands/Strata and deliberate live
+failure/cancellation checks remain unqualified; general Strata routing is disabled.
+Test settings were restored and active LAB/Ollama preserved. See the
+[current qualification](docs/SELECTIVE-IMPLEMENTATION-REPORT.md#windows-mapped-page-release-trial--2026-10-13)
 and [workflow, lifecycle and trust views](docs/WORKFLOW.md).
 
 ## Current project deployment
@@ -105,8 +107,9 @@ are an example qualification, not a mandatory model for other users.
 OpenHands SDK/tools 1.53.0 is exercised through the restricted, networkless
 container/mailbox path. **No OpenHands web UI is installed.** The optional Strata
 adapter and pinned runtime are installed in the isolated test environment,
-but Strata remains disabled and unqualified at the serving retry-policy gate. No
-loaded model or Strata service address is verified. Full human acceptance remains
+with exact loaded GGUF/PLE identity and bounded A/B inference verified in the
+isolated trial. It is currently stopped and disabled; insufficient memory
+headroom and remaining execution/safety qualification block general use. Full human acceptance remains
 outstanding in the
 [manual ledger](docs/release-testing/selective-execution-issue-draft.md).
 Operating token savings are **not established**.

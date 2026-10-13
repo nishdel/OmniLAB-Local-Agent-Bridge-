@@ -332,3 +332,18 @@ correlated in private evidence: **122 input / 34 output / 0 cached tokens**,
 intervals overlap. The later RAM stop blocked C and further live safety checks;
 no alternate provider, automatic restart or cloud inference was substituted.
 See the [measured outcome](SELECTIVE-IMPLEMENTATION-REPORT.md#serving-patch-qualification--2026-10-13). No token-savings claim is made.
+
+## Final serving revision with mapped-page release — 2026-10-13
+
+Fresh real MCP → durable LAB advisory used final patch **3a0ca878…** and the
+single isolated `STRATA_FILE_RELEASE=1` mitigation. The same bounded test suggestion
+was independently accepted without correction: **122 input / 34 output / 0 cached
+tokens**, 71.508 s including MCP submission, 61.780 s worker interval and 43.8 s
+provider generation. These intervals overlap. Exact binding, request increment,
+usage and candidate hash are in the [trial evidence](qualification/strata-file-release-evidence.json).
+Codex owned source/binary/security review, resource admission, monitoring and
+acceptance; no OpenHands implementation or model-authored code was produced.
+C lacked memory headroom; competing inference subsequently triggered the GPU
+guard. Deliberate live failure/cancellation checks remained unrun. No retry,
+alternate provider, cloud fallback or token-savings claim was made. See the
+[current outcome](SELECTIVE-IMPLEMENTATION-REPORT.md#windows-mapped-page-release-trial--2026-10-13).

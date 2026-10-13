@@ -1,6 +1,140 @@
 # Selective local execution implementation report
 
+## Direct-GGUF amendment outcome — 2026-10-13
+
+**Preparation passed; stage A stopped at a source-verified retry-policy
+incompatibility before server startup. Strata remains disabled and unqualified.**
+The owner approved the one direct-GGUF attempt and conditional test-store
+Maximum cap at `7cbaa117fac2913c2fa6a7246f711a5489fe1503`. Neither approval is
+missing. No new download, model inference or runtime modification occurred.
+
+| Component | Implemented | Freshly verified | Enabled | Published where | Remaining work |
+|---|---|---|---|---|---|
+| LAB / dock | Existing v0.5 and Strata adapter | 89 isolated runtime files match reviewed e5c6337 and 7cbaa11 source | Active a9a4bad/Ollama unchanged | Development branch / draft PR #1 | Human acceptance |
+| Strata preparation | Same 0.1.43 CUDA 12 / pinned dependencies and Coder weights | All 6,840 input hashes; complete direct-GGUF pack independently checked | Files only; no server/profile | Private installation; sanitized report in PR | Safe serving retry policy, loaded identity |
+| LAB → Strata advisory | Existing adapter / durable jobs | Not dispatched | Disabled | Development branch / PR | Stage A, measured admission plan, then B |
+| OpenHands → Strata | Existing restricted SDK/mailbox path | Not dispatched | Disabled | Development branch / PR | A/B, protected fixture and independent review |
+| Ollama / OpenHands | Existing qualified paths preserved | No new inference; earlier Qwen27/Qwen35 successes reused | Existing project configuration | Active a9a4bad and development branch | No new qualification claim |
+| Main / release | Separate older implementation | Remote main remains f6df420; latest release v0.4.1 | Unchanged | Default branch / release | Human/review/merge gates |
+
+### Fresh preparation evidence
+
+The clean checkout and published development head both began at **7cbaa11**;
+no newer work was reset. The reused non-editable LAB wheel is
+`15ff00b806600d8f13db336d9d7109234cc65067e58bf1cb2ebbbf1610de1499`.
+Imports resolve to that isolated installation, not the older workspace root or
+active a9a4bad package. Input verification freshly hashed both source exports,
+serving dependencies, both complete main GGUF shards, and raw/generated MTP
+assets: **6,840 unique files in 420.674 seconds**. Exact upstream commits, engine
+and weight identities are retained in the historical installation section below.
+
+The pinned `tools/iq_pack.py --gguf <first-approved-shard> --out
+<fresh-pack-direct-gguf>` ran once, **without `--experts-bin`**. The fresh directory
+was absent before launch, contains nine files, no expert copy or partial output,
+and cannot fall through to the quarantined pack. Independent checks verified:
+
+- All **1,475,120,640 dense bytes** against the original tensor spans; **1,079**
+  index rows and **302** native quantized tensors, offsets, shapes and padding.
+- **48** native expert rows, **256** experts per layer and **25,146,163,200**
+  referenced expert bytes in the first approved shard; no converted extra data.
+- Both freshly hashed shards and their metadata; the second shard's
+  `per_layer_token_embd.weight` requires explicit `--ple-gguf`. Source selection
+  with `experts.bin` absent is verified; **actual engine file selection is not**,
+  because no engine was started.
+- Token IDs, token types, vocabulary, merge ordering and template against GGUF
+  metadata. Dense SHA-256:
+  `99853263806e25450074fc9945f1e955b175bea05aa171ceeb6b5837bf6a1d9d`;
+  native expert table SHA-256:
+  `9ace1b92e1fe12595de469409e69dd52c8d5418c7981c405d9a51aa9d574dd3b`.
+
+| Fresh operation | Elapsed | Peak summed owned-process RSS | Minimum available host RAM | Peak whole GPU |
+|---|---:|---:|---:|---:|
+| Full input hash verification | 420.674 s | 37,957,632 bytes | 22,476,906,496 bytes | 361 MiB |
+| Single direct-GGUF preparation | 13.981 s | 1,771,102,208 bytes (1.65 GiB) | 20,003,127,296 bytes (18.63 GiB) | 361 MiB |
+| Independent pack validation | 12.472 s | 135,970,816 bytes | 22,499,262,464 bytes | 361 MiB |
+
+These are sampled process-tree and system measurements, not inference peaks.
+The owned Windows job and descendants stayed within two CPU affinity slots.
+All owned processes exited. Admission/stop limits remained 6 GiB / 2 GiB hard /
+3 GiB for 15 seconds, 11,776 MiB whole GPU and 900 seconds per preparation step.
+New pack disk: **1,485,311,220 logical / 1,485,321,080 allocated bytes** on D:,
+measured per file with Windows FileStandardInfo (excluding directory metadata).
+Private qualification evidence before regression added about 3.4 MB. No payload
+was downloaded. The previous incomplete pack's paths, sizes and mtimes are unchanged.
+
+### First compatibility stop and staged result
+
+At pinned Strata commit `7695859aa13afb248bdb4d36f9b2e95707db079d`,
+[`Service.run`](https://github.com/Niko1221/Strata/blob/7695859aa13afb248bdb4d36f9b2e95707db079d/serve/server.py#L3917-L3933)
+reissues generation once when non-finite logits occur before any output. There
+is no inspected configuration opt-out for that retry. The separate
+`reasoning_close_retry=false` option does not control it.
+[`ensure_loaded`](https://github.com/Niko1221/Strata/blob/7695859aa13afb248bdb4d36f9b2e95707db079d/serve/server.py#L3000-L3043)
+can also call `restart`, whose default allows three starts. LAB transport retries
+of zero cannot prevent these server-side actions. Disabling the NaN guard would
+weaken safety and was not attempted. A polling monitor cannot reliably prevent
+an in-process replay that has already begun.
+
+Three existing upstream `NonFiniteLogits` tests were run offline with their fake
+engine: first-token failure retries once, mid-reply failure does not replay,
+and two failures end in error. **3 passed in 0.196 s** (0.916 s process interval),
+confirming the conflict; they are not live inference or deliberate backend-failure
+qualification. The inspected server SHA-256 is
+`55ee9d1160f0da457cabe6f9dfea9884296b6d70fd3d14abd4ed42e6f79dd72b`.
+
+| Stage / check | Actual result |
+|---|---|
+| Preparation | Passed once; independent pack validation passed |
+| A: startup, loaded identity, initial 64-token inference | **Blocked before startup** by the unchanged runtime's retry behavior; zero live requests |
+| B: durable LAB advisory | Not dispatched; no job/request correlation or usage exists |
+| C: restricted OpenHands implementation | Not dispatched; no candidate, model-authored edit or protected test result |
+| Representative live backend failure | Not run; offline source diagnostic above is separate |
+| Live cancellation / inference termination | Not run; no generation existed to cancel |
+
+The first unexpected compatibility finding stopped further model execution.
+No controller or sandbox was launched. Stage A's authorized 600-second startup,
+120-second request / 600-second attempt, zero retries, 64-token initial probe,
+16,384 context / 1,536 response ceiling, native/mmap mode and 2,048 MiB engine
+VRAM reserve remain unchanged and **unexercised**. B/C budgets were not dispatched
+or relaxed. No measured Strata loading/inference plan can yet be established;
+the copied Ollama memory plan remains explicitly unverified.
+
+### Isolation, cleanup and next decision
+
+The new qualification data directory and companion SQLite file are physically
+distinct from the active installation. It has no inherited mutable settings,
+jobs or inference reservation. Compute cap belongs to `telemetry.Store` in
+`data_dir/usage.sqlite3`, separately from companion admission state. That test
+file was never created; the effective original and final cap are **Medium**.
+Conditional Maximum authorization remains valid after A passes, but was never
+used. The original test configuration is byte-identical; no restoration write
+was needed. Active configuration hash, settings and job states are unchanged.
+No owned process, port-8080 listener or test reservation remains. Shared Ollama
+stayed running without unloading a model or terminating another application.
+
+A new decision is required only for a **reviewed fail-closed serving change**:
+retain the pinned native engine/dependencies/weights and NaN detection, reject
+the first non-finite result, and prohibit automatic engine restart. Review and
+offline failure tests must precede a newly authorized single Stage-A attempt;
+rebind the changed serving source hash. This is outside the approved unchanged
+runtime scope. No patch, new version, guard relaxation or restart was applied.
+The approved direct pack can be reused; repeating preparation is unnecessary.
+
+Private reproducible receipts are `verified-inputs.json`,
+`direct-packing-result.json`, `model-pack-verification.json`, per-stage host/process
+logs, `upstream-retry-diagnostic.json`, `unexpected-stop.json` and `closeout.json`.
+Only this sanitized summary is public. Codex performed the authority-sensitive
+preparation/review; the intended local advisory was blocked, not replaced with
+Ollama or cloud inference. No token-saving claim or human acceptance is made.
+
+Validation and publication results are recorded with this amendment in draft
+PR #1. The README/workflow Mermaid blocks are unchanged: earlier eight local
+renders and six GitHub renders are reused evidence, not a fresh graphical check.
+The existing eleven human checks remain two incomplete and nine untested.
+
 ## Approved Strata preparation — 2026-10-13
+
+Historical first attempt; superseded by the direct-GGUF amendment outcome above.
 
 **The exact approved runtime and raw assets are installed; main expert packing
 hit the unchanged RAM stop. Strata remains disabled and unqualified.** No model

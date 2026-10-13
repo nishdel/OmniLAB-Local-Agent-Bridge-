@@ -17,7 +17,7 @@ Codex registration. Generic distribution defaults remain unchanged.
 |---|---|---|
 | Ollama | Existing 0.40.2 service, loopback `http://127.0.0.1:11434` | Exact Qwen identity and native options checked before admission; loaded digest/context and runner flags checked before returning tool calls |
 | OpenHands | Existing SDK/tools 1.53.0 in immutable Docker image below | Networkless mailbox executor; real editor/terminal tasks and protected independent acceptance |
-| Strata | Optional adapter; no runnable installation/assets found in bounded known locations | Disabled; no verified Strata URL or live qualification |
+| Strata | Pinned isolated runtime/assets and independently verified direct-GGUF pack | Disabled; serving retry policy blocks startup and live qualification |
 | Dock | Existing native Tk companion, same durable store as the jobs | Automated presentation/window checks; human interaction remains untested |
 
 Qwen tag: `qwen3.8:27b`; full manifest identity:
@@ -94,7 +94,7 @@ accepted patches, model assets and history. Never reset or clean the checkout.
 
 ### Independent Strata status
 
-As of **2026-10-12**, Strata is implemented but **disabled and not live-qualified**.
+As of **2026-10-13**, Strata is implemented but **disabled and not live-qualified**.
 Current upstream inspected: [7695859aa13afb248bdb4d36f9b2e95707db079d](https://github.com/Niko1221/Strata/tree/7695859aa13afb248bdb4d36f9b2e95707db079d),
 including `serve/server.py`, `serve/frontend.py`, `serve/runconfig.py`, setup,
 requirements, model/install guidance and cancellation/context/tool tests.
@@ -113,10 +113,12 @@ and the completion `model` field can echo a request; neither proves loaded ident
 The original e5c6337 inventory found no runtime or complete compatible assets.
 Following the owner's approval, the pinned 0.1.43 CUDA 12 runtime, dependencies
 and all raw model/MTP inputs are installed and hash-verified. A small cuBLAS
-operation passed on the existing driver; **main expert packing then hit LAB's
-2 GiB hard available-RAM stop**. The partial pack is quarantined; no server,
-loaded identity, advisory or implementation inference was run. See the
-[current measured preparation report](SELECTIVE-IMPLEMENTATION-REPORT.md#approved-strata-preparation--2026-10-13).
+operation passed on the existing driver. The original expert-copy RAM failure
+remains quarantined. The approved direct-GGUF retry now passes independent pack
+validation. **Startup stopped at a source-verified server retry-policy conflict**
+with the zero-retry requirement; no loaded identity, advisory or implementation
+inference exists. See the
+[current measured report](SELECTIVE-IMPLEMENTATION-REPORT.md#direct-gguf-amendment-outcome--2026-10-13).
 Port 8080 remains a planned loopback endpoint, not a verified service (upstream's
 direct server default is 8095). Hardware remains RTX 3060 12,288 MiB,
 34,139,435,008 bytes RAM and driver 560.94. No driver change was attempted;
@@ -241,12 +243,15 @@ qualification, not general enablement or a release.
 
 #### Bounded retry amendment after the RAM stop
 
-**Pending owner approval; do not execute as part of the completed preparation.**
+**Owner approved at 7cbaa11; single preparation completed.** The fresh direct
+pack passed independent validation. Startup was held at the pinned server
+retry-policy gate; see the [actual outcome](SELECTIVE-IMPLEMENTATION-REPORT.md#direct-gguf-amendment-outcome--2026-10-13).
+The scope below records the authorization, not a new request to repeat packing.
 The 2026-10-13 main expert-copy attempt exceeded the unchanged available-RAM
 reserve. The [pinned engine documentation](https://github.com/Niko1221/Strata/blob/7695859aa13afb248bdb4d36f9b2e95707db079d/docs/DETAILS.md)
 and [FileExpertSource implementation](https://github.com/Niko1221/Strata/blob/7695859aa13afb248bdb4d36f9b2e95707db079d/src/core/expert_source.cpp)
 support reading this native Coder pack's experts directly from its GGUF shards.
-The proposed change is exactly to omit `--experts-bin` from the pinned
+The approved change was exactly to omit `--experts-bin` from the pinned
 `tools/iq_pack.py` command, producing a fresh `data/pack-direct-gguf` directory.
 Keep the quarantined incomplete pack untouched, and bind the fresh dense/index,
 tokenizer, native expert table and both fully verified shards before startup.
@@ -272,11 +277,14 @@ Rollback stops only the recorded owned process tree, restores test-only settings
 and retains/quarantines only the new pack; active LAB/Ollama files stay intact.
 No administrator, global environment, service, firewall or driver change.
 
-B/C still require the existing supervisor-controlled qualification mechanism and
-a **separate scoped test-store Maximum cap authorization**: the current Medium
-cap is rejected for Strata by `selective.execute`. It is not permission to raise
-any physical/context/output ceiling, change active defaults or enable Strata for
-general work. Neither this retry nor that test-store change has been performed.
+The owner also approved **Maximum only in the isolated qualification store after
+A passes**, with original-setting capture/restoration. That prerequisite did not
+pass, so the effective cap remained Medium and its telemetry database was never
+created. B/C still require the existing supervisor-controlled fixture, a measured
+Strata memory plan and all admission gates. This does not authorize higher
+physical/context/output limits, pre-qualification, active-default changes or
+general Strata routing. A new decision concerns only the serving change needed
+to prevent hidden generation retries and engine restarts; neither was applied.
 
 ## Retained preparation and historical protocol
 

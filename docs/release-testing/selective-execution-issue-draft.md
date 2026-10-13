@@ -244,17 +244,18 @@ wheel/sdist, upgrade, lint/docs/audit/diff and cleanup records are private in
 openhands-moe-20261010. Model identities, original checkouts and accepted Qwen27
 patch preserved. Pilots/general routing inactive; human verification still pending.
 
-- Q-15 (current, local entry): The exact approved Strata 0.1.43 CUDA 12 runtime and raw Coder/MTP assets are installed and hash-verified. Main expert packing stopped at 1.60 GiB available RAM, below the unchanged 2 GiB hard reserve; its partial pack is quarantined. No loaded model, stage A/B/C or live generation cancellation passed. No driver, network or active LAB/default change occurred. The bounded native-GGUF retry requires an explicit amendment; see the current report.
+- Q-15 (current, local entry): The approved direct-GGUF amendment passed preparation and independent dense/index/tokenizer/expert/shard checks in the 7cbaa11 follow-up. The old RAM-failed pack remains untouched. Startup stopped before inference because the pinned server can silently retry non-finite generation and restart a dead engine, conflicting with zero retries/first-failure stop. A/B/C and live failure/cancellation remain unrun; Maximum was conditionally authorized but never applied. Active LAB/Ollama and all human rows are unchanged. See the [current report](../SELECTIVE-IMPLEMENTATION-REPORT.md#direct-gguf-amendment-outcome--2026-10-13).
 
 - Q-20 (close-out): Usage identity bindings and missing/duplicate/conflict checks now pass. Historical generation-only baseline and shared hybrid supervision do not provide complete matched costs. No new comparison was run; net savings remain unknown. Mixed controller usage is retained explicitly. This local entry is not a published issue.
 
 
 ## Approved Strata follow-up — 2026-10-13
 
-The [current preparation/qualification report](../SELECTIVE-IMPLEMENTATION-REPORT.md#approved-strata-preparation--2026-10-13)
+The [current preparation/qualification report](../SELECTIVE-IMPLEMENTATION-REPORT.md#direct-gguf-amendment-outcome--2026-10-13)
 supersedes older claims that installation approval is absent. The new isolated
 LAB runtime matches e5c6337; the active a9a4bad deployment remains unchanged.
-All approved raw assets are present, but main packing hit the RAM guard. The
+All approved raw assets and the fresh direct-GGUF pack are verified. The pinned
+server retry-policy gate now blocks startup; the old RAM stop remains historical. The
 private idle-display kit has selective execution disabled, a paused empty store
 and no controller or inference. Live progress/errors/cancellation and Strata
 selection/persistence require later readiness and qualification; no cosmetic

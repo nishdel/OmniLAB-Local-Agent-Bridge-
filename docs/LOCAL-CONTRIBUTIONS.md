@@ -303,3 +303,14 @@ in this follow-up. No alternate backend was used to turn that failure into a pas
 The [current report](SELECTIVE-IMPLEMENTATION-REPORT.md#approved-strata-preparation--2026-10-13)
 records exact assets, measurements, cleanup and the scoped retry proposal.
 Earlier Ollama advisory/implementation contributions remain historical evidence.
+
+## Direct-GGUF amendment — 2026-10-13
+
+The approved single preparation and independent artifact validation passed from
+7cbaa11 with the unchanged reviewed e5c6337 runtime. Codex owned source/security,
+resource guards, identity checks and final review. The pinned Strata server's
+internal replay/restart policy blocked startup under the zero-retry requirement,
+so the intended stage-B advisory and stage-C implementation were not dispatched.
+No model-authored changes or Codex repairs to a model candidate exist in this
+amendment. Documentation/evidence updates are direct Codex work; another backend
+was not substituted. See the [outcome](SELECTIVE-IMPLEMENTATION-REPORT.md#direct-gguf-amendment-outcome--2026-10-13).

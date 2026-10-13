@@ -86,11 +86,12 @@ sequenceDiagram
 
 The sequence describes the implemented route, **not Strata live acceptance**.
 Ollama/Qwen27 and Qwen35 have specific accepted OpenHands cases; Strata stage A
-was not run: the approved runtime/assets are installed, but main expert packing
-hit the unchanged RAM stop. Stages B/C have not run. Errors and
+remains blocked: the approved direct-GGUF pack now passes validation, but the
+pinned server can retry generation internally despite LAB's zero-retry budget.
+No server was started; stages B/C have not run. Errors and
 cancellation retain evidence and uncertain inference ownership. See the deeper
 [workflow, lifecycle and trust views](docs/WORKFLOW.md) and
-[current qualification](docs/SELECTIVE-IMPLEMENTATION-REPORT.md#approved-strata-preparation--2026-10-13).
+[current qualification](docs/SELECTIVE-IMPLEMENTATION-REPORT.md#direct-gguf-amendment-outcome--2026-10-13).
 
 ## Current project deployment
 
@@ -103,7 +104,7 @@ are an example qualification, not a mandatory model for other users.
 OpenHands SDK/tools 1.53.0 is exercised through the restricted, networkless
 container/mailbox path. **No OpenHands web UI is installed.** The optional Strata
 adapter and pinned runtime are installed in the isolated test environment,
-but Strata remains disabled and unqualified after a preparation RAM stop. No
+but Strata remains disabled and unqualified at the serving retry-policy gate. No
 loaded model or Strata service address is verified. Full human acceptance remains
 outstanding in the
 [manual ledger](docs/release-testing/selective-execution-issue-draft.md).

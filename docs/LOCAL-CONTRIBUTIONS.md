@@ -290,3 +290,16 @@ including 57.899 s loading; durable worker interval 225.162 s. Samples observed
 minimum available host RAM 7,723,597,824 bytes and peak total GPU use 10,277 MiB,
 within the unchanged ceilings. Reservation released; cached and cancelled usage
 are not invented. This is implementation overhead, with no savings comparison.
+
+## Approved Strata preparation — 2026-10-13
+
+The isolated LAB runtime was the reviewed e5c6337 wheel; the active a9a4bad
+Ollama installation was preserved. Codex handled pinned installation, resource
+ownership, artifact identity, failure diagnosis and independent acceptance,
+which require supervisor authority. The intended bounded LAB/Strata advisory
+was blocked before dispatch: main expert packing hit the unchanged RAM guard.
+No local inference, OpenHands implementation or model-authored change occurred
+in this follow-up. No alternate backend was used to turn that failure into a pass.
+The [current report](SELECTIVE-IMPLEMENTATION-REPORT.md#approved-strata-preparation--2026-10-13)
+records exact assets, measurements, cleanup and the scoped retry proposal.
+Earlier Ollama advisory/implementation contributions remain historical evidence.

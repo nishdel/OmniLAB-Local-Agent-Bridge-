@@ -38,7 +38,64 @@ Core tests are deliberately small. Conditional tests activate for the named chan
 
 ## Setup and launch (Windows owner handoff)
 
-### Current Qwen27 disposable display kit — 2026-10-10
+### Strata follow-up: one guided owner session — 2026-10-13
+
+Use the isolated test package identified in the [current implementation
+report](SELECTIVE-IMPLEMENTATION-REPORT.md#approved-strata-preparation--2026-10-13),
+not the active a9a4bad controller or the historical kit below. Its imported runtime
+matches e5c6337, wheel SHA-256
+`15ff00b806600d8f13db336d9d7109234cc65067e58bf1cb2ebbbf1610de1499`.
+The supervisor supplies the private interpreter/configuration paths and the
+matching immutable identity record; no public instruction guesses those paths.
+The supplied private `manual-kit/open-dock.ps1` verifies runtime/configuration
+hashes and invokes the existing `companion dock` command. Its separate empty
+store is paused, selective execution is disabled and no controller is launched.
+Use `-CheckOnly` first. This kit is for idle display, selection persistence and
+usability only; later job controls need a separately admitted fixture. Do not
+start inference from an idle-display check.
+
+Record every observation in the existing eleven-row ledger. The earlier owner
+observation that the widget opens and some options can be selected does not
+verify this package, persistence, telemetry, cancellation or backend execution.
+Use this single session order, stopping dependent steps at their actual gate:
+
+1. **Identity and idle display:** compare interpreter/package/configuration hashes,
+   exact provider/model and available/unavailable counters with the supervisor's
+   records. Compare any displayed Strata state with provider-status diagnostics;
+   physical files do not establish a serving binding. No runnable Strata profile
+   exists yet, so an absent choice is expected and live identity stays untested.
+   Record tester/date.
+2. **Selection and persistence:** once a Strata profile is configured, inspect its
+   unavailable reason and verify that it cannot silently substitute Ollama. Keep
+   that portion pending while no profile exists. Save an available
+   test-store default, close/reopen only this dock and check persistence. The
+   supervisor compares any later explicit per-job override with its durable
+   contract; selecting an entry alone does not pass that part of the row.
+3. **One admitted bounded job:** only when readiness, qualification scope,
+   ownership and resource gates permit it, observe queued/running/awaiting-review
+   and final states against CLI job/request receipts. Compare displayed identity,
+   progress, errors and measured versus unavailable usage. Codex reviews the exact
+   candidate before acceptance; no green state is manufactured for the checklist.
+4. **Visibility and cancellation:** during an authorized owned job, hide/reopen
+   the dock and confirm work continues. Cancel through the dock and compare the
+   terminal or uncertain state, evidence and reservation with the supervisor's
+   cleanup check. If no live interval is available, leave these checks pending.
+5. **Usability and retained controls:** exercise keyboard/focus and supported DPI
+   scales; inspect clipping and responsiveness. Follow the retained workflow,
+   budget, checkpoint, candidate-review and recovery criteria with the supervisor.
+   Automated or hidden Tk observations do not replace these human observations.
+6. **Close and reconcile:** restore only the test-store selection, close the test
+   dock, and confirm the active deployment/configuration is unchanged. Record
+   each complete, incomplete, failed or blocked observation with its evidence.
+
+All M01–M06/C01–C06 criteria below remain in force. A clean Windows host, a live
+managed-review callback and a matched performance pilot retain their own named
+prerequisites; missing prerequisites leave those portions open. This sequence
+neither authorizes extra installation nor general Strata activation. The main preparation RAM stop currently blocks stage A/B/C and their dependent
+manual steps. It is not a human pass.
+
+<a id="current-qwen27-disposable-display-kit--2026-10-10"></a>
+### Historical Qwen27 disposable display kit — 2026-10-10
 
 Start with the displayed-model/backend/usage row, **only its non-disruptive idle
 portion**. The owner-prepared private kit reuses installed dependencies and wheel

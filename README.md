@@ -86,10 +86,11 @@ sequenceDiagram
 
 The sequence describes the implemented route, **not Strata live acceptance**.
 Ollama/Qwen27 and Qwen35 have specific accepted OpenHands cases; Strata stage A
-is blocked by missing runtime/assets, so stages B/C have not run. Errors and
+was not run: the approved runtime/assets are installed, but main expert packing
+hit the unchanged RAM stop. Stages B/C have not run. Errors and
 cancellation retain evidence and uncertain inference ownership. See the deeper
 [workflow, lifecycle and trust views](docs/WORKFLOW.md) and
-[current qualification](docs/SELECTIVE-IMPLEMENTATION-REPORT.md#strata-upgrade--2026-10-12).
+[current qualification](docs/SELECTIVE-IMPLEMENTATION-REPORT.md#approved-strata-preparation--2026-10-13).
 
 ## Current project deployment
 
@@ -101,8 +102,10 @@ are an example qualification, not a mandatory model for other users.
 
 OpenHands SDK/tools 1.53.0 is exercised through the restricted, networkless
 container/mailbox path. **No OpenHands web UI is installed.** The optional Strata
-adapter exists, but its runtime remains disabled and unqualified. No Strata
-service address is verified. Full human acceptance remains outstanding in the
+adapter and pinned runtime are installed in the isolated test environment,
+but Strata remains disabled and unqualified after a preparation RAM stop. No
+loaded model or Strata service address is verified. Full human acceptance remains
+outstanding in the
 [manual ledger](docs/release-testing/selective-execution-issue-draft.md).
 Operating token savings are **not established**.
 

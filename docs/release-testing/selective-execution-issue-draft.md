@@ -7,12 +7,12 @@ filled from the reviewed artifact before owner testing. No published release is
 claimed. Use [manual definitions](../MANUAL-RELEASE-TESTING.md) and the
 [setup/qualification guide](../SELECTIVE-SETUP.md).
 
-Candidate: codex/selective-local-execution; accepted deployment checkpoint
+Historical accepted deployment: codex/selective-local-execution checkpoint
 bec07f63bc8a0991576d7392353f1a541615eeeb plus the recorded close-out commits. Rechecked 2026-10-10: Windows 10 19045, 32 GB RAM,
 RTX 3060 12,288 MiB, driver 560.94; internal GTX reports Code 31.
 Human acceptance: Passed 0 / Failed 0 / Blocked 0 / Incomplete 2 / Not tested 9 / N/A 0.
 
-Manual session prepared 2026-10-10 for runtime source
+Historical manual kit prepared 2026-10-10 for runtime source
 `a9a4bad6eaa2761d3a3648854f83664a94bc119d`, retained wheel SHA-256
 `df9b041c8198213b9237078e39fe71ff18e7c6e55112c771ee7d516f88db2429`.
 All 88 runtime files match the installed package and that source. The private
@@ -20,8 +20,9 @@ kit's `identity.json` records isolated configuration, fixture and definition
 hashes; no inference or human interaction occurred during preparation.
 Actual tester/date and observation evidence are pending. This existing table
 is the sole result location for the authorized unpublished session; issue
-publication remains unauthorized. Start with the
-[current Qwen27 idle-display procedure](../MANUAL-RELEASE-TESTING.md#current-qwen27-disposable-display-kit--2026-10-10).
+publication remains unauthorized. The current e5c6337 isolated runtime uses the
+[Strata follow-up guided session](../MANUAL-RELEASE-TESTING.md#strata-follow-up-one-guided-owner-session--2026-10-13);
+the historical Qwen27 kit remains available as earlier evidence.
 All eleven result rows and their full criteria remain unchanged.
 
 The current 27B configuration independently passed the frozen UTC repository task.
@@ -36,7 +37,7 @@ inventory, four-model screen, full regression and separate approval manifests;
 Automated/mocked and live smoke results are in the [implementation report](../SELECTIVE-IMPLEMENTATION-REPORT.md),
 separate from this table. Assess applicability before changing Blocked/N/A.
 
-Current automated milestone: project-only Qwen27 default and supervised routing
+Historical close-out milestone: project-only Qwen27 default and supervised routing
 are active. Clean committed-source regression is 591 passed / 1 skipped; 180 extracted-wheel checks overlap and are recorded separately.
 Installed start/cancel/recovery/restart and the actual dock data binding were
 checked. Qwen documentation was accepted without repair, UTC tests after local
@@ -243,12 +244,29 @@ wheel/sdist, upgrade, lint/docs/audit/diff and cleanup records are private in
 openhands-moe-20261010. Model identities, original checkouts and accepted Qwen27
 patch preserved. Pilots/general routing inactive; human verification still pending.
 
-- Q-15 (current): Optional Strata has no runnable compatible installation/assets in the bounded inventory. The inspected Flash-Next upstream does not qualify dense Qwen27; separate weights/runtime/driver compatibility and safe admission remain unresolved. No large download, driver/network change or live Strata acceptance is claimed.
+- Q-15 (current, local entry): The exact approved Strata 0.1.43 CUDA 12 runtime and raw Coder/MTP assets are installed and hash-verified. Main expert packing stopped at 1.60 GiB available RAM, below the unchanged 2 GiB hard reserve; its partial pack is quarantined. No loaded model, stage A/B/C or live generation cancellation passed. No driver, network or active LAB/default change occurred. The bounded native-GGUF retry requires an explicit amendment; see the current report.
 
 - Q-20 (close-out): Usage identity bindings and missing/duplicate/conflict checks now pass. Historical generation-only baseline and shared hybrid supervision do not provide complete matched costs. No new comparison was run; net savings remain unknown. Mixed controller usage is retained explicitly. This local entry is not a published issue.
 
 
-## Strata upgrade retest scope — 2026-10-12
+## Approved Strata follow-up — 2026-10-13
+
+The [current preparation/qualification report](../SELECTIVE-IMPLEMENTATION-REPORT.md#approved-strata-preparation--2026-10-13)
+supersedes older claims that installation approval is absent. The new isolated
+LAB runtime matches e5c6337; the active a9a4bad deployment remains unchanged.
+All approved raw assets are present, but main packing hit the RAM guard. The
+private idle-display kit has selective execution disabled, a paused empty store
+and no controller or inference. Live progress/errors/cancellation and Strata
+selection/persistence require later readiness and qualification; no cosmetic
+unqualified profile was inserted just to populate the selector.
+Use the [single guided owner session](../MANUAL-RELEASE-TESTING.md#strata-follow-up-one-guided-owner-session--2026-10-13)
+for this candidate. None of the eleven human rows was executed in this follow-up.
+The two incomplete owner observations are retained as earlier observations, not
+carried-forward acceptance of the new package. Counts remain zero fully passed,
+two incomplete observations and nine untested rows. Q-15/Q-21 remain local entries;
+no public issue has been created.
+
+## Historical Strata upgrade retest scope — 2026-10-12
 
 Q-21 (local entry, not a published issue): Strata choices require an exact
 configured profile and binding; unavailable/unqualified choices show a reason

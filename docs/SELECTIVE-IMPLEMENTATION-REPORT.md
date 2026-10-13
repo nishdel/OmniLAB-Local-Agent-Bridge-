@@ -1,9 +1,204 @@
 # Selective local execution implementation report
 
-## Strata upgrade — 2026-10-12
+## Approved Strata preparation — 2026-10-13
 
-**Delivered adapter/configuration work; Strata is not functional or enabled on
-this machine.** Stage A stopped at missing runtime/compatible assets. No Strata
+**The exact approved runtime and raw assets are installed; main expert packing
+hit the unchanged RAM stop. Strata remains disabled and unqualified.** No model
+was loaded, no inference was attempted, and no stage A/B/C or live generation
+cancellation result is claimed. The prior LAB/Ollama deployment is unchanged.
+
+### Starting point and installed identity
+
+The owner authorized isolated preparation and bounded qualification of the
+[exact e5c6337 package](SELECTIVE-SETUP.md#concrete-optional-installation-approval-package),
+not general activation. The development checkout and remote both remained
+`e5c6337717be4df285c2817732efde5cf7b38a51`; PR #1 was open/draft. The older
+workspace root is not the Git checkout. Main remains
+`f6df420181f21856cb421619e2c1310f6cf46685`, latest release v0.4.1.
+Existing edits and the qualified Ollama models/configuration were preserved.
+
+| Component | Implemented | Live verified in this follow-up | Enabled | Published where | Remaining work |
+|---|---|---|---|---|---|
+| LAB v0.5 / dock | Existing durable jobs, controls and adapter | Isolated e5 runtime imports/tests; no new human acceptance | Active a9a4bad deployment retained | Development branch / draft PR #1 | Human ledger and review gates |
+| Ollama advisory / OpenHands | Existing qualified paths retained | No new inference; earlier Qwen27/Qwen35 results remain historical | Existing project settings | Development branch / draft PR #1 | No new general quality claim |
+| Strata runtime / assets | Exact approved installation completed | Engine version/help, small CUDA operation, hashes, metadata and MTP pack | No server or runnable profile | Private installation on C: and D:; public evidence summary in PR | Main preparation, loaded identity, A/B/C |
+| Strata LAB adapter | e5c6337 implementation retained | Mocked provider tests only | Disabled; no qualification bypass | Development branch / draft PR #1 | Actual tool/SDK round trip and live cancellation/failure |
+| Main / release | v0.4.1 | Historical scope | Separate from development | Default branch / release | Human acceptance, review and merge; no release authorized |
+
+All **64,664,303,372 approved payload bytes** were retrieved and verified against
+the pinned manifests. Transfer retries/HTTP overhead are not extra unique assets.
+No one-click installer, driver change, administrator install, global Python/PATH
+change, service, firewall rule, autostart, cloud inference or model substitution
+was used. Installed components are:
+
+- Core `strata.exe`, `strata-vision.exe` and `BUILD.json` under
+  `%LOCALAPPDATA%/StrataLAB/0.1.43` on C:. Engine 0.1.43 CUDA 12 archive SHA-256
+  `344998f7b91af0b028e8e5241db39bbc5abd9c93a0a33d6dbc33108bb8a837fb`;
+  executable SHA-256 `5f359e2d08e73b11fd7b0edc72652125c12f836394dbf1732cec0d461324cd6b`.
+- Source, CPython 3.13 isolated venv, 18 pinned wheels, models, caches and generated
+  data under `LocalAI/StrataLAB/0.1.43` on D:. Strata source
+  `7695859aa13afb248bdb4d36f9b2e95707db079d` (2,976 checked blobs); llama helper
+  `3cf03257f219afbe7334045ff7c6a06ac68c627d` (3,608 checked blobs). CUDA runtime
+  12.9.79 and cuBLAS 12.9.1.4 are process-local dependencies; driver stays 560.94.
+- Coder revision `5348543e0147355ac9cbcb031184a3546350988e`: two GGUF v3 shards,
+  **58,408,584,928 bytes**, full SHA-256 values
+  `e11083ba855e7666b48ea3f2db6a9c3a20c18751a012cc24f948de91b7087fad` and
+  `316b46f3a2dbd68c900f43136ab9449f9dcc3725dfd8c794847c204bc161e113`.
+  Actual metadata: `qwen4exp`, Qwen3.8-Flash-Next GSQ-RCO Coder, 48 blocks,
+  256 experts / 10 active, embedding 2560. The IQ1_M filename describes a mixed
+  quantization, not uniform one-bit tensors. All 1,224 tensor spans fit the files.
+- MTP revision `de4b8e4d43b917e7706784d8bb445c9af86a3540`: 31 tensor inputs,
+  **5,214,301,696 bytes**, all pinned hashes checked. Generated Q2_0 MTP GGUF
+  SHA-256 `a22206a4d74eafbf31063a84610292535fb3b49af9a339963817fd04aed81e4d`.
+  Independent checks compared all 512 expert blobs, 29 dense tensors and 30
+  sampled Q8 blocks. Main tokenizer vocabulary/merges/types/template comparisons
+  and six small round trips passed; none proves model tool behavior.
+
+The installed Ollama 35B-A3B model remains `qwen3.6:35b`, qwen35moe / Q4_K_M;
+its [earlier exact inventory](SELECTIVE-SETUP.md#independent-strata-status) is
+retained. It was neither replaced nor mistaken for the Flash-Next weights.
+
+The isolated LAB installation actually exercised was the reviewed e5c6337 wheel,
+SHA-256 `15ff00b806600d8f13db336d9d7109234cc65067e58bf1cb2ebbbf1610de1499`.
+All **89 runtime files** equal that source and imports resolve to its isolated
+environment. It has separate configuration, job storage and evidence. The active
+LAB remains the **a9a4bad** wheel
+`df9b041c8198213b9237078e39fe71ff18e7c6e55112c771ee7d516f88db2429` (88 files).
+The active configuration hash remained
+`51809e7f341aea8f6c10f64400da6a7374d75491c48c32bf46dea015ed999f35`.
+The copied Ollama memory plan was explicitly unverified for Strata.
+
+### First failed prerequisite, resources and cleanup
+
+Pinned `tools/iq_pack.py --gguf <first-approved-shard> --out <isolated-pack>
+--experts-bin` stopped after **352.18 seconds**. The LAB host guard observed
+**1,721,860,096 bytes (1.60 GiB) available RAM**, below its unchanged 2 GiB hard
+reserve. Observed peak individual packing-process RSS was **20,378,791,936 bytes
+(18.98 GiB)**; GPU use peaked at **358 MiB**. The wrapper failed; its recorded
+child return code of zero after owned cleanup is **not** successful packing.
+The source constructs each layer with memory-mapped arrays and concatenation;
+these observations do not prove a leak or an inference-memory requirement.
+
+| Preparation operation | Result | Elapsed | Observed process RSS peak |
+|---|---|---:|---:|
+| 2-by-2 cuBLAS SGEMM on existing RTX 3060 | Passed; exact result, buffers freed, owned process exited | 1.18 s | Small CUDA probe; not a model load |
+| MTP quantization | Output independently verified | 731.63 s | 4,730,978,304 bytes |
+| MTP runtime layout | Passed and independently verified | 6.73 s | 1,404,751,872 bytes |
+| Main expert copy | **Stopped by hard RAM guard** | 352.18 s | 20,378,791,936 bytes |
+
+A private monitor initially raced the successful MTP process exit and reported
+`NoSuchProcess`. Its original receipt was preserved; the completed artifact was
+independently verified, the monitor was corrected, and quantization was not
+repeated. That monitor race is distinct from the real later main-packing RAM stop.
+
+Unchanged limits: 6 GiB admission reserve, 2 GiB hard / 3 GiB for 15 seconds
+sustained reserve, whole-GPU ceiling 11,776 MiB, two CPU affinity slots during
+packing, 900-second packing-step deadline. Planned inference stays one job,
+16,384 context, at most 1,536 output, zero retries; no inference limits were used
+to claim a measured pass. Hardware: 34,139,435,008 bytes RAM, i7-8750H AVX2,
+RTX 3060 12,288 MiB, SATA data SSD.
+
+The owned packer exited. Read-only checks found no remaining Strata/packing
+process, no port-8080 listener, no active inference reservation and no queued or
+running active LAB jobs. The shared Ollama service was retained, with no model
+loaded at cleanup. Available RAM recovered to **23,182,364,672 bytes**. No active
+configuration restoration was necessary because it had not changed.
+
+All incomplete files were preserved under `data/pack-incomplete-20261013` in the
+approved Strata directory; the planned `data/pack` path is absent. Its partial
+`experts.bin.tmp` is **17,845,452,800 bytes** and is not a usable pack. Raw weights
+and verified MTP outputs are retained. No serving identity was created.
+
+At cleanup, C: core files occupied **396,791,058 logical / 396,796,184 allocated
+bytes**. D: Strata files occupied **86,670,324,113 logical / 86,689,630,672 allocated
+bytes**, including the quarantined partial pack and retained download assets.
+Private LAB/evidence added about 38 MB. Allocation is summed per file using
+Windows FileStandardInfo, excluding directory metadata. Free disk was about
+140.86 GB on C: and 2.821 TB on D:. These are measured partial-install totals,
+not a successful serving footprint or a loading estimate.
+
+### Staged outcome and next action
+
+| Stage | Result | Required next gate |
+|---|---|---|
+| A: loaded identity + bounded inference | **Not run: preparation failed first** | Explicit retry amendment, complete/verify native pack, safe owned startup and identity |
+| B: LAB durable advisory through Strata | **Not run**; no job/request correlation exists | A plus scoped admission authorization; one useful bounded advisory |
+| C: restricted OpenHands → Strata → edits/tests → review | **Not run**; no local-agent patch | A/B, measured memory plan and supervisor-controlled qualification fixture |
+| Live generation cancellation / representative backend failure | **Not run** because readiness was not established | Owned live runtime and confirmed terminal/reservation cleanup |
+
+The smallest retry proposal uses the **same pinned upstream native-GGUF path**:
+omit `--experts-bin` when preparing a fresh pack; retain `--native` and
+`--mmap-experts`. Pinned `iq_pack.main` returns after the dense/index/tokenizer
+outputs in that mode; `FileExpertSource::open` selects `open_gguf` when
+`experts.bin` is absent. This avoids the **25,146,163,200-byte** expert copy.
+See the [concrete amendment](SELECTIVE-SETUP.md#bounded-retry-amendment-after-the-ram-stop).
+It has not been run here and does not establish safe loading or output quality.
+No larger RAM/GPU allowance, new artifact, model substitution or driver change
+is proposed. The owner's explicit instruction to stop on resource failure
+requires an amendment before another full preparation or loading attempt.
+
+A later independent admission gate remains: `selective.execute` requires the
+Strata compute cap to be **Maximum**, while the isolated test resolves Medium.
+Authorization to change only that test-store cap is pending; active defaults and
+all physical/context/output ceilings would remain unchanged. No cap was changed,
+profile pre-qualified or admission rule bypassed. General activation remains a
+separate later decision: suitability has **not** been demonstrated.
+
+### Validation and handoff
+
+Installed e5 package checks: **114 passed** (overlapping source tests). Pinned
+upstream protocol suite: **23 passed with mocked engines**. Neither is live
+SDK/Strata evidence. Fresh Windows source regression: **614 passed / 1 skipped**
+(Windows symlink support), `python -m pytest -q`, 703.41 seconds. Production
+code, tests and scripts are byte-identical to e5c6337; this follow-up publishes
+seven Markdown files only.
+
+Ruff, generated CLI/config references, **46 Markdown files / 323 local links /
+58 anchors / 43 source symbols**, and the **232-file public-source audit** passed.
+The first publication audit caught absolute installation paths in new prose;
+they were generalized before the passing audit. No audit rule was relaxed.
+Wheel/sdist contents were inspected; a fresh offline wheel install passed **114
+overlapping checks**, and a disposable v0.4.1 upgrade retained usage and its
+checkpoint. The tested follow-up wheel SHA-256 is
+`f6fc55bc079b8772f39c2c56d8b0c5afc24c86198d393310837f95415203d3f8`;
+all 89 runtime files equal the e5 runtime actually used for preparation.
+It did not replace that test runtime or the active controller.
+
+All **eight Mermaid blocks parsed** with the existing local Mermaid 11.12.2.
+Each is byte-for-byte equal to e5c6337. Rendering evidence is explicitly reused:
+eight prior local pixel inspections, plus six prior actual GitHub-renderer
+inspections covering both README and all four workflow diagrams. No new graphical
+inspection is claimed in this follow-up; no private source/evidence was uploaded.
+The detailed sequence remains dense at fitted width and supports GitHub zoom.
+
+Publication is through `codex/selective-local-execution` and
+[draft PR #1](https://github.com/nishdel/OmniLAB-Local-Agent-Bridge-/pull/1), whose
+opening summary records the latest preparation result. The exact published SHA
+and corresponding Windows CI result are verified there and in the private
+publication receipt. A queued check is not a pass. Main/default-homepage README,
+release v0.4.1 and the existing human review/merge gates remain unchanged.
+
+The [single guided owner session](MANUAL-RELEASE-TESTING.md#strata-follow-up-one-guided-owner-session--2026-10-13)
+retains every acceptance criterion and the [eleven-row human ledger](release-testing/selective-execution-issue-draft.md).
+No new human observation occurred. Earlier widget launch/some selection evidence
+remains partial; persistence, displayed live identity, progress, errors,
+cancellation, telemetry and retained-control acceptance remain open. Dependent
+Strata steps cannot run while preparation is blocked.
+
+Private reproducible evidence is retained as `model-downloads.json`,
+`mtp-downloads.json`, `mtp-pack-verification.json`, `tokenizer-precheck.json`,
+`lab-build-identity.json`, `model-packing-result.json`, resource JSONL, original
+logs and `preparation-failure-cleanup.json`. Those local files, configuration,
+databases and weights are excluded from publication. Installation, ownership,
+resource diagnosis and final review were direct Codex work; the planned bounded
+LAB/Strata advisory was blocked before execution. No new model-authored
+contribution or token-savings claim is made.
+
+<a id="strata-upgrade--2026-10-12"></a>
+## Historical adapter upgrade — 2026-10-12
+
+**At the e5c6337 checkpoint, adapter/configuration work was delivered; Strata
+was not functional or enabled.** Stage A stopped at missing runtime/compatible assets. No Strata
 inference, LAB advisory through Strata, or OpenHands/Strata implementation passed.
 [Current setup and installation approval package](SELECTIVE-SETUP.md#independent-strata-status)
 and [source-verified workflow](WORKFLOW.md#source-map) are the canonical details.

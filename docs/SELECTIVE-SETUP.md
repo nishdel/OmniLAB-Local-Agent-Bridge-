@@ -110,13 +110,17 @@ It is not the supported Flash-Next Coder asset. Neither this model nor dense
 Qwen27 may be silently reused as Strata weights. `/v1/models` lists aliases,
 and the completion `model` field can echo a request; neither proves loaded identity.
 
-No executable, complete compatible assets or serving config was found in the
-bounded known application/project/model locations. Loopback 8080/8081/8000
-checks found no Strata service. These are bounded observations, not a disk-wide
-absence claim; 8080 in the example is not a verified endpoint (upstream's direct
-server default is 8095). The RTX 3060 has 12,288 MiB VRAM, host RAM is
-34,139,435,008 bytes and NVIDIA driver is 560.94. Standard CUDA 13 requires
-580+; the CUDA 12 route remains experimental and untested here.
+The original e5c6337 inventory found no runtime or complete compatible assets.
+Following the owner's approval, the pinned 0.1.43 CUDA 12 runtime, dependencies
+and all raw model/MTP inputs are installed and hash-verified. A small cuBLAS
+operation passed on the existing driver; **main expert packing then hit LAB's
+2 GiB hard available-RAM stop**. The partial pack is quarantined; no server,
+loaded identity, advisory or implementation inference was run. See the
+[current measured preparation report](SELECTIVE-IMPLEMENTATION-REPORT.md#approved-strata-preparation--2026-10-13).
+Port 8080 remains a planned loopback endpoint, not a verified service (upstream's
+direct server default is 8095). Hardware remains RTX 3060 12,288 MiB,
+34,139,435,008 bytes RAM and driver 560.94. No driver change was attempted;
+the small CUDA pass does not qualify model inference.
 
 #### Configuration, diagnostics and exact selection
 
@@ -186,8 +190,11 @@ alone cannot. Tests exercise the transport with fixtures, not a real SDK/Strata 
 
 #### Concrete optional installation approval package
 
-**No approval granted and nothing installed by this upgrade.** The proposed
-single route avoids changing the working driver: isolated **Strata 0.1.43 CUDA 12**
+**Approved by the owner for isolated preparation and bounded qualification on
+2026-10-12; no general activation is authorized.** The original e5c6337 proposal
+had no installation approval. Follow the [current preparation/qualification
+report](SELECTIVE-IMPLEMENTATION-REPORT.md#approved-strata-preparation--2026-10-13)
+for actual installed and tested status. The approved route preserves the working driver: isolated **Strata 0.1.43 CUDA 12**
 from the [official release](https://github.com/Niko1221/Strata/releases/tag/v0.1.43),
 server source at the commit above, and the pinned Coder assets below. This is an
 experimental compatibility attempt, not a claim that driver 560.94 or the current
@@ -206,15 +213,18 @@ RAM reserve will pass loading.
 The existing dependency manifest pins the upstream requirements plus CUDA 12
 libraries; retain it rather than resolving latest packages. Code is MIT; Coder
 weights declare Apache-2.0. Estimated retained disk is **90–95 GB**, preparation
-peak about **100 GB**; reserve **120 GiB on D:**. Generated pack sizes, expansion
-of the new engine archive and peak RAM remain unmeasured. Upstream estimates
-about 23.4 GB of Coder expert storage, with low-RAM mmap mode on a 32 GB / 12 GB
+peak about **100 GB**; reserve **120 GiB on D:**. Those were approval estimates;
+the current report gives measured installation/partial-pack disk and preparation
+RAM. Model-loading peaks remain unmeasured. Upstream estimates
+about 23.4 GiB (25,146,163,200 bytes) of Coder expert storage, with low-RAM mmap mode on a 32 GB / 12 GB
 machine. This is not proof that LAB's unchanged 6 GiB pre-admission, 2/3 GiB
 hard/sustained reserve and 11,776 MiB GPU ceiling fit model-loading peaks.
 
-Proposed placement: core launcher/engine under `%LOCALAPPDATA%/StrataLAB/0.1.43`
+Approved placement: core launcher/engine under `%LOCALAPPDATA%/StrataLAB/0.1.43`
 on C:, with source, isolated venv/dependencies, models, cache, pack, logs and evidence
-under the dedicated `LocalAI/StrataLAB/0.1.43` directory on D:. No administrator privileges,
+under the dedicated `LocalAI/StrataLAB/0.1.43` directory on D:. Private LAB test
+installation, configuration/store and evidence use the existing D: project data
+area, separate from the active store. No administrator privileges,
 PATH edits, drivers, services, firewall rules, web application or cloud inference.
 Do not run the one-click installer: even its check/setup route may bootstrap
 Python/dependencies and download models. Reuse approved Python and explicit
@@ -228,6 +238,45 @@ and checking their paths. Preserve all LAB/Ollama configuration, models, databas
 and qualification evidence. A driver upgrade is excluded and would need its own
 specific approval. Approving this package permits preparation and bounded
 qualification, not general enablement or a release.
+
+#### Bounded retry amendment after the RAM stop
+
+**Pending owner approval; do not execute as part of the completed preparation.**
+The 2026-10-13 main expert-copy attempt exceeded the unchanged available-RAM
+reserve. The [pinned engine documentation](https://github.com/Niko1221/Strata/blob/7695859aa13afb248bdb4d36f9b2e95707db079d/docs/DETAILS.md)
+and [FileExpertSource implementation](https://github.com/Niko1221/Strata/blob/7695859aa13afb248bdb4d36f9b2e95707db079d/src/core/expert_source.cpp)
+support reading this native Coder pack's experts directly from its GGUF shards.
+The proposed change is exactly to omit `--experts-bin` from the pinned
+`tools/iq_pack.py` command, producing a fresh `data/pack-direct-gguf` directory.
+Keep the quarantined incomplete pack untouched, and bind the fresh dense/index,
+tokenizer, native expert table and both fully verified shards before startup.
+No custom packer, new release or dependency is required.
+
+Amendment scope: one guarded native-pack attempt (900 seconds), then only if
+artifact checks and ownership/resources pass, one owned stage-A startup (600
+seconds) and bounded inference (120-second request / 600-second attempt, zero
+retries, initial 64-token probe; ceiling 16,384 context / 1,536 output). Preserve
+6 GiB admission, 2/3 GiB hard/sustained RAM and 11,776 MiB GPU ceilings, two-CPU
+preparation scope, one inference and loopback-only transport. Stop again at the
+first resource/compatibility failure. The engine keeps `--native`,
+`--mmap-experts`, 2,048 MiB VRAM reserve, no automatic context fitting, no
+vision/runtime MCP and no prompt/conversation cache.
+
+New download: **0 bytes**. Same Strata 0.1.43 CUDA 12, exact sources, dependencies,
+weights, driver and C: executable path as the approved package above. A fresh
+native pack is expected to add approximately **1.49 GB** under the approved D:
+data root instead of the **25.15 GB** expert copy; the existing 120 GiB reserve
+is sufficient on disk. Loading RAM/VRAM remains unknown and must be measured;
+the direct-file mode is a source-supported retry hypothesis, not a qualification.
+Rollback stops only the recorded owned process tree, restores test-only settings,
+and retains/quarantines only the new pack; active LAB/Ollama files stay intact.
+No administrator, global environment, service, firewall or driver change.
+
+B/C still require the existing supervisor-controlled qualification mechanism and
+a **separate scoped test-store Maximum cap authorization**: the current Medium
+cap is rejected for Strata by `selective.execute`. It is not permission to raise
+any physical/context/output ceiling, change active defaults or enable Strata for
+general work. Neither this retry nor that test-store change has been performed.
 
 ## Retained preparation and historical protocol
 

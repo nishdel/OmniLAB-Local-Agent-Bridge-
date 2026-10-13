@@ -63,6 +63,132 @@ sandbox and host resources. A missing/mismatched model or insufficient headroom
 returns a failure/reason, not a smaller model, CPU fallback or silent cloud call.
 Output, attempts and repairs remain bounded; larger tasks are split.
 
+## Python decisions in the selective path
+
+This walkthrough is source-checked against the development candidate. It is not
+an autonomous planner. The supervisor creates the nodes and supplies `risk`,
+`ambiguity`, `coherent_scope`, `reversible`, `category` and approval. LAB does not
+infer those labels from task prose or ask another AI to classify them.
+
+| Decision and source symbol | Inputs, defaults and precedence | Output or refusal |
+|---|---|---|
+| [Contract](../localagentbridge/task_contract.py) `Contract.validate_scope` | Strict typed fields; required objective, requirement reference, identified acceptance, repository, base and model after resolution. Default lane `codex_direct`, risk `unknown`, ambiguity true, approval/coherence/reversibility false, exact identity required, operations read, review always required. | Rejects unsafe paths, empty acceptance, edit/protected overlap, duplicate/self dependencies, duplicate checks/skills, unknown coverage IDs, read-only reviewers with edits, or an override without a reason. |
+| [Graph](../localagentbridge/task_contract.py) `validate_graph` | Supervisor-supplied task IDs, dependencies and optional parent IDs. | Rejects duplicate IDs, missing parents/dependencies, cycles and any node editing another node's protected checks. It validates the graph; it does not create one. |
+| [Profile](../localagentbridge/local_profile.py) `resolve_contract` | Explicit model first; optional selector passed by the entry point next; configured defaults last. `strata::ALIAS` resolves a provider/model pair. An explicit different backend needs its own explicit model. A configured project root must match. | Matches profile by backend and model; fills missing identity, combines profile limits with explicitly supplied limits, then validates `Contract`. Another model does not inherit the default model's identity. |
+| [Provider settings](../localagentbridge/local_profile.py) `provider_settings` | Start with backend settings; overlay matching profile settings. | Rejects profile identity mismatch. Only trusted profile `context_accounting` injects exact-accounting settings and its model/identity binding. No task-supplied tokenizer count. |
+| [Preparation](../localagentbridge/selective.py) `prepare` | Resolved contract, catalog role/skill constraints, conservative required project reviews, policy, provider inspection, resource/cap gates. Native qualified profiles require recorded thinking=false. | Builds a request containing contract, routing, effective policy, resource policy, skills and required reviews. Disabled/direct paths skip provider inspection. Invalid profile/skill inputs raise; provider/resource failures become capability reasons where caught. It does not persist or generate. |
+| [Lane selection](../localagentbridge/task_contract.py) `route` | `override_lane` before `requested_lane`; approval, supplied risk/ambiguity, orchestration, capabilities and policy. | Returns requested/effective lane, model/backend/identity, accumulated reason, override and `return_to_supervisor`. Any reason makes the effective lane `codex_direct`. This is a handoff, not a cloud invocation. |
+| [Durable submission](../localagentbridge/task_store.py) `TaskStore.submit_many` | Prepared requests and selected run/repository/base. Revalidates the graph together with existing nodes. | Atomically persists jobs and route audit. Identical repeated task IDs are idempotent; changed scope, wrong base, cancelled/finalized run or request over 100,000 bytes rejects. |
+| [Scheduling](../localagentbridge/task_store.py) `eligible`, `effective_jobs`; [worker](../localagentbridge/companion.py) `serve/ensure_worker/worker` | Queue pause, cancellation, leases/ownership and one store-local inference reservation; latest approved correction chain. | Dependencies must have accepted reviews whose accepted hash equals the current candidate hash. `parent_id` participates in graph validation but is not itself a scheduling dependency. Store-local reservation is not a machine-wide lock. |
+| [Dispatch](../localagentbridge/selective.py) `execute` | Persisted effective lane, contract, provider and resource policy. | Direct returns routing evidence without inference. Local reserves the slot, starts the host guard and rechecks readiness, identity, context, memory, manual cap and competitors. Failure/uncertainty retains evidence; unresolved inference retains reservation. |
+| [Generation](../localagentbridge/inference.py) `ChatProvider.inspect/validate_mailbox/chat/_chat` | Exact selected model, complete messages/tools and limits. | Checks provider enablement, loopback origin, supported protocol, identity/settings and input/output bounds. Native Ollama verifies loaded context/runner/VRAM. Strata needs its trusted binding; exact accounting is opt-in and fail-closed. Missing counts do not become zero usage. |
+| [Implementation](../localagentbridge/selective.py) `implementation/verify/make_candidate` | Declared snapshot, accepted dependency candidates/evidence, permitted tools, immutable image and budgets. | Seeds bounded files into OpenHands; persists each inference intent/receipt; checks every turn. Collects candidate bytes, checks allowed changes, runs protected baseline/candidate verification and records evidence. Passing commands still requires review. |
+| [Acceptance](../localagentbridge/task_store.py) `review_guard`; [integration](../localagentbridge/integration.py) `integrate` | Trusted review with current candidate hash and coverage for all acceptance/required reviews. | Rejects failed/unrun verification, stale/forged hashes or incomplete coverage. Integration checks unchanged Git base, accepted/integrated dependencies, unrelated edits, candidate hashes and union of checks before applying bytes. Finalization remains explicit. |
+
+Profile overrides may narrow output, steps, retries, repair/attempt, test,
+memory/CPU and snapshot ceilings. Context must equal the qualified profile and
+the safety margin cannot decrease. This is not a general rule that *every*
+numeric field is narrowed: `inference_deadline_seconds` is a separate optional
+schema field. The generic `TaskLimits` defaults are 20 steps, 1,024 output tokens,
+65,536 output bytes, 16,384 context, zero safety tokens, unspecified self-repair,
+two attempts, one transport retry, unspecified inference/attempt deadlines,
+120-second tests, 2,048 MiB, two CPUs and 16,000,000 snapshot bytes. The personal
+qualified profiles override these; do not confuse generic defaults with deployment
+settings. [Profile tests](../tests/test_local_profile.py) cover precedence and ceilings.
+
+Implementation adds requirements beyond advisory: low risk, coherent reversible
+scope, explicit read/edit/test operations, editable paths, protected acceptance
+files, checks covering every criterion, enabled implementation, an available
+restricted sandbox, exact tool/context qualification, and either a qualified
+backend/identity/category/context tuple, exact scoped contract approval, or an
+explicit category pilot. A scoped approval does not bypass capability or resource
+gates. A local request with `orchestration=workflow` returns to the existing
+workflow interface. `auto` does not decompose a selective contract.
+
+These short excerpts are literal decision points, not complete functions:
+
+```python
+# task_contract.route: labels come from the supervisor
+lane = contract.override_lane or contract.requested_lane
+if not contract.supervisor_approved:
+    reasons.append('Supervisor contract approval required')
+```
+
+```python
+# local_profile.resolve_contract: preserve the qualified context allocation
+if limits.get('context_tokens') != approved.get('context_tokens'):
+    raise ValueError('Context change requires separate qualification')
+```
+
+```python
+# task_store.eligible: finished inference alone cannot unblock a child
+if not result or result['review_status'] != 'accepted' or result['accepted_hash'] != result['candidate_hash']:
+    return False
+```
+
+`memory_admission` in [selective_resources.py](../localagentbridge/selective_resources.py)
+requires a supervisor-verified combined memory plan for implementation; its total
+includes OS/apps, LAB, runtime, context/cache, sandbox and retained headroom.
+The separately configured `HostGuard` also observes whole-host RAM/GPU pressure
+for local execution. Token fit does not prove RAM fit. The
+[Strata session gate](../scripts/strata_session_gate.py) is an additional qualification
+observer, not an automatic global scheduler or authority to close another app.
+
+Advisory execution builds messages from declared context files and dependency
+evidence. Qualified native Ollama and Strata use `ChatProvider`; retained
+non-native Ollama advisory takes `ollama_advisory.run` through `Bridge`.
+Implementation uses the host mailbox, not direct container network access.
+`correction` creates a linked bounded attempt only after trusted review; it
+cannot expand scope/acceptance and it retains the prior failed cost.
+
+See [contracts](../tests/test_selective_contracts.py),
+[flows](../tests/test_selective_flows.py), [bounded execution](../tests/test_selective_bounded.py),
+[provider tests](../tests/test_selective_providers.py),
+[exact accounting](../tests/test_strata_accounting.py) and
+[integration](../tests/test_selective_integration.py).
+Retained [adaptive selection](ADAPTIVE-DELEGATION.md) separately scores caller
+hints and bounded path signals, resolves existing workflow definitions and checks
+budgets. It makes no AI classification call. The seven legacy analysis tools,
+companion exact/routed jobs and selective contracts do not all use that scorer.
+
+### Instructional feature example: preserve duplicate readings
+
+**Not a measured run.** A user asks: “Add a daily export that retains every sensor
+reading, including duplicate timestamps, and explain unavailable readings.”
+Codex keeps product/API decisions and export design itself, then creates three
+bounded nodes. No autonomous LAB planner created this split.
+
+| Contract field | `explain-readings` | `fix-export` | `review-export` |
+|---|---|---|---|
+| `requested_lane`, `category` | `local_advisory`, `documentation` | `local_implementation`, `small-fix` | `local_advisory`, `code-review` |
+| `role`, `operations` | `local-worker`, read | `local-worker`, read/edit/test | `local-reviewer`, read |
+| `dependencies` | empty | `explain-readings` | `fix-export` |
+| `context_files` | `readings.py` | `readings.py`, `export.py` | `readings.py`, `export.py` |
+| `permitted_files` | empty | `export.py` | empty |
+| `acceptance_files` | empty | `acceptance_export.py` | empty |
+| `acceptance` IDs | `source`: cite unavailable-value behavior | `duplicates`: retain stable input order; `unknown`: retain null; `regression`: preserve normal export | `findings`: source-grounded issues with reproduction, or explicit none |
+| `checks` | empty | `export-check`, argv `python acceptance_export.py`, covers all three IDs | empty |
+
+All nodes need the actual absolute disposable `repository`, its same 40-character
+`base_revision`, an objective, `requirement_ref`, non-goals (no schema/network/UI
+changes), an exact qualified backend/model identity, and explicit
+`supervisor_approved=true`, `risk=low`, `ambiguity=false`, `coherent_scope=true`,
+`reversible=true`. Set `orchestration=direct`; do not set an override. For the
+owner's Qwen27 profile, retain 65,536 context, 1,536 output and its other qualified
+limits. These instructional labels require independent supervisor judgment.
+
+`prepare` may return local or direct with reasons; it cannot approve missing
+qualifications. Submission validates/persists the entire graph. The worker waits
+for the explanation's exact-hash acceptance before claiming the fix, and for the
+fix's acceptance before review. `original_files` overlays accepted implementation
+dependencies into the declared base snapshot; unrelated files remain inaccessible.
+The fix must preserve its protected check file and produce real candidate bytes,
+baseline/candidate results, identity, usage and resource evidence. Codex checks
+duplicate ordering, null handling and regressions independently. Only its trusted
+hash-bound decision permits dependency-ordered integration and combined checks.
+The final reviewer model's opinion cannot accept the feature. A rejected or
+uncertain attempt stays in history and consumes its budget.
+
 ## Bounded implementation sequence
 
 ```mermaid
@@ -70,7 +196,7 @@ sequenceDiagram
     participant C as Codex
     participant L as LAB host
     participant H as OpenHands
-    participant P as Ollama/Qwen27
+    participant P as Selected qualified provider
     participant T as Task tools
     participant V as Verifier
     C->>L: Contract, context and protected checks
@@ -118,9 +244,9 @@ never a stage between OpenHands and Ollama.
 
 ```mermaid
 flowchart TD
-    A["Approved request"] --> G{"Admission accepted?"}
+    A["Submitted request"] --> G{"Valid scope, graph and run?"}
     G -->|"no"| B["Reject before job creation; reason"]
-    G -->|"yes"| Q["jobs.state: queued"]
+    G -->|"yes; persist effective route"| Q["jobs.state: queued"]
     Q -->|"worker claim"| R["jobs.state: running"]
     Q -->|"cancel"| X["jobs.state: cancelled"]
     R -->|"execution returns"| S["jobs.state: succeeded"]
@@ -147,6 +273,11 @@ flowchart TD
 ```
 
 This diagram uses **stored values**, with table prefixes to distinguish records.
+Selective policy/capability refusals can persist a `codex_direct` job that returns
+its reasons without inference; invalid scope/graph/run raises before submission.
+CLI/MCP `contract_requests` validates the graph before `prepare`, and durable
+submission checks it again against existing nodes. Resource/identity checks recur
+at dispatch; a previously local route can fail there.
 The finalization arrows summarize guards; unresolved events/jobs prevent
 finalization instead of automatically advancing. Callback reconciliation may
 return to `pending` or `awaiting_decision` depending on recorded delivery.

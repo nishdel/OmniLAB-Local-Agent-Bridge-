@@ -5,6 +5,14 @@ completion model. Managed reviews require an authenticated Codex CLI. The
 tested CLI version and acceptance status are in [release readiness](RELEASE-READINESS.md).
 There is no bundled model, automatic download, or executable installer.
 
+Already have a qualified LAB runtime? Keep its package/environment and data store
+fixed; use its established configuration and skip the generic installation below.
+An advisory is the first useful path and does not need OpenHands or Strata.
+Strata's experimental status does not block this onboarding path. Before submitting,
+check the [model/store and status meanings](USER-GUIDE.md#choose-the-model-and-store).
+Use a separate store for acceptance tests. The [existing human ledger](release-testing/selective-execution-issue-draft.md)
+records owner observations; an automated mock is not human acceptance.
+
 From the candidate checkout:
 
 ```powershell

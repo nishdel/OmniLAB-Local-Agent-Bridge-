@@ -1,5 +1,11 @@
 # Reference benchmarks
 
+For the current offline six-category, four-configuration preparation, use the
+[readiness comparison](../SELECTIVE-PILOT.md#readiness-comparison). Its fixtures,
+mock runner, energy integration and complete-cost worksheet are new instrumentation;
+they contain no measured live comparison. The reference results below remain
+unchanged historical evidence.
+
 Reference results describe one Windows test machine and a small, adversarial
 LocalAgentBridge workload. They are not universal model scores. GPU, RAM, CPU,
 quantization, context length, Ollama version and exact model digest all matter.

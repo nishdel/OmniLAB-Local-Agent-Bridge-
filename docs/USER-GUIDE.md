@@ -1,5 +1,14 @@
 # Companion user guide
 
+The owner's refreshed **idle-only candidate kit** is separate from the active
+installation. From the candidate checkout its established launch command is
+`.\data\readiness-20261013\manual-kit\open-dock.ps1`; add `-CheckOnly` to validate
+the pinned wheel/runtime/configuration and empty paused store without opening UI.
+It has execution disabled and cannot verify running-job/cancellation behavior.
+Use the [existing eleven-row ledger](release-testing/selective-execution-issue-draft.md)
+for actual observations. Other users should use the [quickstart](QUICKSTART.md),
+not assume this private kit exists on their machine.
+
 The companion is a bounded coding/review assistant. You or supervising Codex
 provide a selected excerpt; local models propose code, tests or explanations.
 The supervisor integrates and validates. Legacy/advisory jobs have no
@@ -8,6 +17,37 @@ selective implementation lane permits only bounded tools inside its restricted
 sandbox; see the [complete workflow](WORKFLOW.md). Neither path grants arbitrary
 repository access or bypasses cloud quotas.
 
+## Choose the model and store
+
+First identify the configuration used by the intended controller. `--config`
+takes precedence over `LAB_CONFIG`, then the current directory's `config.toml`;
+relative paths resolve against that file. Reopening with another configuration
+can show a different empty store, not lost work. Do not point a test/acceptance
+instance at the active data directory or upgrade a controller while it owns jobs.
+
+For a first advisory, select an already installed compatible completion model.
+An installed tag is not a quality guarantee. Companion exact jobs use an explicit
+job model before the saved selector and configured default; workflows retain their
+own roles/allowlists. Selective contracts resolve the backend/model's own profile.
+An unavailable Strata choice cannot be made runnable by selecting it.
+
+| Model/provider label | Meaning |
+|---|---|
+| installed | Local inventory contains the tag/assets; not proof of loaded identity or fit |
+| compatible | Required protocol/capability metadata matches; not acceptance |
+| qualified / locally_validated | Evidence applies to that exact identity, settings and scoped task/tool use |
+| enabled | Policy permits consideration; admission and execution still recheck |
+| disabled / unreachable / unloaded / unverified | Read the specific reason; no silent model substitution |
+
+Pause prevents new jobs; it does not suspend current generation. To stop safely,
+pause, inspect active jobs/review events, and finish or explicitly cancel owned
+work. Retain uncertain reservations until trusted reconciliation confirms a stop.
+Only then shut down the owned controller if needed. Hiding/quitting the dock does
+not stop jobs. Reopen with the same configuration and store; never delete a database
+to clear a blocked state. The separate idle-only acceptance kit opens no controller.
+
+## Read results before accepting
+
 The dock shows the selected run/task, exact model, local input/output tokens,
 total elapsed time, queued and locally finished counts. `unavailable` means no
 provider report, not zero. Counts are not percent-complete estimates. Details
@@ -15,6 +55,14 @@ show each job, digest, queue wait, local execution, review duration, reported
 Codex usage, result, error and review event. Local execution time includes bridge
 work; provider usage has the actual inference duration. Repeated review attempts
 remain in the deliveries table; displayed review timing is the latest attempt.
+
+Local tokens are provider counters, not cloud tokens saved. Preflight counts,
+configured context and output ceilings are admission quantities. CPU power,
+cloud phases or cache metrics may be unavailable. The benchmark's full-session
+accounting is separate from dock totals. Execution, verification, review and
+integration are separate axes: `finished`, `passed`, `accepted` and `integrated`
+are different milestones. An advisory's verification may legitimately be
+`not_run`; its source-grounded independent review is still required.
 
 `Refresh models` fetches the configured Ollama inventory and show metadata.
 `Save default` changes future exact-model jobs only; submission and execution both

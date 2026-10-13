@@ -12,6 +12,18 @@ bec07f63bc8a0991576d7392353f1a541615eeeb plus the recorded close-out commits. Re
 RTX 3060 12,288 MiB, driver 560.94; internal GTX reports Code 31.
 Human acceptance: Passed 0 / Failed 0 / Blocked 0 / Incomplete 2 / Not tested 9 / N/A 0.
 
+Customer-readiness preparation (2026-10-13): a new isolated idle-only kit is bound
+to the reviewed readiness candidate wheel and runtime tree in its private
+`identity.json`. The [user guide](../USER-GUIDE.md) gives its owner launch/check-only
+command. Historical kits are retained. Check-only verification is automated;
+no human observations or table outcomes were added. Core package/selection/UI/review
+checks remain separate from experimental Strata qualification, which stays disabled.
+Local graphical Mermaid preview was blocked by the browser's file-URL policy;
+all eight README/workflow/architecture blocks were syntax-parsed with the existing
+Mermaid 11.12.2 asset. Parsing is not fresh graphical verification. Local native
+Tk test initialization also lacked usable Tcl in the test environment; no human
+or native-UI pass is inferred from other regression checks.
+
 Historical manual kit prepared 2026-10-10 for runtime source
 `a9a4bad6eaa2761d3a3648854f83664a94bc119d`, retained wheel SHA-256
 `df9b041c8198213b9237078e39fe71ff18e7c6e55112c771ee7d516f88db2429`.

@@ -347,3 +347,12 @@ C lacked memory headroom; competing inference subsequently triggered the GPU
 guard. Deliberate live failure/cancellation checks remained unrun. No retry,
 alternate provider, cloud fallback or token-savings claim was made. See the
 [current outcome](SELECTIVE-IMPLEMENTATION-REPORT.md#windows-mapped-page-release-trial--2026-10-13).
+
+## Readiness-only audit — 2026-10-13
+
+The user explicitly required direct Codex work to preserve observed resource
+conditions. No local delegation, model request or startup occurred. Codex traced
+provider/store metadata, reconstructed the SDK envelope offline and reviewed the
+qualification-only observation gate/tests. Prior final-patch A/B acceptance remains
+separate; no new local-agent contribution, token saving or implementation success
+is claimed. See the [single readiness plan](SELECTIVE-IMPLEMENTATION-REPORT.md#next-session-readiness-decision--2026-10-13).

@@ -652,3 +652,11 @@ in the [manual draft](release-testing/selective-execution-issue-draft.md), obser
 idle, running, awaiting review and completed; exact model/backend/usage; cancel;
 and an explicit override followed by restart persistence. An open window or an
 automated widget binding test does not mark these human checks passed.
+
+### Next session: readiness before startup
+
+Use the single [numerical memory and exclusive-session plan](SELECTIVE-IMPLEMENTATION-REPORT.md#next-session-readiness-decision--2026-10-13).
+The current decision is C: no new startup is justified yet. It specifies operator
+pause/finish actions, read-only checks, request-context accounting and conservative
+22 GiB pre-start/10.5 GiB pre-dispatch screens. These do not qualify memory fit or
+change existing limits. No installation, packing or A/B repeat is the next step.

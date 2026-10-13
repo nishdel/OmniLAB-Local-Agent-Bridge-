@@ -92,6 +92,9 @@ Native mapped-page release was verified active, but idle RAM stayed below the
 6 GiB admission requirement. A competing inference process later triggered the
 whole-GPU guard during observation. OpenHands/Strata and deliberate live
 failure/cancellation checks remain unqualified; general Strata routing is disabled.
+The [model-free readiness audit](docs/SELECTIVE-IMPLEMENTATION-REPORT.md#next-session-readiness-decision--2026-10-13)
+withholds another startup: the complete memory envelope and SDK context admission
+remain unresolved; store-local reservations do not provide machine-wide exclusivity.
 Test settings were restored and active LAB/Ollama preserved. See the
 [current qualification](docs/SELECTIVE-IMPLEMENTATION-REPORT.md#windows-mapped-page-release-trial--2026-10-13)
 and [workflow, lifecycle and trust views](docs/WORKFLOW.md).

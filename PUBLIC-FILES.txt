@@ -239,3 +239,5 @@ docs/qualification/STRATA-LICENSE.txt
 docs/qualification/strata-serving-tested.patch
 docs/qualification/strata-serving-tested-provenance.json
 docs/qualification/strata-file-release-evidence.json
+scripts/strata_session_gate.py
+tests/test_strata_session_gate.py

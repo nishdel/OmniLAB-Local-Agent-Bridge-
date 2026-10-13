@@ -96,6 +96,8 @@ final serving patch plus engine-only mapped-page release passed fresh A/B.
 Idle RAM remained below admission; a later competing-runtime GPU guard ended
 observation before C and deliberate live cancellation/failure checks.
 The conditional isolated Maximum cap was used and restored to absent/Medium.
+The later [readiness-only audit](SELECTIVE-IMPLEMENTATION-REPORT.md#next-session-readiness-decision--2026-10-13)
+started no inference and leaves all eleven human rows unchanged.
 No human row passed; see the [current outcome](SELECTIVE-IMPLEMENTATION-REPORT.md#windows-mapped-page-release-trial--2026-10-13).
 
 <a id="current-qwen27-disposable-display-kit--2026-10-10"></a>

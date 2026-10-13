@@ -1,5 +1,266 @@
 # Selective local execution implementation report
 
+## Next-session readiness decision — 2026-10-13
+
+**Decision C: do not spend another startup yet.** A lower-background session has
+not demonstrated the required headroom, and the unchanged LAB context policy
+rejects the reconstructed SDK fixture before generation. Neither of the two
+inspected native memory options resolves these prerequisites. This is an offline
+readiness decision, not another failed live run or a claim the hardware can never
+run the fixture. The successful final-patch A/B below remains valid.
+
+Started from clean local/remote **c34fd74f3268b04a05a6417cce3e05207db697df**.
+Direct Codex work was explicitly requested for this audit; no local delegation,
+inference, native-engine or Docker startup occurred. Active a9a4bad LAB/Ollama,
+all stored settings/admission state and the serving patch remain unchanged.
+
+### Competitor: established facts and limits
+
+The original timeline recorded `llama-server.exe` PID 15804, creation
+**2026-10-13 11:12:42.609 UTC**, before the **11:12:47.850 UTC** GPU stop. The
+still-running Ollama service's open log handles identify the relevant provider
+logs. Their scheduler records independently show that service launching the
+same executable/model at **11:12:42.601 UTC**. Its model blob is
+`a8cc1361f3145dc01f6d77c6c82c9116b9ffe3c97b34716fe20418455876c40e`,
+subsequently identified as **qwen3:14b-q4_K_M**, with context 4096 and one slot.
+At 11:12:54.481 the provider records client disconnection/cancelled loading;
+a second launch at **11:13:19.405 UTC** matches the separately preserved PID
+2524/create-time identity. These are two distinct runners, not PID continuity.
+
+The provider reported a GPU-discovery timeout and reused old free-memory values
+before the first load. This explains why its own admission cannot be treated as
+Strata-aware; per-process GPU allocation and the initiating HTTP caller remain
+unknown. The original process sampler did not save the first runner's parent
+identity. Provider launch records establish the launching service, not the client
+application. The access log records loopback `/v1/chat/completions` requests
+finishing at 11:13:00 UTC (499, 21.302 s) and 11:13:48 UTC (200, 30.706 s).
+Subtracting those durations implies HTTP handling began around 11:12:38.7 and
+11:13:17.3, during the trial; this is an inference from second-resolution end
+timestamps, not a client trace. Any earlier application-side queue and other
+unrecorded pending requests remain unknown. Do not identify the caller from the
+resident model, a later application process or matching timestamps.
+
+The active companion store had no queued/running jobs or reservation at trial
+start or cleanup, and no job/event in the contention interval; its latest job
+ended before the trial. Its usage/activity tables and the older project usage
+store also have no request in that interval. The isolated store contains only
+its completed, reviewed B job. Thus the inspected LAB stores provide **no evidence
+that they initiated this load**; they do not exclude an unrecorded direct client
+or another project's store. Only task-relevant metadata and fixture envelopes
+were inspected; raw prompts and unrelated sessions are excluded from publication.
+
+`TaskStore.reserve` serializes a singleton with `BEGIN IMMEDIATE` **inside one
+SQLite file**. Different stores can each reserve successfully. `Bridge.lock` is
+per Python instance; companion Pause stops `claim_job`, not direct Bridge/MCP
+requests or external Ollama clients. Ollama has its own scheduler, with no LAB
+reservation protocol. The old harness checked active-store jobs and `/api/ps`
+before launch and while monitoring; `/api/ps` can be empty during loading. There
+is also a check-to-start/check-to-dispatch race. No observation check or new lock
+can make old installations and nonparticipating applications exclusive.
+
+### Numerical readiness screen, not a verified memory fit
+
+The reference is the uncontaminated c34fd74 run **with Docker already resident**:
+31.795 GiB physical RAM; pre-start availability **16.197 GiB**; idle availability
+**4.507–4.671 GiB**; generation minimum **2.414 GiB**. The whole-host depletion
+from pre-start to generation was **13.784 GiB**. This is an empirical combined
+runtime envelope including background variation, not a sum of unique process
+RSS or an isolated engine allocation measurement.
+
+| Component | Already resident | Additional allowance | Evidence | Uncertainty |
+|---|---|---|---|---|
+| Windows and ordinary applications | Within the measured 15.597 GiB pre-start used total | No second charge; remeasure after operator actions | System available RAM | Background can change; application RSS is not reclaimable RAM |
+| Docker/WSL host | Included in that same baseline; diagnostic process sum peaked at 3.127 GiB | Do not add that RSS sum again | Existing image/host preflight and timeline | Shared pages/private counters partly unavailable; keep Docker resident for the readiness measurement |
+| Strata, serving, existing LAB client and monitor | Absent/present as observed at pre-start | **13.784 GiB combined observed depletion**, including generation | 2.414 GiB clean minimum, not startup/idle alone | Larger prompts can touch additional mapped expert pages |
+| Full restricted sandbox | No agent container at reference | **2.000 GiB**, no swap, 2 CPUs | Existing cgroup ceiling; tmpfs is inside this allowance | No credit for presumed VM cache reuse |
+| Additional host controller/client/diagnostics | Prior monitor/client already included above | **0.500 GiB extra** | Prior monitor peak 77 MiB and client/worker sum 139 MiB; extra allowance exceeds twice that observed sum | SDK process itself belongs to the sandbox row |
+| Full SDK/context/tool-history growth | Not qualified by 122-token B | **2.500 GiB provisional uncertainty floor** | Covers another rounded clean idle-to-generation excursion (2.257 GiB) | Not a measured upper bound for a 5,864-token initial prompt or later turns; blocks a positive fit claim |
+| Retained free host headroom | Must remain available, not allocated | **3.000 GiB** | Existing sustained-pressure threshold | Separate unchanged 6 GiB admission floor also applies |
+
+The screening total is **21.784 GiB**, rounded upward to **22 GiB available before
+startup, after Docker/executor readiness and ordinary monitoring are established**.
+That is **5.803 GiB more** than the previous pre-start availability, or at least
+**5.586 GiB extra at its generation low point** before rounding. The old 1.46 GiB
+idle admission gap is not a complete plan.
+
+Before creating/dispatching C, require **10.5 GiB available**: 2.5 GiB rounded
+observed generation excursion + 2 GiB sandbox + 0.5 GiB extra host overhead +
+2.5 GiB further-growth floor + 3 GiB retained headroom. This is 5.83–5.99 GiB above
+the previous clean idle interval. Before later model turns, require **8.5 GiB +
+the unconsumed part of the 2 GiB sandbox allowance**, and retain the existing
+6 GiB minimum. Already resident, independently measured sandbox pages are not
+charged twice. If their residency cannot be established, do not guess a credit
+or declare a later turn admitted. No new allocation is inferred from summed
+Docker/container RSS. Stop on growing uncertainty rather than increasing a limit.
+
+These are conservative **screening thresholds**, not permission to mark the
+memory plan supervisor-verified: the 2.5 GiB growth floor still needs a justified
+upper bound or separately approved guarded validation. Commit capacity, private
+commit/working sets, page faults and I/O support interpretation; only actual host
+available RAM supplies headroom. No hypothetical reclaimable pages are credited.
+The earlier near-threshold timing and guard interpretation remain unchanged.
+
+### Offline SDK request exposes a separate admission prerequisite
+
+The current `qualification.start` contract and runner prompt were reconstructed
+from their AST using the unchanged 8-step/120-second-request/600-second-attempt,
+15-second-test, 16,384-context, 1,536-output and zero-retry/repair limits. The static
+system/tools envelope comes from a saved real restricted SDK 1.53.0 request; its
+terminal description exactly matches the current runner. This is a reconstruction,
+not a fresh Docker SDK run. Cached SDK/tools wheel SHA-256 values are
+`37e8349f02d64bc089c02a2233c824a949e67ef6a2e2d0ac6be2a9303d364220` and
+`ab0ea27cae25417d248f70e492d52e276b58cea880167a66b0fda3e8bd430498`.
+
+The system text alone is **15,235 UTF-8 bytes**, tool definitions **8,947 serialized
+bytes**. The resulting Strata payload is **25,951 bytes**; current
+`context_accounting` requires **27,487** including output reserve, exceeding
+16,384 before any tool result. The actual provider path, with a fake verified
+identity and mock-only HTTP transport, rejects it with **zero model requests**.
+A model-free `Service.encode_prompt` call using the exact retained tokenizer and
+final serving source counted **5,864 tokens**, or **7,400 with output reserved**.
+This distinguishes conservative LAB rejection from real model-context overflow;
+it does not authorize bypassing the guard. Payload SHA-256:
+`b5944a9782233a330cfcc60c19b8ea6588d1181a697726a4420c247e00028ee1`.
+
+Up to eight normally budgeted responses can each add 1,536 output tokens and a
+permitted tool result up to 16,384 bytes. Those maxima do not all fit in one 16K
+history; each complete next request must be checked and rejected if oversized.
+There is no automatic shortening, hidden extra context or retry. The 122-token
+advisory cannot certify those requests, memory peaks or the full tool loop.
+Before C, a separate reviewed decision on exact pinned-template token accounting
+would be needed; increasing context or weakening the current guard is not this
+audit's fix. No prompt/tool definition or LAB provider implementation was changed.
+
+### One operational procedure and its stop conditions
+
+1. **Resolve offline gates first.** Keep Strata disabled. Review the SDK accounting
+   decision and memory-growth uncertainty above; do not launch A/B again merely
+   to rediscover them. Verify final serving patch `3a0ca878…`, server `670a36ec…`,
+   native executable `5f359e2d…`, and the unchanged mapped-release configuration.
+2. **Operator establishes a quiet window.** Finish inference in every LAB project,
+   other Codex/local-agent task and standalone client. Inventory all participating
+   stores and callers. An authorized operator records existing pause values and
+   uses each installation's existing `companion pause` (or dock Pause) after work
+   finishes. Direct MCP clients must also stop submitting; Pause alone does not
+   cover them. Leave uncertain reservations held until independently reconciled.
+   Do not resume paused queued work during this session.
+3. **Review optional background reductions.** Before this audit's validation,
+   Firefox had 22 processes/~2.12 GiB summed RSS, ChatGPT Classic six/~0.535 GiB,
+   and the standalone Odysseus server ~0.147 GiB. An operator may finish/save and
+   close unused instances or disable their inference admissions using their own
+   controls; this audit did neither. Other ChatGPT tasks may be finished, but
+   preserve the current Codex supervisor. Do not touch Windows/security services.
+   These are candidates, not promised recoverable memory or an attribution of the
+   earlier caller. Current available RAM was 21.352 GiB **with Docker stopped**;
+   it is not evidence of 22 GiB with the executor ready. Even optimistic sums for
+   the first three applications do not establish the complete target.
+4. **Measure readiness afresh.** After approved operator actions and ordinary
+   executor startup in a later authorized session, verify the immutable existing
+   image, protected fixture, all stores paused/empty, zero uncertain reservations,
+   empty Ollama `/api/ps`, no loading/running unrelated engine, and 22 GiB host
+   availability with diagnostics active. Keep observing during a quiet window;
+   operator coordination is still required because snapshots cannot close races.
+   Do not unload a model automatically; if another model remains, stop readiness.
+5. **Only then request one new startup.** Existing conditional B/C/Maximum approval
+   is retained, not requested again. A new startup needs its own authorization.
+   The owner monitor calls the qualification gate before consuming that start and
+   on its existing monitoring loop; the isolated worker installs the dispatch hook
+   before its first request and every later turn. Both share one new-session halt
+   file and exact owned engine/job/attempt identities. No active installation is
+   patched. An appearance after admission blocks subsequent dispatch, latches the
+   stop, and invokes existing cleanup for owned work only. Provider termination
+   uncertainty retains the reservation; no foreign work is killed or reconciled.
+6. **Conditional execution and closeout.** Keep all original physical guards and
+   deadlines; enforce the C/later-turn memory screens and complete-request checks.
+   The first unexpected failure ends the session, without replay/restart/tuning.
+   Deliberate failure/cancellation remain last and conditional; guard shutdown is
+   not their pass. Restore only recorded test settings and operator-approved pause
+   states after owned termination/listener/reservations are verified. Report missing
+   diagnostics and unknown termination instead of manufacturing idle success.
+
+The executable read-only checker is [strata_session_gate.py](../scripts/strata_session_gate.py).
+Use the verified isolated LAB interpreter; the paths below are operator-supplied
+variables, not default stores. This command never pauses or starts anything:
+
+```powershell
+& $LabPython -I -B $GateScript --endpoint http://127.0.0.1:11434 `
+  --store-db "active=$ActiveStore" --store-db "isolated=$QualificationStore" `
+  --halt-file $NewSessionHaltFile
+```
+
+A successful observation alone is neither memory admission nor exclusive-session
+proof. `observe` reads SQLite in `mode=ro`; known loading processes supplement
+provider metadata. `SessionGate.check` rejects stale/missing diagnostics, other
+jobs/reservations, unpaused admissions, identity loss/PID reuse and competition;
+its halt persists across checker instances. `install_dispatch_guard` is an explicit
+process-local hook for the isolated qualification worker only. Rollback is removing
+that hook in the test process and discarding the unused new-session harness, never
+editing active LAB, resetting uncertain reservations or erasing previous evidence.
+The original launcher/worker records remain untouched; the next session must bind
+these reviewed hooks into its own manifest before authorization.
+
+### Two inspected native candidates; neither recommended
+
+- **`--trim-stage-weights`:** installed executable contains the option and the
+  ignored-on-single-GPU diagnostic. Pinned `generate.cpp` lines 2933–2946 enable it
+  only with a multi-GPU layer split. It trims duplicate stage dense weights/VRAM,
+  not this single-GPU mapped expert residency. It would need a forbidden placement
+  change and new qualification; adding it here is a no-op. No amendment recommended.
+- **`--resident-budget-gib N`:** binary contains option/positive-value validation;
+  pinned parsing and `FileExpertSource.pin_cache_complement` confirm Windows native
+  direct-GGUF support. Default budget is zero in the current mmap configuration.
+  A positive value copies/locks selected non-GPU experts; it does not cap mapped
+  file residency, dense buffers, KV, Windows or total engine memory. It can add
+  private/locked RAM and alter disk traffic/latency. It preserves expert bytes;
+  fresh numerical parity is unverified, and existing CPU/GPU placement can round differently. It cannot be justified as a reduction from this zero-budget
+  baseline. No native/source/launcher change was applied; rollback remains no change.
+
+The same executable still hashes to `5f359e2d…`; option/diagnostic byte offsets
+are recorded privately with the source/release evidence. No version-string-only
+support inference, additional candidate sweep, cache-disable proposal or hardware
+purchase recommendation is made.
+
+### Offline correction, acceptance and publication
+
+The identified harness defect is treating resident-model metadata as sufficient
+while a separate runner is loading. The new observer and sticky per-dispatch gate
+close that detection gap for the declared participants. They do **not** implement
+machine-wide scheduling or guarantee exclusivity against nonparticipants. Focused
+model-free tests cover early/late competition, two independently reserved stores,
+missing diagnostics, PID reuse, subsequent dispatch, owned uncertainty and foreign
+reservation preservation. A real read-only observation correctly blocked because
+the existing stores were not paused; no setting was changed.
+
+Harness SHA-256: `21775cfbc8c9d51ebfea01577d31641ac72bb816f727651813fd3288eab32a97`.
+Test SHA-256: `bf9c2d8f5f391931b09d933e4c31c61de6cf4cc562cfd96e5e3f22f6ae084a6c`.
+Final serving patch SHA-256 remains
+`3a0ca878f80c66e26c26b429e00db71ccb3c9febcc34056728602ee996d05190`.
+Private audit evidence is retained under `strata-readiness-20261013` (inventory,
+relevant provider/store metadata, offline request/template counts, numerical plan,
+source hashes and validation); raw logs, paths and prompts are excluded from publication.
+Fresh local regression: **672 passed, 1 skipped in 752.57 s**, including the
+41 final-serving-patch checks. The Windows symlink skip remains explicit. The
+17 new focused gate checks passed again in 1.96 s. Wheel/sdist content inspection,
+offline installation, v0.4.1 retained-usage/checkpoint upgrade and **114 overlapping
+installed checks** passed. Lint, 46 Markdown/generated references, 357 local links,
+71 anchors and the 242-file public audit passed. No model-free result establishes
+live exclusivity or C acceptance. Exact archive identities and published-commit
+CI belong to [PR #1](https://github.com/nishdel/OmniLAB-Local-Agent-Bridge-/pull/1);
+CI explicitly skips optional patch cases when private Strata source is absent.
+Earlier A/B and rendering evidence are explicitly reused, not rerun.
+
+The LAB/README upgrade can be reviewed with Strata explicitly experimental and
+disabled, but existing gates are not waived: owner package identity/launch and
+rollback; selector/default persistence and exact overrides; displayed identity,
+usage/progress/errors; keyboard/DPI/readability; hide/reopen and real cancellation;
+retained workflows/budgets/checkpoints; stale/forged candidate/recovery review;
+and separately applicable managed callback, fresh-Windows and performance checks.
+The **eleven human rows remain two incomplete/nine untested**. Reviewer approval
+and the existing human merge gate remain required; this task does not merge or
+release. All eight Mermaid blocks are unchanged, so prior visual evidence is reused
+without claiming a fresh render. Main/release remain separate from the development
+branch, and OpenHands/Strata plus deliberate live safety checks remain pending.
+
 ## Windows mapped-page release trial — 2026-10-13
 
 **The installed release option works on this path, and fresh A/B passed on the

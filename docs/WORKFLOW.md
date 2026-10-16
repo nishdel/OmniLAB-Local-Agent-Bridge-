@@ -88,6 +88,12 @@ nor does an implementation failure prevent a separately admitted advisory job.
 The code does not automatically reroute failed implementation into advisory;
 Codex may submit a separately bounded advisory contract.
 
+Implementation evidence is inspected only when the effective requested lane is
+`local_implementation`. A missing or malformed OpenHands proof cannot disable an
+otherwise admitted advisory contract, including an explicit advisory override.
+The [lane-independence regression](../tests/test_selective_contracts.py) verifies
+both cases while the corresponding implementation request remains refused.
+
 Sources: [lane schema and `route`](../localagentbridge/task_contract.py),
 [`prepare` and lane dispatch in `execute`](../localagentbridge/selective.py),
 [`ChatProvider`](../localagentbridge/inference.py),

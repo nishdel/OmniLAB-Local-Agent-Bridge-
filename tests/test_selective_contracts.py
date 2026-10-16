@@ -115,6 +115,39 @@ def test_disabled_optional_dependencies_and_defaults(tmp_path):
     assert 'openhands.sdk' not in __import__('sys').modules
 
 
+@pytest.mark.parametrize('proof_state', ['missing', 'malformed'])
+@pytest.mark.parametrize('override', [False, True])
+def test_advisory_admission_does_not_depend_on_openhands_evidence(tmp_path, monkeypatch, proof_state, override):
+    import localagentbridge.selective as selective
+    proof = tmp_path/'implementation-proof.json'
+    if proof_state == 'malformed':
+        proof.write_text('not JSON', encoding='utf-8')
+    async def inspect(self, model):
+        assert self.backend == 'ollama' and model == 'exact:tag'
+        return capability()
+    def no_sandbox(*args):
+        raise AssertionError('Advisory admission must not construct an OpenHands sandbox')
+    monkeypatch.setattr(selective.ChatProvider, 'inspect', inspect)
+    monkeypatch.setattr(selective, 'DockerSandbox', no_sandbox)
+    cfg = Config(data_dir=tmp_path/'data', source_root=tmp_path,
+        selective=policy() | {'providers':{'ollama':{'endpoint':'http://127.0.0.1:11434'},
+                                          'strata':{'enabled':False}},
+            'capability_evidence':[{'backend':'ollama', 'identity':'weights', 'context_tokens':16384,
+                'image':'fixture-image', 'sdk_version':'1.53.0', 'path':str(proof)}],
+            'sandbox':{'image':'fixture-image'},
+            'memory_plan':{'supervisor_verified':True, 'os_and_apps_mb':1, 'lab_mb':1,
+                           'runtime_mb':1, 'context_cache_mb':1, 'headroom_mb':1}})
+    cfg.adaptive.enabled = False
+    advisory = contract(tmp_path, requested_lane='local_implementation' if override else 'local_advisory',
+        override_lane='local_advisory' if override else None,
+        override_reason='Use advisory because implementation is unqualified' if override else '')
+    admitted = asyncio.run(prepare(cfg, [advisory]))[0]
+    assert admitted['routing']['effective_lane'] == 'local_advisory'
+    implementation = contract(tmp_path)
+    refused = asyncio.run(prepare(cfg, [implementation]))[0]
+    assert refused['routing']['effective_lane'] == 'codex_direct'
+
+
 def test_migration_preserves_history_and_is_repeatable(tmp_path):
     store=CompanionStore(tmp_path/'state')
     with store.db() as db:

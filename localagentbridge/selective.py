@@ -90,24 +90,26 @@ async def prepare(config, contracts, transport=None):
                         eligible, reason = task_eligibility(profile,config.adaptive,cap,telemetry.model_metrics(c.model),'analyze_code')
                         if not eligible:
                             capability.update(ready=False,reason='Existing compute/resource/quality gate: '+str(reason))
-                qualification = next((q for q in policy.get('capability_evidence', []) if
-                    q.get('backend') == c.backend and q.get('identity') == capability.get('identity') and
-                    q.get('context_tokens') == c.limits.context_tokens and
-                    q.get('image') == policy.get('sandbox', {}).get('image') and
-                    q.get('sdk_version') == '1.53.0'), {})
-                # These are explicit operator qualification records, not model self-reports.
-                proof = Path(qualification['path']).read_bytes() if qualification.get('path') else b''
-                proof_data = json.loads(proof) if proof else {}
-                qualified = bool(proof and hashlib.sha256(proof).hexdigest() == qualification.get('sha256')
-                                 and qualification.get('supervisor_accepted')
-                                 and proof_data.get('kind') == 'openhands_roundtrip'
-                                 and proof_data.get('verification_status') == 'passed'
-                                 and proof_data.get('tool_result_messages', 0) > 0
-                                 and {'terminal', 'file_editor'} <= set(proof_data.get('tools_called', []))
-                                 and all(proof_data.get(k) == qualification.get(k) for k in
-                                         ('backend','identity','context_tokens','image','sdk_version')))
-                capability.update(tool_roundtrip_verified=qualified, context_verified=qualified)
                 if (c.override_lane or c.requested_lane) == 'local_implementation':
+                    # OpenHands evidence belongs to implementation admission only.
+                    # Missing/stale proof must not disable independently admitted advisory work.
+                    qualification = next((q for q in policy.get('capability_evidence', []) if
+                        q.get('backend') == c.backend and q.get('identity') == capability.get('identity') and
+                        q.get('context_tokens') == c.limits.context_tokens and
+                        q.get('image') == policy.get('sandbox', {}).get('image') and
+                        q.get('sdk_version') == '1.53.0'), {})
+                    # These are explicit operator qualification records, not model self-reports.
+                    proof = Path(qualification['path']).read_bytes() if qualification.get('path') else b''
+                    proof_data = json.loads(proof) if proof else {}
+                    qualified = bool(proof and hashlib.sha256(proof).hexdigest() == qualification.get('sha256')
+                                     and qualification.get('supervisor_accepted')
+                                     and proof_data.get('kind') == 'openhands_roundtrip'
+                                     and proof_data.get('verification_status') == 'passed'
+                                     and proof_data.get('tool_result_messages', 0) > 0
+                                     and {'terminal', 'file_editor'} <= set(proof_data.get('tools_called', []))
+                                     and all(proof_data.get(k) == qualification.get(k) for k in
+                                             ('backend','identity','context_tokens','image','sdk_version')))
+                    capability.update(tool_roundtrip_verified=qualified, context_verified=qualified)
                     try:
                         capability['sandbox_available'] = DockerSandbox(policy.get('sandbox', {})).preflight()
                     except (ValueError, RuntimeError, OSError) as error:

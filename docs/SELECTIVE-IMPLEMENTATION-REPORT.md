@@ -1,5 +1,47 @@
 # Selective local execution implementation report
 
+## Architecture correction and consolidation — 2026-10-17
+
+The [workflow](WORKFLOW.md) and [documentation website](index.md) now distinguish
+the three execution lanes from the two inference providers. Five source-linked
+views explain routing, transport, advisory handoff, implementation execution and
+verification. OpenHands remains specific to implementation; Strata remains an
+experimental inference alternative. [Independent Janas research](research/JANAS.md)
+is outside the deployment and has no provider, default, route or fallback.
+
+Source inspection exposed one cross-lane admission defect: `selective.prepare`
+read a matching OpenHands capability proof even for an advisory request. A missing
+or malformed proof could therefore return otherwise qualified advisory work to
+Codex. Proof inspection and sandbox preflight now occur only for the effective
+implementation lane. Four offline regressions cover missing/malformed proof and
+direct/overridden advisory requests; the corresponding implementation request
+still fails closed. Provider identity, context, resource, review and acceptance
+gates are unchanged. This corrects development source, not a running installation.
+
+Validation: **195 source tests passed** across contracts, flows, providers,
+sandbox, integration, profiles, bounded execution, MCP and Strata accounting.
+The isolated wheel passed **46 contract tests**, overlapping the source suite.
+All 93 packaged runtime entries matched source; the 264-file public source set
+was present in the sdist. An offline v0.4.1 → candidate install preserved a
+disposable settings sentinel. Ruff, 50-document links/generated reference,
+website links/anchors and the public-source audit passed. Website browser checks
+confirmed search and all eight workflow Mermaid blocks rendered without diagram
+errors. These checks do not grant live model or human release qualification.
+
+The website is generated from the canonical Markdown, with development status,
+source-revision links and historical evidence retained. GitHub Pages publication
+is separate from merging PR #1 or releasing/installing a package. Local Docker
+cleanup archives stopped-container metadata/logs and writable filesystem images;
+qualified images, models, mounted data and the Open WebUI volume are retained.
+Standalone Open WebUI was restored and its HTTP endpoint and healthy state checked.
+See [operations](OPERATIONS.md) for the access and cleanup boundaries.
+
+The requested Strata Coder shards already exist. Fresh read-only readiness still
+refused startup on resource/ownership and outstanding authorization/qualification
+gates. No model was loaded or downloaded by this correction. The separate Janas
+35B smoke result does not establish 80B practicality or supervisory capability;
+its next target requires a new isolated preflight and explicit authorization.
+
 ## Exact context accounting — 2026-10-13
 
 **Exact-accounting prerequisite implemented and offline-verified. Strata remains

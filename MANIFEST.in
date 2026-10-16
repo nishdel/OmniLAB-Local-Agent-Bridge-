@@ -11,6 +11,8 @@ recursive-include examples *.toml *.json
 recursive-include profiles *.toml
 recursive-include tests *.py *.json
 recursive-include scripts *.py
+include website/package.json website/package-lock.json website/build.mjs
+recursive-include website/assets *.css *.js
 prune data
 prune benchmarks
 prune release-staging

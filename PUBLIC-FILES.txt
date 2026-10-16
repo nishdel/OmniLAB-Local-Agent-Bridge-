@@ -253,3 +253,13 @@ scripts/benchmark_readiness.py
 scripts/comparison_fixtures.py
 scripts/comparison_mock.py
 tests/test_readiness_comparison.py
+docs/index.md
+docs/OPERATIONS.md
+docs/INFERENCE-ROADMAP.md
+docs/research/JANAS.md
+website/package.json
+website/package-lock.json
+website/build.mjs
+website/assets/style.css
+website/assets/app.js
+.github/workflows/docs.yml

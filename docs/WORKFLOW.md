@@ -65,6 +65,126 @@ Output, attempts and repairs remain bounded; larger tasks are split.
 
 ## Python decisions in the selective path
 
+### Task lanes and inference providers are separate dimensions
+
+| Task execution | Inference provision | Qualification boundary |
+|---|---|---|
+| `codex_direct` | No local inference dispatched by LAB | Codex handles unsuitable or unqualified work; this is not an automatic cloud call. |
+| `local_advisory` | Ollama/Qwen directly through LAB | Exact identity, context, resources and advisory task suitability; no OpenHands prerequisite. |
+| `local_implementation` | Ollama today; experimental Strata after separate qualification | OpenHands SDK tools plus exact backend/model/context/image evidence, permitted files and protected verification. |
+
+Ollama can serve both local lanes because model inference and tool execution are
+different responsibilities. In advisory work the result is text for Codex to
+evaluate and act upon, including repository explanations, documentation drafts,
+code review and implementation suggestions. In implementation OpenHands supplies
+the iterative tool loop: read permitted files, propose/apply permitted edits,
+invoke approved tests and consume their results. The provider supplies model
+responses; it neither grants permissions nor independently verifies completion.
+
+Strata's adapter supports text and tool-response transport, but its next intended
+qualification is **Strata inference behind OpenHands**. It remains disabled until
+that exact configuration passes. An advisory success cannot qualify implementation,
+nor does an implementation failure prevent a separately admitted advisory job.
+The code does not automatically reroute failed implementation into advisory;
+Codex may submit a separately bounded advisory contract.
+
+Sources: [lane schema and `route`](../localagentbridge/task_contract.py),
+[`prepare` and lane dispatch in `execute`](../localagentbridge/selective.py),
+[`ChatProvider`](../localagentbridge/inference.py),
+[SDK runner and tool registration](../localagentbridge/executor_assets/runner.py).
+These are implemented paths; dated live scope remains in the qualification reports.
+
+### Routing diagram
+
+```mermaid
+flowchart TD
+    C["Codex: scope, risk, acceptance and requested lane"] --> V["OmniLAB prepare: contract, profile and lane gates"]
+    V -->|"direct requested or local gates fail"| D["codex_direct: reasons returned to Codex"]
+    V -->|"advisory admitted"| A["local_advisory: direct provider call"]
+    V -->|"implementation separately admitted"| I["local_implementation: OpenHands SDK"]
+    A --> E["Saved advisory text and evidence"]
+    I --> P["Candidate plus protected verification"]
+    D --> R["Codex: plan, review and final acceptance"]
+    E --> R
+    P --> R
+```
+
+Source: [`task_contract.route`](../localagentbridge/task_contract.py#L171),
+[`selective.prepare/execute`](../localagentbridge/selective.py).
+Validation: [contract tests](../tests/test_selective_contracts.py),
+[flow tests](../tests/test_selective_flows.py). No provider or framework can accept
+its own output; Codex's final authority is enforced through trusted review and
+integration checks, not a model confidence score.
+
+### Inference transport diagram
+
+```mermaid
+flowchart TD
+    subgraph Box["Restricted implementation sandbox: network none"]
+      H["OpenHands SDK"] <--> R["Container loopback Relay"]
+      R <--> M["Request / response mailbox"]
+    end
+    M <-->|"fixed Docker transport; validated requests"| W["Trusted OmniLAB worker"]
+    W <-->|"host loopback"| O["Ollama"]
+    W -.->|"experimental alternative; separately gated"| S["Strata"]
+    A["Advisory execution in OmniLAB"] <-->|"direct host call"| O
+```
+
+Source: [runner `Relay`](../localagentbridge/executor_assets/runner.py),
+[`DockerSandbox.read/respond`](../localagentbridge/sandbox.py),
+[`transport.py`](../localagentbridge/executor_assets/transport.py),
+[`implementation` mailbox validation](../localagentbridge/selective.py),
+[`ChatProvider`](../localagentbridge/inference.py).
+Validation: [sandbox tests](../tests/test_selective_sandbox.py),
+[provider tests](../tests/test_selective_providers.py).
+The relay is inside the networkless container. No container-to-host endpoint,
+host networking or expanded host mount is introduced for Strata.
+
+### Advisory handoff diagram
+
+```mermaid
+sequenceDiagram
+    participant C as Codex
+    participant L as OmniLAB
+    participant O as Ollama / Qwen
+    C->>L: Bounded question, declared source and acceptance
+    L->>L: Check identity, context, policy and resources
+    L->>O: Advisory messages, no model-directed task tools
+    O-->>L: Proposed explanation, documentation or implementation advice
+    L-->>C: Saved answer, usage and evidence
+    C->>C: Check source, decide edits, test and review
+    C->>L: Trusted review outcome
+```
+
+Source: [`execute` advisory branch](../localagentbridge/selective.py),
+[retained Ollama advisory bridge](../localagentbridge/ollama_advisory.py),
+[`TaskStore.review`](../localagentbridge/task_store.py).
+Validation: [flow tests](../tests/test_selective_flows.py).
+Writing documentation or changing code following an advisory answer is a Codex
+action; the advisory model has not executed an implementation task.
+
+### Verification diagram
+
+```mermaid
+flowchart TD
+    H["OpenHands candidate"] --> B["OmniLAB checks permitted changes and protected baseline/candidate tests"]
+    B --> R["Codex independently reviews diff, evidence and acceptance coverage"]
+    R -->|"accept exact candidate hash"| G["Trusted integration checks base, dependencies and candidate hashes"]
+    R -->|"reject, correct or escalate"| X["Retain failed evidence; no integration"]
+    G --> T["Run union of checks on assembled feature"]
+    T -->|"pass"| I["Apply verified bytes; explicit finalization"]
+    T -->|"fail"| X
+```
+
+Source: [`make_candidate/verify`](../localagentbridge/selective.py),
+[`review_guard`](../localagentbridge/task_store.py),
+[`integrate`](../localagentbridge/integration.py).
+Validation: [integration tests](../tests/test_selective_integration.py),
+[bounded tests](../tests/test_selective_bounded.py).
+The implementation sequence below expands the same path into tool invocations.
+
+### Python decision walkthrough
+
 This walkthrough is source-checked against the development candidate. It is not
 an autonomous planner. The supervisor creates the nodes and supplies `risk`,
 `ambiguity`, `coherent_scope`, `reversible`, `category` and approval. LAB does not

@@ -1,5 +1,8 @@
 # OmniLAB / LocalAgentBridge
 
+**[Documentation website](https://nishdel.github.io/OmniLAB-Local-Agent-Bridge-/)** ·
+[Documentation index](docs/index.md) · [Standalone access](docs/OPERATIONS.md)
+
 LAB helps a developer use a local model for a small part of a coding task while
 keeping supervision, evidence and acceptance explicit. It is useful when you
 already use Codex and Ollama and want reviewable local explanations, code reviews,
@@ -31,13 +34,20 @@ installation requirements for other users.
 ```mermaid
 flowchart TD
     U["User: feature request and constraints"] --> C["Codex: split, classify and approve bounded tasks"]
-    C --> L["LAB: validate, route, schedule and retain evidence"]
-    L --> A["Advisory: bounded source and question"]
-    L --> H["Implementation: OpenHands with permitted files and tools"]
-    A --> P["One local provider: Ollama or qualified Strata"]
-    H <-->|"host-mediated model requests"| P
-    P --> M["Model: generate text or proposed tool calls"]
-    M --> E["LAB: result, candidate and verification evidence"]
+    C --> L["OmniLAB: validate, route, schedule and retain evidence"]
+    L --> D["codex_direct: return scope and reasons to Codex"]
+    L --> A["local_advisory: bounded source and question"]
+    L --> H["local_implementation: OpenHands SDK and permitted tools"]
+    subgraph Inference["Inference provision — separate from task execution"]
+      O["Ollama: current qualified profiles"]
+      S["Strata: experimental, disabled pending qualification"]
+    end
+    A <-->|"direct host provider call"| O
+    H <-->|"restricted mailbox via trusted OmniLAB worker"| O
+    H -.->|"same transport after separate qualification"| S
+    A --> E["OmniLAB: advisory output or candidate and verification evidence"]
+    H --> E
+    D --> R
     E --> R["Codex: independent review and explicit acceptance"]
     R --> I["Trusted integration and final validation"]
 ```
@@ -58,6 +68,15 @@ The [workflow guide](docs/WORKFLOW.md#python-decisions-in-the-selective-path)
 explains the actual Python decisions, defaults and tests. Its
 [execution sequence](docs/WORKFLOW.md#bounded-implementation-sequence) shows the
 mailbox, tools, protected verification and independent review.
+
+Task lanes answer **who does the work**; inference providers answer **who serves
+the model**. Ollama can serve both local lanes: advisory asks for text, while
+OpenHands implementation asks for responses in a bounded tool loop. Strata's next
+target is inference for that same OpenHands loop, not a replacement for OpenHands.
+Its adapter can also carry advisory text, but this does not qualify either lane.
+Failure of Strata qualification does not remove the Ollama advisory path.
+See the [qualification roadmap](docs/INFERENCE-ROADMAP.md) and separate
+[Janas research scope](docs/research/JANAS.md).
 
 ```mermaid
 flowchart TD

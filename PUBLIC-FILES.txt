@@ -189,6 +189,7 @@ docs/ROLE-MIGRATION.md
 docs/SELECTIVE-EXECUTION.md
 docs/SELECTIVE-PILOT.md
 docs/SELECTIVE-SETUP.md
+docs/STRATA-STANDALONE.md
 docs/release-testing/selective-execution-issue-draft.md
 examples/selective-contract.json
 examples/selective.toml
@@ -254,6 +255,7 @@ scripts/comparison_fixtures.py
 scripts/comparison_mock.py
 tests/test_readiness_comparison.py
 docs/index.md
+docs/OPENHANDS-STRATA.md
 docs/OPERATIONS.md
 docs/INFERENCE-ROADMAP.md
 docs/research/JANAS.md

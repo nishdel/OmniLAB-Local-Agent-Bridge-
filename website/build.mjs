@@ -16,7 +16,8 @@ const relative = (from, to) => path.posix.relative(path.posix.dirname(from), to)
 const nav = [
   ['Start here', [['docs/index.md', 'Documentation home'], ['README.md', 'Overview'], ['docs/QUICKSTART.md', 'Quickstart'], ['docs/USER-GUIDE.md', 'Using the dock']]],
   ['Understand the system', [['docs/WORKFLOW.md', 'Lanes, transport & verification'], ['docs/ARCHITECTURE.md', 'Retained interfaces'], ['docs/CONFIGURATION.md', 'Configuration'], ['docs/OPERATIONS.md', 'Standalone apps & Docker']]],
-  ['Evidence & direction', [['docs/INFERENCE-ROADMAP.md', 'Strata qualification'], ['docs/research/JANAS.md', 'Independent Janas research'], ['docs/SELECTIVE-IMPLEMENTATION-REPORT.md', 'Implementation evidence'], ['docs/OPENHANDS-STRONGER-QUALIFICATION.md', 'Ollama / OpenHands evidence'], ['docs/RELEASE-READINESS.md', 'Release gates']]]
+  ['Strata qualification', [['docs/INFERENCE-ROADMAP.md', 'Inference roadmap'], ['docs/STRATA-STANDALONE.md', 'Standalone acceptance'], ['docs/OPENHANDS-STRATA.md', 'OpenHands integration']]],
+  ['Evidence & direction', [['docs/research/JANAS.md', 'Independent Janas research'], ['docs/SELECTIVE-IMPLEMENTATION-REPORT.md', 'Implementation evidence'], ['docs/OPENHANDS-STRONGER-QUALIFICATION.md', 'Ollama / OpenHands evidence'], ['docs/RELEASE-READINESS.md', 'Release gates']]]
 ];
 await fs.mkdir(out, {recursive: true});
 const search = [];

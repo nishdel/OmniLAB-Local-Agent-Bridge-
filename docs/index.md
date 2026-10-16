@@ -19,6 +19,8 @@ active configuration and dated live evidence are distinct states.
 | How do the three task lanes and two inference providers relate? | [Workflow and source-linked diagrams](WORKFLOW.md) |
 | How do I open the independent applications or manage Docker safely? | [Standalone access and Docker](OPERATIONS.md) |
 | What remains experimental for Strata? | [Inference qualification roadmap](INFERENCE-ROADMAP.md) |
+| Can Strata operate independently today? | [Standalone status, blockers and acceptance](STRATA-STANDALONE.md) |
+| How will OpenHands use Strata safely? | [Separate implementation qualification](OPENHANDS-STRATA.md) |
 | Why is Janas separate? | [Independent supervisory-agent research](research/JANAS.md) |
 
 ## Implementation and evidence
@@ -38,6 +40,11 @@ active configuration and dated live evidence are distinct states.
 Synthetic tests do not establish live model quality. **Experimental** means code
 exists but production admission is not established. **Planned** means a future
 qualification target, with no automatic enabling, download or startup.
+
+Acceptance reports use **VERIFIED**, **FAILED**, **BLOCKED** or **NOT TESTED** for
+each individual requirement. VERIFIED inventory or automated tests do not imply
+VERIFIED live operation. BLOCKED identifies an unmet prerequisite; NOT TESTED
+identifies an observation that has not been performed. Keep those scopes visible.
 
 Historical reports stay at their existing links so their evidence remains
 auditable. Use this index and the current workflow for navigation; do not treat

@@ -13,19 +13,23 @@ is serving. Loading a model still requires its existing preflight and authorizat
 | Ollama | Installed Ollama app/CLI; optional separately installed Open WebUI | Inference for advisory and qualified implementation profiles |
 | Open WebUI | Its configured browser port; the inspected personal installation maps port 3000 | Independent chat frontend with its own retained volume; not required by LAB |
 | OpenHands | Its separately installed application, if present | LAB uses the pinned SDK in disposable restricted containers, not the standalone web app |
-| Strata | Installed **Strata Control**; browser at `http://127.0.0.1:8080` during an authorized session | Standalone inference and experimental alternative backend; implementation still uses OpenHands |
+| Strata | Installed **Strata Control**; intended upstream browser at `http://127.0.0.1:8080` during an authorized session | Standalone acceptance BLOCKED; experimental inference alternative, with OpenHands still providing implementation |
 
 An `agent-server` container is not evidence that a complete OpenHands browser UI
 is installed. Consult that application's actual setup before advertising a URL.
 Do not start an old agent-server container merely to obtain a browser interface.
 Its network and permission settings differ from LAB's restricted executor.
 
-The personal Strata Control currently refuses Start until separate live approval
-and safety gates pass. Its frozen configuration is not lazy-loading; starting its
+The personal Strata Control has no qualified live launch action; its Start path
+currently reports readiness. It requires a separately qualified supervisor, new
+live approval and passing safety gates. Its frozen configuration is not lazy-loading; starting its
 server may immediately load weights. A shortcut to port 8080 must not bypass that
 control. The target Coder shards are already present; see the
-[qualification roadmap](INFERENCE-ROADMAP.md). Browser availability and successful
-model inference must be reported separately.
+[standalone acceptance guide](STRATA-STANDALONE.md). Browser availability,
+successful model inference and [OpenHands integration](OPENHANDS-STRATA.md) must
+be reported separately. The revised private control identifies historical stopped
+sessions, retains logs/configuration access and offers the existing browser only
+when an owned live listener is reported; it never starts inference from that button.
 
 Independent experimental applications outside this deployment retain their own
 entry points and models; see [research scope](research/JANAS.md).

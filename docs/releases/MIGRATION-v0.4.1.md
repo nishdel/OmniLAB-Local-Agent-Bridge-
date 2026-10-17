@@ -15,5 +15,5 @@
 - No model deletion, Git history rewrite, repository creation or publication is
   part of this migration. Review any local cleanup proposal separately.
 
-See [profiles and exact selection rules](docs/PROFILES.md) and
+See [profiles and exact selection rules](../PROFILES.md) and
 [release verification](VERIFICATION-v0.4.1.md).

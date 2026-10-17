@@ -743,4 +743,4 @@ automated unless the linked qualification/ledger explicitly says otherwise.
 
 See [architecture](ARCHITECTURE.md) for retained MCP/adaptive internals,
 [safety](../SECURITY.md), [troubleshooting](TROUBLESHOOTING.md),
-[manual testing](MANUAL-RELEASE-TESTING.md) and [upgrade](../MIGRATION-v0.5.md).
+[manual testing](MANUAL-RELEASE-TESTING.md) and [upgrade](releases/MIGRATION-v0.5.md).

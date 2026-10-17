@@ -1,7 +1,7 @@
 # Public release checklist — companion candidate
 
 This is an unreleased development candidate. See
-[release readiness](docs/RELEASE-READINESS.md) for exact observed results.
+[release readiness](../RELEASE-READINESS.md) for exact observed results.
 Historical v0.4.1 verification remains in VERIFICATION-v0.4.1.md; its checkmarks
 do not certify this candidate. No publication is authorized by this checklist.
 
@@ -32,7 +32,7 @@ do not certify this candidate. No publication is authorized by this checklist.
 - [ ] Active CPU/peak memory, true callback latency and perceptual UI measurements.
 - [ ] Native symlink rejection under Windows Developer Mode or equivalent symlink privilege.
 
-The [focused recovery repair](docs/RECOVERY.md) resolves the reproduced
+The [focused recovery repair](../RECOVERY.md) resolves the reproduced
 cross-database process-crash blocker. Legacy missing output and ambiguous records
 remain explicit intervention cases. Callback, fresh-machine and visual gates
 are separate from that verdict; the original broad preservation audit is retained.

@@ -20,9 +20,10 @@ dev = ["pytest>=8,<10", "ruff>=0.12,<1"]
 localagentbridge = "localagentbridge.__main__:main"
 
 [project.urls]
-Repository = "https://github.com/nishdel/LocalAgentBridge"
-Issues = "https://github.com/nishdel/LocalAgentBridge/issues"
-Security = "https://github.com/nishdel/LocalAgentBridge/security/policy"
+Repository = "https://github.com/nishdel/OmniLAB-Local-Agent-Bridge-"
+Documentation = "https://nishdel.github.io/OmniLAB-Local-Agent-Bridge-/"
+Issues = "https://github.com/nishdel/OmniLAB-Local-Agent-Bridge-/issues"
+Security = "https://github.com/nishdel/OmniLAB-Local-Agent-Bridge-/security/policy"
 
 [project.gui-scripts]
 localagentbridge-tray = "localagentbridge.widget:main"

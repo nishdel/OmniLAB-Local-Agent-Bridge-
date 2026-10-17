@@ -1,5 +1,9 @@
 # OmniLAB documentation
 
+[Repository home](../README.md) ·
+[Documentation website](https://nishdel.github.io/OmniLAB-Local-Agent-Bridge-/) ·
+[Release and upgrade guides](releases/README.md)
+
 OmniLAB helps Codex delegate bounded work to local models while keeping planning,
 review and final acceptance with Codex. Start with advisory work; add the restricted
 OpenHands implementation lane only after its separate qualification gates pass.
@@ -33,6 +37,9 @@ active configuration and dated live evidence are distinct states.
 | Tested scope and unresolved gates | [Implementation report](SELECTIVE-IMPLEMENTATION-REPORT.md), [OpenHands qualification](OPENHANDS-STRONGER-QUALIFICATION.md), [human acceptance ledger](release-testing/selective-execution-issue-draft.md) |
 | Recovery, security and operations | [Recovery](RECOVERY.md), [troubleshooting](TROUBLESHOOTING.md), [security](../SECURITY.md) |
 | Measurement and release | [Comparison protocol](SELECTIVE-PILOT.md), [release readiness](RELEASE-READINESS.md), [development snapshot](DEVELOPMENT-SNAPSHOT.md) |
+| Historical benchmarks and contributed work | [Benchmark index](benchmarks/README.md), [local contribution ledger](LOCAL-CONTRIBUTIONS.md), [adaptive delegation](ADAPTIVE-DELEGATION.md) |
+| Upgrades and historical release evidence | [Release and migration index](releases/README.md), [changelog](../CHANGELOG.md) |
+| Contributor reference | [Contributing](../CONTRIBUTING.md), [project policy](../CODEX_POLICY.md), [profiles](PROFILES.md), [decisions](DECISIONS.md), [dependencies](DEPENDENCIES.md) |
 
 ## Reading status correctly
 
@@ -46,6 +53,7 @@ each individual requirement. VERIFIED inventory or automated tests do not imply
 VERIFIED live operation. BLOCKED identifies an unmet prerequisite; NOT TESTED
 identifies an observation that has not been performed. Keep those scopes visible.
 
-Historical reports stay at their existing links so their evidence remains
-auditable. Use this index and the current workflow for navigation; do not treat
+Historical release reports are grouped under [releases](releases/README.md);
+their findings remain intact and the website retains the previous page URLs.
+Use this index and the current workflow for navigation; do not treat
 an older successful probe as current permission to run another model or lane.

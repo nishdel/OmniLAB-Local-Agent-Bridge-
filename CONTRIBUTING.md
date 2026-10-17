@@ -27,7 +27,7 @@ historical source and synthetic exercises. Keep those fixtures byte-identical.
 Quality grades must come from independent review, never self-reported confidence.
 
 Before preparing a release, run the release audit and clean-install checks in
-`PUBLIC-RELEASE-CHECKLIST.md`. Do not attach telemetry databases to issues.
+[release checklist](docs/releases/PUBLIC-RELEASE-CHECKLIST.md). Do not attach telemetry databases to issues.
 
 ## Companion candidate workflow
 
@@ -67,7 +67,8 @@ unpublished drafts are preparation only; publishing an issue requires authorizat
 
 [PR validation](.github/workflows/pr-validation.yml) runs for pull requests to
 `main`, including drafts, on opened/synchronize/reopened/ready-for-review events.
-There are no path filters. It checks the exact PR head on Windows/Python 3.13
+It also validates pushes to `main`, including the merged source commit. There
+are no path filters. It checks the exact PR head or push commit on Windows/Python 3.13
 using the existing locked dependencies, pytest, Ruff, documentation/reference
 checker and public-source/ignore audit. Tests use mocked providers; no model,
 Ollama or OpenHands installation/inference runs in CI.

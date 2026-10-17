@@ -1,166 +1,133 @@
 # OmniLAB / LocalAgentBridge
 
-**[Documentation website](https://nishdel.github.io/OmniLAB-Local-Agent-Bridge-/)** ·
-[Documentation index](docs/index.md) · [Standalone access](docs/OPERATIONS.md)
+**Local AI assistance for coding, with explicit supervision and review.**
 
-LAB helps a developer use a local model for a small part of a coding task while
-keeping supervision, evidence and acceptance explicit. It is useful when you
-already use Codex and Ollama and want reviewable local explanations, code reviews,
-tests or bounded fixes, with durable jobs that survive closing the user interface.
-It does not yet establish that delegation saves time, cloud allowance or money.
+OmniLAB connects Codex to local models for focused explanations, code reviews,
+tests and bounded fixes. It keeps exact model choices, durable jobs and saved
+evidence together, so a supervisor can inspect and accept each contribution.
 
-Start with a **small advisory task**: choose a repository and installed model,
-submit a focused question with selected source, inspect the saved answer, and
-record your independent review. The [quickstart](docs/QUICKSTART.md) provides the
-commands; the [user guide](docs/USER-GUIDE.md) explains the dock and status labels.
+**[Get started](docs/QUICKSTART.md)** · **[Browse the guides](docs/index.md)** ·
+**[Open an application](docs/OPERATIONS.md)** ·
+**[Documentation website](https://nishdel.github.io/OmniLAB-Local-Agent-Bridge-/)**
 
-## What is available?
+> **Development source: 0.5.0.dev0. Latest released version: v0.4.1.**
+> Merging source does not qualify experimental engines, upgrade an installed
+> runtime or publish a release. See [current status](#current-status).
 
-| Scope | What the evidence supports |
+<a id="your-first-useful-task"></a>
+## Start here
+
+| I want to… | Start with |
 |---|---|
-| Released v0.4.1 | Local analysis/MCP tools, model routing and usage/dashboard functionality. See [release verification](VERIFICATION-v0.4.1.md). |
-| Development candidate: **0.5.0.dev0** | Durable companion jobs, retained adaptive/workflow interfaces, and opt-in selective advisory/implementation contracts. This branch is a draft candidate, not a completed release. [Release gates](docs/RELEASE-READINESS.md) still apply. |
-| Owner's qualified personal deployment | Specific Ollama/Qwen27 advisory and restricted OpenHands cases; Qwen35 has separately accepted fixture/UTC cases. These are narrow, dated results, not universal defaults or permission to delegate arbitrary work. [Exact profiles and evidence](docs/WORKFLOW.md#qualified-personal-profile). |
-| Experimental Strata | Adapter and exact context accounting implemented; isolated patched A/B probes passed historically. Disabled here: memory/exclusivity, OpenHands execution and live safety qualification remain unresolved. [Current qualification](docs/SELECTIVE-IMPLEMENTATION-REPORT.md#exact-context-accounting--2026-10-13). |
-| Still untested | Full human dock acceptance, broader task-category quality and complete matched cloud/time/energy savings. [The existing eleven-row ledger](docs/release-testing/selective-execution-issue-draft.md) records two incomplete observations and nine untested rows. |
+| Try a small task with my local model | [Quickstart](docs/QUICKSTART.md) — submit an advisory, inspect the answer and record a review |
+| Use the dock, change models or recover a job | [User guide](docs/USER-GUIDE.md) and [troubleshooting](docs/TROUBLESHOOTING.md) |
+| Find Ollama, OpenHands or Strata | [Standalone access](docs/OPERATIONS.md) — application controls, browser availability and current blockers |
+| Understand the code and task boundaries | [Workflow walkthrough](docs/WORKFLOW.md) — source links, examples and verification |
+| Contribute a change | [Contributing](CONTRIBUTING.md) — isolated development, checks and review |
 
-Windows is the tested desktop target. Other systems are not certified. Personal
-machine paths, installed model choices and the owner's frozen runtime are not
-installation requirements for other users.
+Start with a focused advisory question and selected source. Use an exact installed
+model, inspect its saved answer against the source, then record your independent
+decision. **Finished generation is not accepted work.**
+
+Windows is the tested desktop target. The candidate needs Python 3.11+, a private
+LAB configuration/data store, Ollama and an installed completion model. The dock
+also needs Tcl/Tk; managed Codex reviews need an authenticated Codex CLI. Local
+trusted review is supported. Follow the quickstart for installation and commands.
 
 <a id="system-overview"></a>
 ## How it works
 
-```mermaid
-flowchart TD
-    U["User: feature request and constraints"] --> C["Codex: split, classify and approve bounded tasks"]
-    C --> L["OmniLAB: validate, route, schedule and retain evidence"]
-    L --> D["codex_direct: return scope and reasons to Codex"]
-    L --> A["local_advisory: bounded source and question"]
-    L --> H["local_implementation: OpenHands SDK and permitted tools"]
-    subgraph Inference["Inference provision — separate from task execution"]
-      O["Ollama: current qualified profiles"]
-      S["Strata: experimental, disabled pending qualification"]
-    end
-    A <-->|"direct host provider call"| O
-    H <-->|"restricted mailbox via trusted OmniLAB worker"| O
-    H -.->|"same transport after separate qualification"| S
-    A --> E["OmniLAB: advisory output or candidate and verification evidence"]
-    H --> E
-    D --> R
-    E --> R["Codex: independent review and explicit acceptance"]
-    R --> I["Trusted integration and final validation"]
-```
-
-- **Codex** interprets your request, creates bounded subtasks, supplies risk and
-  scope labels, and reviews the result. This supervision may use cloud services.
-- **LAB** is the Python bridge, durable queue and policy/evidence layer. It checks
-  supplied contracts; it does not autonomously decompose arbitrary requests.
-- **OpenHands** manages the permitted read/edit/test loop for selective
-  implementation in a restricted networkless sandbox. Advisory jobs do not use
-  it. This integration uses the SDK, not an OpenHands web UI.
-- **Ollama or Strata** serves the selected model locally. They are alternative
-  providers, not successive stages. Strata remains experimental and disabled.
-- **The model** generates an answer or proposes tool calls. Its confidence or
-  claim of success cannot grant permissions, accept a patch or publish anything.
-
-The [workflow guide](docs/WORKFLOW.md#python-decisions-in-the-selective-path)
-explains the actual Python decisions, defaults and tests. Its
-[execution sequence](docs/WORKFLOW.md#bounded-implementation-sequence) shows the
-mailbox, tools, protected verification and independent review.
-
-Task lanes answer **who does the work**; inference providers answer **who serves
-the model**. Ollama can serve both local lanes: advisory asks for text, while
-OpenHands implementation asks for responses in a bounded tool loop. Strata's next
-target is inference for that same OpenHands loop, not a replacement for OpenHands.
-Its adapter can also carry advisory text, but this does not qualify either lane.
-Failure of Strata qualification does not remove the Ollama advisory path.
-See the [qualification roadmap](docs/INFERENCE-ROADMAP.md) and separate
-[Janas research scope](docs/research/JANAS.md).
+Three task lanes share explicit scope, evidence and independent acceptance:
 
 ```mermaid
 flowchart TD
-    C["Supervisor supplies contract"] --> V{"Valid scope, profile and graph?"}
-    V -->|"no"| X["Reject with error; supervisor must revise"]
-    V -->|"yes"| G{"Requested local lane passes policy and capability gates?"}
-    G -->|"direct requested or gate fails"| D["codex_direct: return reasons to supervisor"]
-    G -->|"yes"| Q["Persist job; wait for accepted dependencies"]
-    Q --> A{"Dispatch identity, context and resources still fit?"}
-    A -->|"no"| F["Record failure or uncertainty; retain evidence"]
-    A -->|"yes"| E["Bounded local execution and verification"]
-    E --> R["Independent review: accept, correct, reject or escalate"]
-    F --> R
+    C["Codex: plan and supervise"] --> L["OmniLAB: validate, route and retain evidence"]
+    L -->|"return scope and reasons"| D["Codex direct"]
+    L --> A["Local advisory"]
+    L --> H["Local implementation: OpenHands SDK"]
+    A <-->|"direct provider call"| O["Ollama"]
+    H <-->|"restricted inference relay"| O
+    H -.->|"separate qualification required"| S["Strata: experimental"]
+    D --> R["Codex: independent review and acceptance"]
+    A --> R
+    H --> R
 ```
 
-`codex_direct` returns control and reasons. It is **not an automatic cloud call or
-silent fallback**. Contract jobs are bounded single stages. The retained
-[adaptive workflow](docs/ADAPTIVE-DELEGATION.md) has its own deterministic
-selection rules; those rules do not govern every interface.
+- **Codex direct** returns the scope and reasons to the supervisor. LAB does not
+  make an automatic cloud call or silently change models.
+- **Local advisory** asks a local model for bounded analysis. It works independently
+  of OpenHands qualification.
+- **Local implementation** gives OpenHands a restricted read/edit/test loop.
+  The networkless sandbox reaches inference through a trusted LAB relay; the
+  supervisor checks the candidate and protected acceptance results.
 
-## Your first useful task
+Ollama and Strata are alternative inference providers. Strata is disabled pending
+qualification. LAB uses the **OpenHands SDK**, which does not install an OpenHands
+browser application. The [workflow guide](docs/WORKFLOW.md#python-decisions-in-the-selective-path)
+explains the routing decisions; its [execution sequence](docs/WORKFLOW.md#bounded-implementation-sequence)
+shows transport, permitted tools and verification.
 
-You need a compatible Python environment, a LAB configuration pointing to the
-intended source and separate data store, and an already installed completion
-model available through Ollama. The Windows dock additionally needs Tcl/Tk;
-managed Codex callbacks need authenticated Codex CLI. Local trusted review is
-also supported. An advisory task needs no OpenHands sandbox.
+<a id="what-is-available"></a>
+## Current status
 
-Use the [quickstart](docs/QUICKSTART.md) to check the selected configuration and
-inventory, create a run and submit the example task. You submit an objective,
-bounded context and exact model choice. You receive a durable job ID, then an
-answer, available usage, errors and a review event. Read the evidence and check
-the answer against the source before recording acceptance and finalizing the run.
-**Finished generation is not accepted work.**
-
-Implementation additionally needs a separately qualified provider/profile and
-restricted executor, explicit file/tool permissions, protected acceptance checks
-and enough host resources. Follow the [selective setup](docs/SELECTIVE-SETUP.md)
-only when that lane is needed. LAB does not install or delete models for you.
-
-The model selector affects future eligible jobs; explicit job choices take
-precedence. Use the same configuration/store when reopening the dock. Closing it
-hides the view and leaves jobs running; pausing prevents new claims. Cancellation
-of an HTTP request does not prove a shared server stopped generation. See
-[safe stopping and reopening](docs/USER-GUIDE.md#choose-the-model-and-store).
-
-## What stays local, and what may leave?
-
-Task snapshots, local model inference, SQLite job/usage records and candidate
-artifacts stay on the configured machine. The selective implementation sandbox
-has no external network or host-home mount; trusted LAB mediates inference.
-Supplying file paths limits which source LAB reads, but does not itself guarantee
-that source never reaches cloud supervision.
-
-Your Codex prompts, selected excerpts, returned findings, diffs and verification
-evidence may be sent to its configured cloud service during planning or review.
-Managed callbacks also send their bounded report. Review that content and your
-provider's settings for sensitive work. See [security](SECURITY.md) and the
-[trust boundaries](docs/WORKFLOW.md#source-map).
-
-## Deliberate limits
-
-LAB does not grant itself new permissions, approve its own results, silently
-switch models, resize qualified contexts, or turn local token counts into claimed
-cloud savings. It does not automatically merge, release, deploy, change a
-subscription, install an engine or manage unrelated applications. Explicit
-trusted integration exists only after independent acceptance and checks.
-
-The [matched comparison protocol](docs/SELECTIVE-PILOT.md#readiness-comparison)
-now prepares six synthetic task categories, four exact configurations, complete
-usage accounting and timestamped energy reporting. Its mock results validate
-instrumentation, not model quality. Live trials need the bounded approval package
-there; no broader routing recommendation or subscription downgrade is established.
-
-## Documentation map
-
-| Need | Guide |
+| Area | Supported scope |
 |---|---|
-| Python walkthrough, instructional example and source/test map | [Workflow](docs/WORKFLOW.md) |
-| First advisory and dock controls | [Quickstart](docs/QUICKSTART.md), [user guide](docs/USER-GUIDE.md) |
-| Exact configuration, qualification and operations | [Configuration](docs/CONFIGURATION.md), [selective setup](docs/SELECTIVE-SETUP.md) |
-| Recovery and privacy | [Recovery](docs/RECOVERY.md), [troubleshooting](docs/TROUBLESHOOTING.md), [security](SECURITY.md) |
-| Delegation/subscription decisions, accounting and live approval | [Matched pilot](docs/SELECTIVE-PILOT.md) |
-| Historical benchmarks and implementation evidence | [Benchmarks](docs/benchmarks/README.md), [implementation report](docs/SELECTIVE-IMPLEMENTATION-REPORT.md), [qualification](docs/OPENHANDS-STRONGER-QUALIFICATION.md) |
-| Human acceptance and release scope | [Manual testing](docs/MANUAL-RELEASE-TESTING.md), [eleven-row ledger](docs/release-testing/selective-execution-issue-draft.md), [readiness](docs/RELEASE-READINESS.md) |
-| Retained interfaces and contribution history | [Architecture](docs/ARCHITECTURE.md), [workflows](docs/WORKFLOWS.md), [durable workflows](docs/COMPANION-WORKFLOWS.md), [profiles](docs/PROFILES.md), [feature matrix](docs/FEATURE-PRESERVATION.md), [contributions](docs/LOCAL-CONTRIBUTIONS.md) |
-| Development and project policy | [Contributing](CONTRIBUTING.md), [AGENTS](AGENTS.md), [delegation policy](CODEX_POLICY.md), [migration](MIGRATION-v0.5.md), [snapshot](docs/DEVELOPMENT-SNAPSHOT.md), [decisions](docs/DECISIONS.md), [dependencies](docs/DEPENDENCIES.md), [changelog](CHANGELOG.md) |
+| **Released v0.4.1** | Local analysis/MCP tools, model routing, usage and dashboard functionality. [Release evidence](docs/releases/VERIFICATION-v0.4.1.md) |
+| **Development 0.5.0.dev0** | Durable companion jobs, retained adaptive/workflow interfaces and opt-in selective task contracts. [Release gates remain open](docs/RELEASE-READINESS.md) |
+| **Qualified personal profiles** | Dated Ollama/Qwen27 advisory and restricted OpenHands cases; separately accepted Qwen35 fixture/UTC cases. [Exact profiles and limits](docs/WORKFLOW.md#qualified-personal-profile) |
+| **Strata standalone** | Coder artifacts are verified; browser, API, inference, resource and lifecycle acceptance remain blocked or untested. [Standalone qualification](docs/STRATA-STANDALONE.md) |
+| **OpenHands + Strata** | Blocked on Strata standalone acceptance and separate bounded edit/test qualification. [Integration guide](docs/OPENHANDS-STRATA.md) |
+| **Broader acceptance** | Human dock checks and matched cloud/time/energy savings remain incomplete. [Human ledger](docs/release-testing/selective-execution-issue-draft.md), [comparison protocol](docs/SELECTIVE-PILOT.md#readiness-comparison) |
+
+These personal profiles are dated, narrow observations; they are not public
+hardware requirements or permission for arbitrary tasks. Other operating systems
+are not certified. Independent Janas experiments have their own
+[research and access guide](docs/research/JANAS.md).
+
+<a id="documentation-map"></a>
+## Documentation
+
+The guides render directly on GitHub. The [documentation website](https://nishdel.github.io/OmniLAB-Local-Agent-Bridge-/)
+presents the same source with search and sidebar navigation.
+
+| Topic | Guides |
+|---|---|
+| Setup and everyday use | [Quickstart](docs/QUICKSTART.md) · [User guide](docs/USER-GUIDE.md) · [Configuration](docs/CONFIGURATION.md) |
+| Architecture and source | [Workflow](docs/WORKFLOW.md) · [Retained interfaces](docs/ARCHITECTURE.md) · [Feature preservation](docs/FEATURE-PRESERVATION.md) |
+| Independent applications | [Access and Docker](docs/OPERATIONS.md) · [Strata standalone](docs/STRATA-STANDALONE.md) · [Provider roadmap](docs/INFERENCE-ROADMAP.md) |
+| Safety and recovery | [Security](SECURITY.md) · [Recovery](docs/RECOVERY.md) · [Troubleshooting](docs/TROUBLESHOOTING.md) |
+| Testing and qualification | [Implementation evidence](docs/SELECTIVE-IMPLEMENTATION-REPORT.md) · [Manual testing](docs/MANUAL-RELEASE-TESTING.md) · [Release readiness](docs/RELEASE-READINESS.md) |
+| Release history and project policy | [Upgrades and release evidence](docs/releases/README.md) · [Changelog](CHANGELOG.md) · [Contributing](CONTRIBUTING.md) · [Delegation policy](CODEX_POLICY.md) |
+
+See the [documentation index](docs/index.md) for the retained workflow
+interfaces, benchmarks, decisions and contribution history.
+
+<a id="what-stays-local-and-what-may-leave"></a>
+<a id="deliberate-limits"></a>
+## Privacy and evidence
+
+Task snapshots, local inference, SQLite records and candidate artifacts stay on
+the configured machine. Selected source, findings, diffs and verification evidence
+may reach Codex's configured cloud service during planning or review. Check that
+content and your provider settings for sensitive work. The selective sandbox has
+no external network or host-home mount; trusted LAB mediates inference.
+
+Models propose work. They cannot grant permissions, approve their own results,
+merge, publish or install another engine. Local token counts do not establish
+cloud savings; that claim requires an equivalent accepted baseline with complete
+overhead and usage accounting. The [comparison protocol](docs/SELECTIVE-PILOT.md)
+separates synthetic instrumentation checks from live evidence.
+
+## Repository map
+
+| Location | Contents |
+|---|---|
+| [localagentbridge/](localagentbridge/) | Python package, CLI, durable stores and restricted executor |
+| [docs/](docs/index.md) | User guides, architecture, qualification and [release history](docs/releases/README.md) |
+| [examples/](examples/) and [profiles/](profiles/) | Example task contracts and configurations |
+| [tests/](tests/) and [scripts/](scripts/) | Regression coverage, documentation checks and release audits |
+| [website/](website/) | Documentation website built from the same Markdown |
+
+Contributors should read [CONTRIBUTING.md](CONTRIBUTING.md) and
+[AGENTS.md](AGENTS.md). OmniLAB is [MIT licensed](LICENSE); model and dependency
+licenses are separate.

@@ -1,9 +1,18 @@
 # 0.5.0.dev0 development source and retained packages
 
-The current supervised Qwen27 work continues on `codex/selective-local-execution`.
-See the [publication qualification addendum](OPENHANDS-STRONGER-QUALIFICATION.md#workflow-documentation-publication--2026-10-10)
-and [complete workflow](WORKFLOW.md). The earlier companion-release-candidate
-provenance below remains historical evidence, not the current activation scope.
+The current source is **0.5.0.dev0 development work**. The supervised Qwen27 work
+and standalone documentation were published on `codex/selective-local-execution`;
+the repository presentation cleanup prepares that work for integration into
+`main`. Check the actual branch and commit before treating that integration as
+complete. See the [publication qualification addendum](OPENHANDS-STRONGER-QUALIFICATION.md#workflow-documentation-publication--2026-10-10)
+and [complete workflow](WORKFLOW.md).
+
+Consolidating development source into `main` is distinct from publishing a
+release or recording a passed human/live acceptance result. Keep the eleven-row human ledger, Strata
+standalone blockers and separate OpenHands/Strata qualification visible. The
+released v0.4.1 tag/package and installed controller remain separate from `main`.
+The earlier companion-release-candidate provenance below is historical evidence,
+not the current activation scope.
 
 The companion-release-candidate branch is **development work, not a qualified
 Windows release candidate**. Its historical branch name grants no acceptance.
@@ -12,8 +21,8 @@ binary, send a callback or pass a human test.
 
 ## Source provenance
 
-The verified remote base is `f6df420181f21856cb421619e2c1310f6cf46685` (main and
-the existing v0.4.1 tag target). The canonical repository is
+The historical publication base is `f6df420181f21856cb421619e2c1310f6cf46685`
+(then `main` and the existing v0.4.1 tag target). The canonical repository is
 [nishdel/OmniLAB-Local-Agent-Bridge-](https://github.com/nishdel/OmniLAB-Local-Agent-Bridge-);
 the former LocalAgentBridge URL redirects there.
 

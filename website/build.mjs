@@ -10,6 +10,8 @@ const revision = execFileSync('git', ['rev-parse', 'HEAD'], {cwd: root, encoding
 const repo = 'https://github.com/nishdel/OmniLAB-Local-Agent-Bridge-';
 const manifest = (await fs.readFile(path.join(root, 'PUBLIC-FILES.txt'), 'utf8')).split(/\r?\n/).filter(x => x && !x.startsWith('#'));
 const documents = manifest.filter(x => x.endsWith('.md') && !x.startsWith('.github/'));
+const legacyDocuments = ['MIGRATION-v0.4.md', 'MIGRATION-v0.4.1.md', 'MIGRATION-v0.5.md',
+  'VERIFICATION-v0.4.md', 'VERIFICATION-v0.4.1.md', 'PUBLIC-RELEASE-CHECKLIST.md'];
 const outputName = name => name === 'docs/index.md' ? 'index.html' : name.replace(/\.md$/, '.html');
 const escape = value => String(value).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;');
 const relative = (from, to) => path.posix.relative(path.posix.dirname(from), to) || path.posix.basename(to);
@@ -17,8 +19,9 @@ const nav = [
   ['Start here', [['docs/index.md', 'Documentation home'], ['README.md', 'Overview'], ['docs/QUICKSTART.md', 'Quickstart'], ['docs/USER-GUIDE.md', 'Using the dock']]],
   ['Understand the system', [['docs/WORKFLOW.md', 'Lanes, transport & verification'], ['docs/ARCHITECTURE.md', 'Retained interfaces'], ['docs/CONFIGURATION.md', 'Configuration'], ['docs/OPERATIONS.md', 'Standalone apps & Docker']]],
   ['Strata qualification', [['docs/INFERENCE-ROADMAP.md', 'Inference roadmap'], ['docs/STRATA-STANDALONE.md', 'Standalone acceptance'], ['docs/OPENHANDS-STRATA.md', 'OpenHands integration']]],
-  ['Evidence & direction', [['docs/research/JANAS.md', 'Independent Janas research'], ['docs/SELECTIVE-IMPLEMENTATION-REPORT.md', 'Implementation evidence'], ['docs/OPENHANDS-STRONGER-QUALIFICATION.md', 'Ollama / OpenHands evidence'], ['docs/RELEASE-READINESS.md', 'Release gates']]]
+  ['Evidence & direction', [['docs/research/JANAS.md', 'Independent Janas research'], ['docs/SELECTIVE-IMPLEMENTATION-REPORT.md', 'Implementation evidence'], ['docs/OPENHANDS-STRONGER-QUALIFICATION.md', 'Ollama / OpenHands evidence'], ['docs/RELEASE-READINESS.md', 'Release gates'], ['docs/releases/README.md', 'Releases & migrations']]]
 ];
+await fs.rm(out, {recursive: true, force: true});
 await fs.mkdir(out, {recursive: true});
 const search = [];
 const allLinks = [];
@@ -59,7 +62,7 @@ for (const name of documents) {
   const body = marked.parse(text, {renderer});
   const sidebar = nav.map(([group, links]) => `<p class="nav-label">${group}</p>${links.map(([target, label]) => `<a ${target === name ? 'aria-current="page"' : ''} href="${relative(file, outputName(target))}">${label}</a>`).join('')}`).join('');
   const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Source-linked OmniLAB development documentation: advisory, OpenHands implementation, inference and independent acceptance."><title>${escape(title)} · OmniLAB</title><link rel="stylesheet" href="${relative(file, 'assets/style.css')}"></head><body>
-  <a class="skip" href="#content">Skip to content</a><header><a class="brand" href="${relative(file, 'index.html')}"><span class="brand-mark">O</span> OmniLAB <span class="brand-sub">/ Docs</span></a><span class="status">DEVELOPMENT · 0.5.0.dev0</span><a href="${repo}/pull/1">Development PR ↗</a></header>
+  <a class="skip" href="#content">Skip to content</a><header><a class="brand" href="${relative(file, 'index.html')}"><span class="brand-mark">O</span> OmniLAB <span class="brand-sub">/ Docs</span></a><span class="status">DEVELOPMENT · 0.5.0.dev0</span><a href="${repo}/tree/${revision}">Source on GitHub ↗</a></header>
   <div class="layout"><aside aria-label="Documentation navigation"><label for="search">Find a guide</label><input id="search" type="search" placeholder="Search documentation…" autocomplete="off"><div id="results" aria-live="polite"></div><nav>${sidebar}</nav></aside>
   <main id="content"><div class="eyebrow">SUPERVISED LOCAL DEVELOPMENT</div><article>${body}</article><footer>Source revision <a href="${repo}/tree/${revision}">${revision.slice(0, 7)}</a> · <a href="${repo}/blob/${revision}/${name}">View this page on GitHub</a><br>Implementation, dated qualification and future plans are separate. Local output requires independent acceptance.</footer></main>
   <nav class="toc" aria-label="On this page"><p class="nav-label">On this page</p>${headings.map(h => `<a href="#${escape(h.id)}">${escape(h.title)}</a>`).join('')}</nav></div>
@@ -75,7 +78,14 @@ for (const name of manifest.filter(x => /^docs\/images\/.+\.png$/.test(x))) {
 await fs.cp(path.join(root, 'website/assets'), path.join(out, 'assets'), {recursive: true});
 await fs.writeFile(path.join(out, 'search.json'), JSON.stringify(search));
 await fs.writeFile(path.join(out, '.nojekyll'), '');
-await fs.writeFile(path.join(out, 'build.json'), JSON.stringify({revision, pages: documents.length, diagrams: 'Mermaid 11.12.2; raw source retained', source: repo}, null, 2));
+for (const name of legacyDocuments) {
+  const file = outputName(name);
+  const target = outputName(`docs/releases/${name}`);
+  await fs.access(path.join(out, target));
+  const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="refresh" content="0; url=${escape(target)}"><link rel="canonical" href="${escape(target)}"><title>Moved · OmniLAB</title></head><body><p>This guide moved to <a href="${escape(target)}">release and migration documentation</a>.</p><script>location.replace(${JSON.stringify(target)} + location.search + location.hash);</script></body></html>`;
+  await fs.writeFile(path.join(out, file), html);
+}
+await fs.writeFile(path.join(out, 'build.json'), JSON.stringify({revision, pages: documents.length, redirects: legacyDocuments.length, diagrams: 'Mermaid 11.12.2; raw source retained', source: repo}, null, 2));
 for (const {from, target} of allLinks) {
   if (/^https?:/.test(target)) continue;
   const [filename, anchor] = target.split('#');
@@ -86,4 +96,4 @@ for (const {from, target} of allLinks) {
     if (!html.includes(`id="${anchor}"`) && !html.includes(`id='${anchor}'`)) throw new Error(`${from}: missing anchor ${target}`);
   }
 }
-console.log(`Built ${documents.length} public pages; local links and anchors verified; source ${revision}`);
+console.log(`Built ${documents.length} public pages and ${legacyDocuments.length} compatibility redirects; local links and anchors verified; source ${revision}`);

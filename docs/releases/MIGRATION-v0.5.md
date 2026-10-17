@@ -12,11 +12,11 @@ The existing per-workflow total time/cost limits still apply; disabling a direct
 inference deadline does not disable workflow budgets.
 
 The companion now preserves the implemented pre-companion v0.5 layer, as audited
-in the [preservation matrix](docs/FEATURE-PRESERVATION.md). Configured roles use
+in the [preservation matrix](../FEATURE-PRESERVATION.md). Configured roles use
 existing routing by default; `--model`/`--execution exact` opt into a single model.
 New workflow-submit/next/checkpoint/status actions reuse the existing engine and
 ledger. Original workflows continue through their original interface; they are
-not silently moved into the new companion database. See [integration](docs/COMPANION-WORKFLOWS.md).
+not silently moved into the new companion database. See [integration](../COMPANION-WORKFLOWS.md).
 
 Companion jobs use a new `companion/companion.sqlite3`; old `usage.sqlite3` is
 left intact. Back up your data directory with all processes closed before an

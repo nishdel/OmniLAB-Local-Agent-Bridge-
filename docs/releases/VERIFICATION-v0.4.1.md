@@ -15,7 +15,7 @@ checks on one Windows host, not a cross-platform or broad hardware certification
 The GPT-OSS profile sends `think: "low"`, validates final JSON independently of
 thinking and prevents MCP callers from overriding that policy. Regression tests
 cover this behavior and stronger-only bounded escalation. See
-[profiles and routing](docs/PROFILES.md).
+[profiles and routing](../PROFILES.md).
 
 ## Final public-state verification
 
@@ -49,7 +49,7 @@ content. No private Git history is imported into the initial public repository.
 
 LocalAgentBridge retains MIT. Model licenses and installed dependency licenses
 remain separate; no weights or dependency binaries are distributed. The existing
-44-version constraint file is unchanged. See [dependency review](docs/DEPENDENCIES.md).
+44-version constraint file is unchanged. See [dependency review](../DEPENDENCIES.md).
 
 ## Practical limits
 
@@ -61,7 +61,7 @@ responsibility. Review delegated results before using them.
 Byte compression compares input content and returned envelopes. It excludes tool
 schema/orchestration overhead and does not measure cloud-token savings or avoided
 cloud calls. No controlled with/without-delegation experiment was run. Historical
-[reference results](docs/benchmarks/v0.4-results.md) are a small workload, not a
+[reference results](../benchmarks/v0.4-results.md) are a small workload, not a
 universal quality ranking. Final release checks do not rerun those benchmarks.
 
 Optional large models can be slow or exhaust memory; configured budgets are not

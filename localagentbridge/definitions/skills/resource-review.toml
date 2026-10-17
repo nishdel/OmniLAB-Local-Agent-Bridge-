@@ -1,0 +1,6 @@
+schema_version = 1
+id = "resource-review"
+description = "resource review"
+adapter = "analyze_code"
+input = "context"
+instruction = "Review retained memory, work amplification, CPU/I/O, bounded queues/caches, background work and cancellation/shutdown cleanup. Separate observed measurements from estimates; do not claim hardware or energy measurements."

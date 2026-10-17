@@ -9,7 +9,7 @@ import time
 import uuid
 
 LOG = logging.getLogger("localagentbridge")
-TOKEN_FIELDS = ("input_tokens", "cached_input_tokens", "output_tokens", "reasoning_output_tokens", "total_tokens")
+TOKEN_FIELDS = ("input_tokens", "cached_input_tokens", "output_tokens", "reasoning_output_tokens", "cache_write_input_tokens", "total_tokens")
 
 
 def configure_logging(config):
@@ -40,6 +40,11 @@ class Store:
                   reasoning_output_tokens INTEGER, total_tokens INTEGER, tokens_per_second REAL,
                   input_chars INTEGER, output_bytes INTEGER, status TEXT NOT NULL);
                 CREATE INDEX IF NOT EXISTS usage_group ON usage(session_id,model,source);
+                CREATE TABLE IF NOT EXISTS usage_bindings (
+                  kind TEXT NOT NULL, session_id TEXT NOT NULL, logical_id TEXT NOT NULL,
+                  run_id TEXT NOT NULL, task_id TEXT, category TEXT NOT NULL,
+                  evidence TEXT NOT NULL, created REAL NOT NULL,
+                  PRIMARY KEY(kind,session_id,logical_id));
                 CREATE TABLE IF NOT EXISTS activity (
                   id TEXT PRIMARY KEY, source TEXT NOT NULL, session_id TEXT NOT NULL,
                   model TEXT NOT NULL, started REAL NOT NULL, updated REAL NOT NULL,
@@ -65,7 +70,7 @@ class Store:
             # Additive v0.2 migration: v0.1 readers/writers remain compatible.
             db.execute("BEGIN IMMEDIATE")
             columns = {row[1] for row in db.execute("PRAGMA table_info(usage)")}
-            for name, kind in {"role": "TEXT", "source_bytes": "INTEGER", "context_compression": "REAL",
+            for name, kind in {"cache_write_input_tokens": "INTEGER", "role": "TEXT", "source_bytes": "INTEGER", "context_compression": "REAL",
                                "outcome": "TEXT", "outcome_at": "REAL", "group_id": "TEXT",
                                "generation_seconds": "REAL", "load_seconds": "REAL",
                                "logical_id": "TEXT", "escalated_from": "TEXT", "escalation_reason": "TEXT",
@@ -90,6 +95,7 @@ class Store:
     def connect(self):
         db = sqlite3.connect(self.path, timeout=5)
         db.row_factory = sqlite3.Row
+        db.execute('PRAGMA synchronous=FULL')
         try:
             with db:
                 yield db

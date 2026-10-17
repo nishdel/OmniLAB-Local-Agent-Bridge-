@@ -1,0 +1,36 @@
+schema_version = 1
+id = "implement_issue"
+description = "Explore and plan, pause for Codex implementation and tests, then analyze and review."
+task_kinds = ["implement_issue"]
+
+[[stages]]
+id = "explore"
+role = "repository-explorer"
+skills = ["repository-discovery", "context-summary"]
+
+[[stages]]
+id = "plan"
+role = "planner"
+skills = ["implementation-planning"]
+inputs_from = ["explore"]
+
+[[stages]]
+id = "implement"
+executor = "codex"
+checkpoint = "implementation"
+
+[[stages]]
+id = "test"
+role = "test-engineer"
+skills = ["test-failure-analysis"]
+
+[[stages]]
+id = "review"
+role = "code-reviewer"
+skills = ["code-review"]
+inputs_from = ["test"]
+
+[[stages]]
+id = "verify"
+executor = "codex"
+checkpoint = "final"

@@ -1,0 +1,36 @@
+# Opt-in example only. Does not replace personal config or existing defaults.
+model = "qwen3:4b"
+source_root = ".."
+data_dir = "../data/selective-example"
+
+[selective]
+enabled = false
+implementation_enabled = false
+pilot_enabled = false
+pilot_categories = []
+qualified = []
+
+[selective.providers.ollama]
+enabled = true
+endpoint = "http://127.0.0.1:11434"
+
+[selective.providers.strata]
+enabled = false
+endpoint = "http://127.0.0.1:8080"
+# api_key_env = "LAB_STRATA_API_KEY"
+# Exact Strata jobs require a locally verified serving binding; see the guide.
+
+[selective.sandbox]
+# After separate, explicit image preparation, use its immutable local image ID.
+image = ""
+docker = "docker"
+
+[selective.memory_plan]
+supervisor_verified = false
+# Replace these placeholders with measured whole-system residency, including
+# Windows/apps, LAB, runtime, context/KV cache, headroom AND the task sandbox.
+os_and_apps_mb = 0
+lab_mb = 0
+runtime_mb = 0
+context_cache_mb = 0
+headroom_mb = 0

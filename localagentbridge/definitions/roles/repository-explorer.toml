@@ -1,0 +1,6 @@
+schema_version = 1
+id = "repository-explorer"
+description = "repository explorer"
+category = "general"
+skills = ["repository-discovery","context-summary"]
+instruction = "Locate and compress relevant evidence, including uncertainty. Avoid repeated broad repository exploration."

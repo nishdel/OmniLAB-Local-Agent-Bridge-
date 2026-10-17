@@ -1,0 +1,12 @@
+# Select an installed model before submitting. This tag is an example, not a prerequisite.
+model = "qwen3:4b"
+endpoint = "http://localhost:11434"
+source_root = ".."
+data_dir = "../data/companion-example"
+max_input_chars = 10000
+max_output_tokens = 600
+max_output_bytes = 3000
+num_ctx = 8192
+timeout_seconds = 180
+no_inference_deadline = false
+thinking = false

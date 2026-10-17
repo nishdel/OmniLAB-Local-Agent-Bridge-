@@ -1,0 +1,6 @@
+schema_version = 1
+id = "maintainability-reviewer"
+description = "maintainability reviewer"
+category = "coding"
+skills = ["maintainability-review"]
+instruction = "Assess developer comprehensibility and maintenance cost without broad cleanup or new runtime authority."

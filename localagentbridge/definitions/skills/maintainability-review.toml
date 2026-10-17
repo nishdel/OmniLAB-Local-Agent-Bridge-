@@ -1,0 +1,6 @@
+schema_version = 1
+id = "maintainability-review"
+description = "maintainability review"
+adapter = "analyze_code"
+input = "context"
+instruction = "Review discoverability, naming, responsibility boundaries, test intent and developer/build complexity. Prefer scoped improvements over speculative cleanup; preserve compatibility."

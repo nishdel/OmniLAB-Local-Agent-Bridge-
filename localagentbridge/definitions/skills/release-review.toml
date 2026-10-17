@@ -1,0 +1,6 @@
+schema_version = 1
+id = "release-review"
+description = "release review"
+adapter = "analyze_code"
+input = "context"
+instruction = "Review supplied release evidence for consistent source/artifact identity, dependencies, privacy and validation gaps. Distinguish automated, native, manual, package, signing and publication facts. Never publish or declare approval."

@@ -103,7 +103,8 @@ Use `complexity="moderate"` for a short but difficult summary, and `use_model=fa
 for a lexical lookup that needs no inference. Do not pretend a complex task is simple
 to obtain a local answer. See [exact selection rules](docs/PROFILES.md).
 
-Delegation is advisory and initiated by Codex; there is no automatic cloud
-dispatcher. Direct tool calls retain hard input/output limits but do not silently
+MCP delegation is advisory and initiated by Codex. The separate opt-in companion
+controller can dispatch read-only reports to its dedicated Codex session; it never
+integrates patches automatically. Direct tool calls retain hard input/output limits but do not silently
 invoke triage. The caller must apply this policy. `local_first=false` restores the
 optional minimum-size gate for users who prefer fewer local round trips.

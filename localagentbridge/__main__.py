@@ -6,7 +6,7 @@ from .telemetry import Store, configure_logging
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Local Ollama MCP bridge and usage monitor")
+    parser = argparse.ArgumentParser(description="Local coding companion, Ollama MCP bridge and usage monitor")
     parser.add_argument("--config", help="TOML config path (or LAB_CONFIG)")
     commands = parser.add_subparsers(dest="command", required=True)
     commands.add_parser("server", help="Run the MCP server over stdio")
@@ -23,10 +23,37 @@ def main():
     smoke_parser.add_argument("--consensus", action="store_true", help="Also exercise the configured consensus roles")
     commands.add_parser("models", help="Check configured role models; print exact install commands for missing models")
     commands.add_parser("verify-models", help="Verify every configured role/model with real local inference")
+    workflow_parser = commands.add_parser('workflow', help='Opt-in bounded role/workflow operations')
+    workflow_parser.add_argument('action', choices=['catalog','plan','start','step','checkpoint','status'])
+    workflow_parser.add_argument('--request', help='JSON object with the operation arguments; no commands are executed')
+    from .companion_cli import add_parser
+    add_parser(commands)
     args = parser.parse_args()
     config = load_config(args.config)
     configure_logging(config)
-    if args.command == "server":
+    if args.command == 'companion':
+        from .companion_cli import run
+        run(args, config)
+    elif args.command == 'workflow':
+        import asyncio
+        from pathlib import Path
+        from .service import Service
+        engine = Service(config).workflows
+        if engine is None:
+            parser.exit(1, 'Workflow support is disabled; configure [agentic].\n')
+        payload = {}
+        if args.request:
+            with Path(args.request).open('rb') as stream:
+                raw = stream.read(200001)
+            if len(raw)>200000:
+                parser.exit(1, 'Workflow request exceeds 200,000 bytes.\n')
+            payload = json.loads(raw)
+        function = engine.catalog.inspect if args.action=='catalog' else getattr(engine,args.action)
+        result = function(**payload)
+        if args.action=='step':
+            result = asyncio.run(result)
+        print(json.dumps(result,indent=2))
+    elif args.command == "server":
         from .server import create_server
         create_server(config).run(transport="stdio")
     elif args.command in ("widget", "dashboard"):

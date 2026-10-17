@@ -1,0 +1,17 @@
+schema_version = 1
+id = "adaptive-example"
+description = "Prefer minimum sufficient delegation; preserve required sensitive reviews."
+workflows = ["review_change", "implement_issue"]
+workflow_mode = "auto"
+decomposition_threshold = 3
+instruction = "Verify consequential findings against source. For dependency changes, inspect provenance and license evidence when supplied; missing evidence stays unknown. Codex owns implementation and final decisions."
+
+[[required_reviews]]
+role = "security-reviewer"
+skill = "security-review"
+when = "security"
+
+[[required_reviews]]
+role = "performance-reviewer"
+skill = "resource-review"
+when = "resources"

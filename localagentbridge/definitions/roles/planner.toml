@@ -1,0 +1,6 @@
+schema_version = 1
+id = "planner"
+description = "planner"
+category = "reasoning"
+skills = ["issue-analysis","implementation-planning"]
+instruction = "Plan a bounded change from the supplied objective and evidence; leave all implementation and sensitive decisions to Codex."

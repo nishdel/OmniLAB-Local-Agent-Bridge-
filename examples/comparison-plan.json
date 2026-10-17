@@ -1,0 +1,113 @@
+{
+  "schema_version": 1,
+  "name": "readiness-comparison-v1",
+  "reference_commit": "dbb91853b1d98dfaa95a7a1726a9844ed787b8a9",
+  "authority": "offline preparation only; subsequent live package requires owner approval",
+  "comparison_kind": "configuration comparison, not engine-only",
+  "supervisor": {
+    "model": "gpt-6-astra",
+    "reasoning_effort": "xhigh",
+    "service_tier": "standard",
+    "source": "proposed fixed baseline from historical comparison; verify availability at approval",
+    "authentication": "existing account; no changes",
+    "isolation": "fresh dedicated supervisor session per arm/fixture/trial, including planning through acceptance; no prior solutions"
+  },
+  "trials": 2,
+  "arm_order_by_trial": [["A", "B", "C", "D"], ["C", "B", "A", "D"]],
+  "fixture_order": ["source_explanation", "bounded_fix", "defect_review", "regression_tests", "multifile_refactor", "structured_logs"],
+  "pilot": {"trial": 1, "fixtures": ["source_explanation", "bounded_fix"], "arms": ["A", "B", "C"], "maximum_sessions": 6, "wall_seconds": 10800},
+  "budgets": {
+    "eligible_task_sessions": 36,
+    "blocked_strata_slots": 12,
+    "attempts_per_session": 2,
+    "maximum_attempts": 72,
+    "task_end_to_end_seconds": 1800,
+    "attempt_seconds": 600,
+    "total_wall_seconds": 64800,
+    "maximum_cloud_total_tokens": 2000000,
+    "local_requests_per_attempt": 8,
+    "transport_retries": 0,
+    "test_seconds": 15,
+    "evidence_bytes_per_attempt": 134217728,
+    "total_output_bytes": 12884901888,
+    "telemetry_bytes_per_attempt": 8388608,
+    "sandbox_memory_mb": 2048,
+    "sandbox_cpus": 2,
+    "sandbox_pids": 128
+  },
+  "host_stop_conditions": {
+    "minimum_available_before_bytes": 6442450944,
+    "hard_available_bytes": 2147483648,
+    "sustained_available_bytes": 3221225472,
+    "sustained_seconds": 15,
+    "maximum_gpu_mib": 11776,
+    "stop_on_missing_gpu_diagnostics": true,
+    "stop_on_competing_loading_or_running_inference": true,
+    "retain_uncertain_reservations": true
+  },
+  "shared_context": {
+    "smallest_runtime_tokens": 16384,
+    "maximum_fixture_utf8_bytes": 10000,
+    "truncate": false,
+    "policy": "Small common inputs; retain each profile context allocation. Full SDK/system/tool/history envelope needs existing per-request admission. No token-fit RAM claim."
+  },
+  "sandbox_image": "sha256:b0ec53df107bdbb7b9df9c397ee56d4f7f74bc49d6e6550b16ca6f23e5748090",
+  "sdk_version": "1.53.0",
+  "arms": {
+    "A": {
+      "name": "Codex-only",
+      "backend": "codex",
+      "model": "gpt-6-astra",
+      "identity": null,
+      "status": "approval_required",
+      "lanes": ["advisory", "implementation"],
+      "settings": {"reasoning_effort": "xhigh", "service_tier": "standard", "cache_state": "observe; never assume cold"},
+      "requirements": ["Dedicated complete supervisor accounting", "same frozen fixture and independent acceptance", "availability of requested cloud model/settings"]
+    },
+    "B": {
+      "name": "Codex + LAB + Ollama Qwen27",
+      "backend": "ollama",
+      "model": "qwen3.8:27b",
+      "identity": "aaee06c39dcf2437cde036998d960e1fc1494b8191be7cc9657d01e509097813",
+      "installed_wrapper_manifest_sha256": "b45285c1cc1fafaf0272e840a7b799cb11e1b4597c2dc47a2dc58a61942f408c",
+      "weight_sha256": "f5f1dd8920d417aac2718b0bda3403da274301efdd6760b4f0f4b864ff2ad57d",
+      "status": "approval_required",
+      "lanes": ["advisory", "implementation"],
+      "settings": {"backend_version": "0.40.2", "quantization": "Q4_K_M", "context_tokens": 65536, "context_safety_tokens": 1024, "output_tokens": 1536, "output_bytes": 16384, "num_gpu": 28, "draft_num_predict": 4, "temperature": 0, "thinking": false, "truncate": false, "shift": false, "keep_alive_seconds": 120, "steps": 8, "self_repair_cycles": 2, "qualified_attempt_seconds": 1800, "template_sha256": "b507b9c2f6ca642bffcd06665ea7c91f235fd32daeefdf875a0f938db05fb315", "cache_state": "observe per trial"},
+      "requirements": ["Revalidate exact runtime binding and recorded native runner flags", "existing tool-roundtrip evidence", "scoped fixture approval for categories outside qualified documentation/small-fix", "unchanged memory/ownership/resource gates"]
+    },
+    "C": {
+      "name": "Codex + LAB + Ollama Qwen35-A3B",
+      "backend": "ollama",
+      "model": "qwen3.6:35b",
+      "identity": "a7eb95c53bcf96b4bdd008d0fab4a5dac88047d9c1a7a9ab88ed453423fbd87c",
+      "installed_wrapper_manifest_sha256": "e967ed89e98e312f71c780ddddfda26d3084f41a6aa5ea7b3eca7e9f94d08b96",
+      "weight_sha256": "d372de8e934898a59e6ccfabc3368474711384d8f1fd4d22d87a3f0a45400cdc",
+      "status": "approval_required",
+      "lanes": ["advisory", "implementation"],
+      "settings": {"backend_version": "0.40.2", "quantization": "Q4_K_M", "context_tokens": 65536, "context_safety_tokens": 1024, "output_tokens": 1536, "output_bytes": 16384, "num_gpu": 14, "draft_num_predict_override": null, "stored_draft_num_predict": 2, "temperature": 0, "thinking": false, "truncate": false, "shift": false, "keep_alive_seconds": 120, "steps": 8, "self_repair_cycles": 2, "qualified_attempt_seconds": 1800, "template_sha256": "b507b9c2f6ca642bffcd06665ea7c91f235fd32daeefdf875a0f938db05fb315", "cache_state": "observe per trial"},
+      "requirements": ["Use the separately recorded g14/c64 qualified profile; preserve stored draft behavior", "revalidate exact runtime binding and actual flags", "bind existing accepted tool-roundtrip proof", "scoped fixture approvals; no general category activation", "unchanged memory/ownership/resource gates"]
+    },
+    "D": {
+      "name": "Codex + LAB + pinned Strata Coder",
+      "backend": "strata",
+      "model": "qwen3.8-flash-next-coder-iq1_m",
+      "identity": "9f69a2de21ebd696bacd9828ce013434b7dbb2383745efc6ce0c55d8bf9c0c71",
+      "status": "blocked",
+      "lanes": [],
+      "reason": "No startup: provisional memory growth/exclusive-session prerequisites unresolved; implementation C and live failure/cancellation unqualified",
+      "settings": {"backend_version": "0.1.43 CUDA 12 with LAB serving patch", "upstream_commit": "7695859aa13afb248bdb4d36f9b2e95707db079d", "patch_sha256": "3a0ca878f80c66e26c26b429e00db71ccb3c9febcc34056728602ee996d05190", "engine_sha256": "5f359e2d08e73b11fd7b0edc72652125c12f836394dbf1732cec0d461324cd6b", "quantization": "IQ1_M-labelled mixed tensor GGUF", "weight_shards_sha256": ["e11083ba855e7666b48ea3f2db6a9c3a20c18751a012cc24f948de91b7087fad", "316b46f3a2dbd68c900f43136ab9449f9dcc3725dfd8c794847c204bc161e113"], "context_tokens": 16384, "context_safety_tokens": 0, "server_reserve_tokens": 8, "output_tokens": 1536, "output_bytes": 16384, "steps": 8, "self_repair_cycles": 0, "implementation_attempts": 1, "transport_retries": 0, "thinking": false, "expert_cache": "auto", "prefill": 256, "spec": 4, "spec_min_p": 0.5, "kv": "int8", "mmap_experts": true, "ple_io": "direct", "vram_reserve_mib": 2048, "prompt_cache": 0, "conversation_cache_mib": 0, "file_release": 1, "template_sha256": "12827f24b742ea4e80cdc12dbcf9622227056b9f797252a3149263d4f9aaadce", "exact_accounting": "strata_pinned_exact_v1; private reviewed manifest binding required"},
+      "requirements": ["Additional 0.5 GiB counter/IPC allowance", "at least 22.5 GiB pre-start / 11 GiB before C provisional screen; not a proven bound", "justify uncertain 2.5 GiB further-growth floor before any startup", "exclusive-session procedure and live safety qualification", "complete OpenHands C before implementation trials; separate subsequent approval"]
+    }
+  },
+  "telemetry": {
+    "cloud": "existing usage_report.investment plus whole-session/run bindings; actual complete coverage required",
+    "local": "existing provider receipts including failed/uncertain requests; preflight counts separate",
+    "gpu_board_power": "read-only existing LaptopPower NVML export OR nvidia-smi power.draw; never sum both for one GPU",
+    "cpu_package_power": "unavailable in observed existing monitor; no probe or driver authorized",
+    "whole_system_power": "unavailable; requires an existing external measurement covering laptop and eGPU supplies, battery flow and other loads",
+    "sampling_seconds": 2,
+    "maximum_interpolation_gap_seconds": 5,
+    "laptop_power_maximum_gap_seconds": 25
+  }
+}

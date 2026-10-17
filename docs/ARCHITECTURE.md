@@ -1,5 +1,9 @@
 # Architecture
 
+For the complete current path, see the [end-to-end workflow and source map](WORKFLOW.md).
+The first diagrams below describe the retained MCP/adaptive interfaces; the README
+and workflow guide own the current system, sequence, lifecycle, trust and accounting views.
+
 ```mermaid
 flowchart TD
   C[Codex: orchestration and final decisions] -->|stdio MCP| S[Seven bounded analysis tools]
@@ -34,7 +38,138 @@ Fixed consensus is two or three configured roles, with Codex resolving disagreem
 intermediate attempts and final returned payload sizes. These are distinct accounting
 units. `collector.py`, `otel.py` and `codex_usage.py` run independently of MCP.
 `dashboard_state.py` derives readable model states; `dashboard.py` uses native tabs.
-Hardware process sampling runs only during explicit benchmarks.
+Hardware performance sampling remains opt-in; companion workers also record their own process identity.
 
 Older single-model configs and v0.1 tool arguments remain supported. SQLite
 migrations only add tables/columns; a new checkout creates an empty local database.
+
+## Opt-in v0.5 workflow layer
+
+```mermaid
+flowchart TD
+  T[Typed task and evidence] --> P[Validated workflow and project profile]
+  P --> S[Next sequential role stage]
+  S --> K[Approved declarative skills]
+  K --> R[Existing adaptive router and compute/resource gates]
+  R --> B[Existing Bridge and bounded Ollama transport]
+  B --> E[Validated advisory results and usage]
+  E --> H[Hash-checked handoff to a declared next stage]
+  E --> C[Explicit Codex implementation or decision checkpoint]
+  C -->|supplied revised evidence, remaining budget| S
+  S --> L[(Shared workflow ledger in usage.sqlite3)]
+  B --> L
+  C --> L
+```
+
+`catalog.py` validates data-only TOML skills, semantic roles, sequential workflows
+and project profiles. These semantic roles are distinct from the legacy
+general/coding/reasoning model bindings. Profiles can narrow requirements and
+budgets, replace/remove local stages, and explicitly constrain model candidates.
+They cannot remove Codex checkpoints or bypass the router's gates.
+
+`workflow.py` advances one role or checkpoint per caller request. It supplies
+bounded evidence to existing analysis adapters, adds an implementation-plan
+schema, and prevents local output from performing actions. Every workflow ends
+with a caller-recorded Codex decision. An implementation checkpoint accepts actual
+diff/test evidence supplied after Codex performs the work. No model edits files,
+runs tests, invokes tools, creates agents, or dispatches cloud work.
+
+`workflow_store.py` adds a durable ledger to the existing metadata database.
+Generations reserve shared attempts, corrections, context/output allowances and
+active execution time. Stable task IDs, version checks, evidence/configuration
+digests and a per-data-directory workflow lease prevent silent replay or overlap.
+Raw task text, prompts, model results and checkpoint notes are not persisted by
+the workflow ledger. Callers retain returned handoffs and re-supply them after a
+restart. Routing metadata stays visible to Codex but is excluded from subsequent
+model prompts. Revision invalidates prior result references without refunding
+attempts or time.
+
+The lease covers workflow execution sharing one data directory; legacy calls
+remain serialized only within each Bridge instance. This is cooperative local
+orchestration, not an OS resource governor or authentication boundary. Native
+usage cards continue to show existing generation telemetry; workflow status is
+available through MCP and CLI. See [WORKFLOWS.md](WORKFLOWS.md) for contracts,
+accounting semantics and limitations.
+
+## Durable companion path (candidate)
+
+`companion_cli` and `dock` use `CompanionStore` as the local-user controller
+interface. No HTTP control server is exposed. `companion.py` owns scheduling;
+the dock owns no worker lifecycle. A controller lifetime kernel lock prevents
+competing schedulers in one state directory, and a worker lock serializes model
+calls. Detached workers use the controller runtime directory, not source_root.
+
+Submission checks worktree HEAD, source_root, inventory and exact model selection;
+SQLite persists the input excerpt, digest/options and task key. Workers revalidate
+HEAD and model digest. Legacy exact jobs invoke Bridge; qualified profile jobs
+use the native contract provider. Routed jobs preserve the full configuration
+through Service. `companion_workflows.py` invokes one existing
+WorkflowEngine step/checkpoint per job, preserving versions, budgets and bounded
+handoffs across process restarts. For companion jobs, exact private packets and
+operation receipts commit with the corresponding workflow ledger transitions.
+The companion then copies each receipt, result and unique completion event in
+one transaction and acknowledges it afterward. Startup replays this database
+copy idempotently, not the work. Acquiring the old worker lock permits retaining
+partial evidence and marking unfinished attempts interrupted, never resuming
+tokens. See [recovery](RECOVERY.md) for authority, ordering and legacy cases.
+
+`callbacks.py` validates repository identity and resumes a dedicated Codex CLI
+session using its exact returned identifier. The outbox claims one callback per
+session. A crash after claim is uncertain, requiring explicit reconciliation.
+Recorded accepted/corrected/rejected/further_work decisions carry validation
+notes. Only resolved jobs/reviews permit idempotent finalization; failures cannot
+become completed. The current callback is report-only and cannot apply patches.
+Local supervising review can be recorded with `decide --local` without dispatch.
+Successful finalization also requires every attached workflow checkpoint resolved.
+
+Jobs, review events and parent runs have separate stored states. See the
+[source-mapped lifecycle](WORKFLOW.md#job-lifecycle); local execution success is
+not independent acceptance or finalization.
+
+Data includes authorized task excerpts/results in companion storage and its
+workflow recovery tables; ordinary telemetry stays metadata-only. See SECURITY.md for private storage
+and cloud callback flow, and DECISIONS.md for compatibility decisions.
+
+## Selective execution extension
+
+The optional [contract path](SELECTIVE-EXECUTION.md) adds three explicit lanes:
+Codex direct return, bounded advisory, and isolated OpenHands implementation.
+Inference backend selection (Ollama or Strata) is separate from execution ownership.
+Qualified native Ollama advisory uses ChatProvider and runtime binding checks;
+legacy advisory retains Bridge. The SDK consumes bounded Chat Completions via the
+container-local relay and trusted host mailbox transport.
+The deterministic companion scheduler, store, worker, dock and explicit supervisor
+review remain authoritative. See [setup](SELECTIVE-SETUP.md) for exact provider,
+sandbox and candidate-verification boundaries. Legacy workflow semantics above
+remain available; they do not acquire tool permissions from the new lane.
+
+## Qualified project profiles and accounting
+
+`local_profile.py` resolves project-scoped defaults and explicit model/backend
+overrides before the existing contract admission. Trusted profiles carry exact
+identities and bounded limits, with no mandatory machine model in distribution
+defaults. Profiled companion advisory jobs use the same native provider and
+runtime verification as OpenHands implementation; legacy callers keep their
+existing configuration and unsupported transport/profile combinations fail.
+
+`runtime_profile.py` verifies the actual runner model path and flags.
+Provider admission checks the installed version, digest, quantization and stored
+template hash; completed responses verify loaded digest/context before an SDK
+tool call can execute. LAB's host resource guard observes loading/execution;
+the durable reservation admits one inference workload across providers.
+No lifecycle or acceptance authority enters the model-controlled sandbox.
+
+Successful, failed and interrupted requests feed the existing usage table;
+durable receipts repair accounting after restart without replaying inference.
+`usage_report.py` creates provenance/cutoff/missing-coverage views from those
+records. It never counts measurement views as additional provider requests.
+The dock reflects per-request available counters and exact backend/model,
+task, project, elapsed time and separate execution/verification/review states.
+
+Usage attribution adds metadata to the existing telemetry database through
+usage_bindings. It maps a whole cloud session/turn or LAB run/job to an accounting
+run/task and category. It never modifies token receipts. Reports first deduplicate
+alternative cloud streams, then join exact identities; absent bindings and
+missing fields remain explicit. Trusted CLI owns bindings; model tools cannot
+relabel costs. Existing frozen controllers can continue using the additive schema.
+See [accounting semantics](SELECTIVE-PILOT.md).

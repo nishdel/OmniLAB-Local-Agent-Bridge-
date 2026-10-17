@@ -1,0 +1,121 @@
+# Use in place with --config. If copying it, adjust source_root/data_dir paths.
+model = "qwen3:4b"
+endpoint = "http://localhost:11434"
+# Role profiles require loopback. This flag only applies to legacy single-model configs.
+allow_remote = false
+max_input_chars = 10000
+max_output_tokens = 600
+max_output_bytes = 3000
+num_ctx = 8192
+timeout_seconds = 180
+data_dir = "../data/companion-quality"
+# Optional: permit explicitly selected relative files inside this directory.
+# This saves sending entire file contents through Codex's tool arguments.
+source_root = ".."
+consensus_roles = ["coding", "reasoning"]
+
+[roles]
+general = "qwen3:4b"
+coding = "gpt-oss:20b"
+reasoning = "qwen3:14b-q4_K_M"
+
+[routes]
+find_relevant_context = "general"
+summarize_context = "general"
+analyze_code = "coding"
+analyze_test_output = "coding"
+review_diff = "coding"
+triage_task = "reasoning"
+second_opinion = "reasoning"
+
+[delegation]
+local_first = true
+# These minima skip an extra triage inference for small work; local tools still run.
+min_context_chars = 1500
+min_file_count = 3
+max_files_for_local_analysis = 8
+min_confidence = "medium"
+min_compression = 0.25
+max_failed_local_attempts = 2
+
+[search]
+max_files = 2000
+max_entries = 10000
+max_file_bytes = 128000
+max_total_bytes = 8000000
+max_seconds = 5
+max_candidates = 12
+max_results = 5
+# Keep frozen comparison sources/results out of normal repository discovery.
+exclude = ["data/", "benchmarks/", "release-staging/", "tests/fixtures/", ".*test*/", "*.lock*", "requirements.lock.txt"]
+
+[monitor]
+poll_seconds = 2
+discover_seconds = 30
+collapse_seconds = 10
+stale_seconds = 300
+# Only this local receiver opens a port. Set 0 to disable OTel reception.
+otel_port = 4318
+# Automatic rollout monitoring starts with today's files; use --backfill for history.
+
+[adaptive]
+enabled = true
+default_cap = "Large"
+max_attempts = 2
+# Combined allocation budget, not VRAM; GPT-OSS needs about 14.85 GiB with reserve.
+memory_budget_gb = 16
+runtime_reserve_gb = 2
+min_reviewed_cases = 3
+# Correctable results can be useful; majority-wrong results cannot.
+min_accepted_rate = 0.25
+max_rejected_rate = 0.5
+preferred_model = "gpt-oss:20b"
+lightweight_model = "qwen3:4b"
+trivial_max_chars = 1200
+maximum_trivial_max_chars = 256
+
+[[model_registry]]
+name = "qwen3:4b"
+display_name = "Qwen 3 4B"
+min_tier = "Light"
+architecture = "dense"
+total_parameters_b = 4.0
+weight_gb = 2.33
+quantization = "Q4_K_M"
+roles = ["general"]
+strength = 1
+enabled = true
+
+[[model_registry]]
+name = "qwen3:14b-q4_K_M"
+display_name = "Qwen 3 14B"
+min_tier = "Medium"
+architecture = "dense"
+total_parameters_b = 14.8
+weight_gb = 8.67
+quantization = "Q4_K_M"
+roles = ["general", "coding", "reasoning"]
+strength = 4
+# Reviewed lower-memory substantive fallback; Medium permits its measured footprint and latency.
+enabled = true
+
+[[model_registry]]
+name = "gpt-oss:20b"
+display_name = "GPT-OSS 20B"
+architecture = "moe"
+total_parameters_b = 20.914757184
+active_parameters_b = 3.6
+weight_gb = 12.846
+quantization = "MXFP4"
+roles = ["general", "coding", "reasoning"]
+strength = 5
+min_tier = "Large"
+thinking = "low"
+enabled = true
+experimental = false
+# Compatible low-thinking protocol: 7 accepted / 4 corrected / 0 rejected.
+# Original think=false failed all 11 cases; both histories are retained.
+
+[agentic]
+enabled = true
+project_profile = "generic"

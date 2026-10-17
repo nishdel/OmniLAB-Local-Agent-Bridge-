@@ -88,7 +88,7 @@ The compatible low-thinking suite had no API/schema failures. These are local
 request counts, not cloud calls avoided. Measured cloud calls/token reduction
 remain unavailable. Benchmark payload compression is reported separately below.
 
-See the [complete paired comparison](docs/benchmarks/v0.4-results.md) for exact tags,
+See the [complete paired comparison](../benchmarks/v0.4-results.md) for exact tags,
 protocol compatibility, independently reviewed A/C/R grades, failures, token/time
 measurements, sampled memory, byte compression and routing recommendations.
 The five historical baseline results are preserved. New calls are separate records.

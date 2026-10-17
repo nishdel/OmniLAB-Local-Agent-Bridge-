@@ -6,6 +6,7 @@ import tomllib
 from urllib.parse import urlsplit
 import re
 from .models import ModelProfile, AdaptiveConfig
+from .catalog import AgenticConfig, Catalog
 
 ROUTES = {
     "find_relevant_context": "general", "summarize_context": "general",
@@ -64,6 +65,8 @@ class Config:
     max_output_bytes: int = 3000
     num_ctx: int = 8192
     timeout_seconds: float = 180
+    no_inference_deadline: bool = False
+    thinking: bool | str = False
     data_dir: Path = field(default_factory=lambda: Path(os.getenv("LOCALAPPDATA", str(Path.home()))) / "LocalAgentBridge")
     poll_seconds: float = 2
     discover_seconds: float = 30
@@ -80,8 +83,18 @@ class Config:
     delegation: DelegationConfig = field(default_factory=DelegationConfig)
     model_registry: list[ModelProfile] = field(default_factory=list)
     adaptive: AdaptiveConfig = field(default_factory=AdaptiveConfig)
+    agentic: AgenticConfig = field(default_factory=AgenticConfig)
+    selective: dict = field(default_factory=dict)
 
     def __post_init__(self):
+        from .selective_config import validate_policy
+        self.selective = validate_policy(self.selective)
+        if type(self.no_inference_deadline) is not bool:
+            raise ValueError('no_inference_deadline must be boolean')
+        if type(self.thinking) is not bool and self.thinking not in ('low', 'medium', 'high'):
+            raise ValueError('thinking must be boolean or low/medium/high')
+        if isinstance(self.agentic, dict):
+            self.agentic = AgenticConfig.model_validate(self.agentic)
         if isinstance(self.adaptive, dict):
             self.adaptive = AdaptiveConfig(**self.adaptive)
         self.model_registry = [ModelProfile(**p) if isinstance(p, dict) else p for p in self.model_registry]
@@ -148,6 +161,10 @@ class Config:
                                 ("stale_seconds", 10, 7200), ("otel_port", 0, 65535)):
             if not low <= getattr(self, name) <= high:
                 raise ValueError(f"{name} must be between {low} and {high}")
+        if self.agentic.enabled:
+            if not self.adaptive.enabled:
+                raise ValueError('Workflows require the existing adaptive registry and compute gates')
+            Catalog(self.agentic)  # validate all explicitly enabled definitions before serving requests
 
     def resolve_model(self, tool, role=None):
         role = role or self.routes[tool]
@@ -167,6 +184,10 @@ def load_config(path=None):
         for key in ("data_dir", "codex_home", "source_root"):
             if key in values and not Path(values[key]).is_absolute():
                 values[key] = path.parent / values[key]
+        if values.get('agentic', {}).get('catalog_root'):
+            catalog_root = Path(values['agentic']['catalog_root'])
+            if not catalog_root.is_absolute():
+                values['agentic']['catalog_root'] = str(path.parent / catalog_root)
     for key in ("model", "endpoint", "data_dir"):
         if f"LAB_{key.upper()}" in os.environ:
             values[key] = os.environ[f"LAB_{key.upper()}"]

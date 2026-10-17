@@ -1,0 +1,32 @@
+schema_version = 1
+id = "review_change"
+description = "Extract relevant context, review a supplied diff, add risk-triggered checks, and return to Codex."
+task_kinds = ["review_change"]
+
+[[stages]]
+id = "explore"
+role = "repository-explorer"
+skills = ["repository-discovery", "context-summary"]
+
+[[stages]]
+id = "review"
+role = "code-reviewer"
+skills = ["code-review"]
+inputs_from = ["explore"]
+
+[[stages]]
+id = "security"
+role = "security-reviewer"
+skills = ["security-review"]
+when = "security"
+
+[[stages]]
+id = "resources"
+role = "code-reviewer"
+skills = ["resource-review"]
+when = "resources"
+
+[[stages]]
+id = "decide"
+executor = "codex"
+checkpoint = "decision"

@@ -95,3 +95,10 @@ Build tooling is not vendored in the source release.
 | typing-inspection | 0.4.4 | MIT | 1 |
 | typing_extensions | 4.16.0 | PSF-2.0 | 1 |
 | uvicorn | 0.52.4 | BSD-3-Clause | 1 |
+
+## Companion candidate
+
+psutil is now a core dependency for process identity. Windows explicitly requires
+pywin32 for native process creation identity and the retained owned-runtime tests.
+The redundant benchmark extra is removed. Installed versions remain constrained
+by the existing requirements.lock.txt; no new bundled third-party binaries.

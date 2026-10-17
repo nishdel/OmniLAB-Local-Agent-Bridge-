@@ -1,0 +1,48 @@
+# Development example. Uses only Qwen3 4B and isolated example history.
+model = "qwen3:4b"
+endpoint = "http://localhost:11434"
+source_root = "../.."
+data_dir = "../../data/v05-example"
+max_input_chars = 10000
+max_output_tokens = 600
+max_output_bytes = 3000
+num_ctx = 8192
+timeout_seconds = 180
+
+[roles]
+general = "qwen3:4b"
+coding = "qwen3:4b"
+reasoning = "qwen3:4b"
+
+[adaptive]
+enabled = true
+default_cap = "Medium"
+max_attempts = 2
+memory_budget_gb = 6
+
+[[model_registry]]
+name = "qwen3:4b"
+architecture = "dense"
+total_parameters_b = 4.0
+weight_gb = 2.33
+roles = ["general", "coding", "reasoning"]
+capabilities = ["general", "reasoning"]
+min_tier = "Light"
+strength = 1
+enabled = true
+
+[search]
+exclude = ["data/", "benchmarks/", "release-staging/", ".*test*/", "*.lock*"]
+
+[agentic]
+enabled = true
+project_profile = "generic"
+
+[agentic.limits]
+max_stages = 12
+max_attempts = 8
+max_corrections = 2
+max_reserved_tokens = 80000
+max_output_tokens = 4800
+max_input_chars = 80000
+max_seconds = 600

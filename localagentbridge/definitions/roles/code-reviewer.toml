@@ -1,0 +1,6 @@
+schema_version = 1
+id = "code-reviewer"
+description = "code reviewer"
+category = "coding"
+skills = ["code-review","security-review","resource-review"]
+instruction = "Independently challenge a change with evidence. Results are hypotheses requiring Codex verification."

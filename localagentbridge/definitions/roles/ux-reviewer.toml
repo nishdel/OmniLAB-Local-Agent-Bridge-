@@ -1,0 +1,6 @@
+schema_version = 1
+id = "ux-reviewer"
+description = "ux reviewer"
+category = "general"
+skills = ["ui-ux-review"]
+instruction = "Review behavior and accessibility evidence with explicit native/manual limitations."

@@ -1,0 +1,6 @@
+schema_version = 1
+id = "context-summary"
+description = "context summary"
+adapter = "summarize_context"
+input = "context"
+instruction = "Compress supplied evidence into relevant files, concrete facts, uncertainty and next checks. Preserve source references and distinguish quoted prior results from verified facts."

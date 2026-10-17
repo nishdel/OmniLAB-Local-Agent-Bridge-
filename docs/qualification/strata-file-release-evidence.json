@@ -1,0 +1,250 @@
+{
+  "scope": "One Windows qualification session; no general routing or OpenHands implementation qualification",
+  "starting_lab_commit": "1371bd1944825d55ea9ccec869a910ac2e761021",
+  "runtime_label": "Strata 0.1.43 engine with LAB-specific serving patch",
+  "upstream_base_commit": "7695859aa13afb248bdb4d36f9b2e95707db079d",
+  "patch_sha256": "3a0ca878f80c66e26c26b429e00db71ccb3c9febcc34056728602ee996d05190",
+  "patched_server_sha256": "670a36ec733fadfd0880035180e1345483ea21576a90b3501b807d68209d39f0",
+  "previous_live_patch_sha256": "f680795863739a005113a96ea3d6ce496a40222b9b9e3f50b20e65e27e0199f2",
+  "engine_sha256": "5f359e2d08e73b11fd7b0edc72652125c12f836394dbf1732cec0d461324cd6b",
+  "release_archive_sha256": "344998f7b91af0b028e8e5241db39bbc5abd9c93a0a33d6dbc33108bb8a837fb",
+  "release_asset_id": 630974439,
+  "release_source": "https://github.com/Niko1221/Strata/releases/download/v0.1.43/strata-windows-x64-cuda12.zip",
+  "effective_native_config_sha256": "740c480f3b74f70ba0e10784a7cda339960b2b19f8902871e05f7562c8bec8b1",
+  "binding_identity": "9f69a2de21ebd696bacd9828ce013434b7dbb2383745efc6ce0c55d8bf9c0c71",
+  "sole_native_setting_change": {
+    "env": {
+      "STRATA_FILE_RELEASE": "1"
+    }
+  },
+  "native_argv_unchanged": true,
+  "native_starts": 1,
+  "new_download_bytes": 0,
+  "new_model_bytes": 0,
+  "repacked": false,
+  "feature_support": {
+    "binary_strings": {
+      "STRATA_FILE_RELEASE": 5586976,
+      "FileExpertSource: cannot trim mapped pages": 5587008,
+      "VirtualUnlock": 6908744,
+      "getenv": -1,
+      "prefill refill": -1,
+      "released": 5598600
+    },
+    "env_string_rva": 5591072,
+    "text_string_references": [
+      {
+        "file_offset": 1130734,
+        "rva": 1133806,
+        "bytes": "488d0d2b034400e80a793e004885c07464488d152e034400488bc8e81209410085c07551b001eba8488d0dbb365900e8"
+      }
+    ],
+    "release_function": {
+      "start_rva": 1133280,
+      "end_rva": 1133930
+    },
+    "static_bool_stores": [
+      {
+        "instruction_rva": 1133765,
+        "data_rva": 6980548,
+        "bytes": "8805f9365900"
+      }
+    ],
+    "imports": [
+      {
+        "dll": "KERNEL32.dll",
+        "symbol": "VirtualUnlock",
+        "iat_rva": 5464848,
+        "call_references": [
+          1026705,
+          1121118,
+          1121156,
+          2523910
+        ]
+      }
+    ]
+  },
+  "activation": {
+    "effective_child_environment": "STRATA_FILE_RELEASE=1",
+    "native_release_static_enabled": 1,
+    "enabled_static_rva": 6980548,
+    "engine_log_advised_GiB": 3.73,
+    "advised_bytes_are_not_reclaimed_RAM": true
+  },
+  "stages": {
+    "A": {
+      "result": "passed",
+      "startup_seconds": 49.82,
+      "request_with_identity_checks_seconds": 39.01686096191406,
+      "input_tokens": 20,
+      "output_tokens": 2,
+      "max_output_tokens": 64
+    },
+    "B": {
+      "result": "passed; independent acceptance without correction",
+      "seconds_including_MCP_submit": 71.50816869999107,
+      "worker_interval_seconds": 61.7797041,
+      "server_generation_seconds": 43.8,
+      "usage": {
+        "input_tokens": 122,
+        "output_tokens": 34,
+        "cached_input_tokens": 0
+      },
+      "actual_serialized_prompt_bytes": 788,
+      "conservative_required_context_bound": 2324,
+      "candidate_sha256": "908e9c9a427f67907d202f1e706ad247ea57e9ea68de163fc81e07a502c4813d",
+      "added_server_requests": 1,
+      "answer_content_utf8_bytes": 195,
+      "HTTP_wire_response_bytes": null
+    },
+    "C": {
+      "dispatch": false,
+      "supervisor_verified": false,
+      "reason": "Post-B memory never supports 6 GiB fresh inference admission; full 2 GiB sandbox plus 3 GiB headroom also exceeds idle available RAM before additional context/history/controller/growth allowances. Later competing-runtime GPU stop prohibits further execution.",
+      "idle_available_before_competitor_bytes": 4879126528,
+      "admission_requirement_bytes": 6442450944,
+      "admission_shortfall_bytes": 1563324416,
+      "sandbox_plus_headroom_bytes": 5368709120,
+      "minimum_combined_shortfall_bytes": 489582592,
+      "measured_executor_host_peak_working_set": 3357368320,
+      "initial_os_executor_monitor_used": 16813334528,
+      "observed_owned_server_peak_rss": 15923068928,
+      "full_sdk_tool_history_and_future_native_growth": "No safe positive allowance established within remaining physical envelope; not dispatched.",
+      "old_startup_plan_reused": false,
+      "profile_prequalified": false,
+      "executor_ready_before_trial": true,
+      "live_failure_test": "not run after unexpected guard failure",
+      "live_cancellation_test": "not run: insufficient admission, followed by unexpected guard stop"
+    },
+    "safety_checks": {
+      "deliberate_failure": "not run after unexpected GPU guard stop",
+      "live_cancellation": "not run; insufficient admission, then unexpected stop",
+      "guard_shutdown_is_user_cancellation": false
+    }
+  },
+  "observed": {
+    "peak_native_working_set_bytes": 15720583168,
+    "native_OS_reported_peak_working_set_bytes": 15754518528,
+    "peak_summed_owned_RSS_bytes": 15923068928,
+    "peak_native_private_working_set_bytes": 3133714432,
+    "peak_native_nonprivate_working_set_bytes": 12635000832,
+    "peak_native_private_commit_bytes": 13986390016,
+    "minimum_available_RAM_before_competitor_bytes": 2591657984,
+    "whole_GPU_peak_before_competitor_MiB": 10234,
+    "minimum_available_RAM_all_samples_bytes": 2214416384,
+    "whole_GPU_peak_at_guard_MiB": 12088,
+    "system_commit_peak_bytes": 35226091520,
+    "system_commit_limit_bytes": 70646657024,
+    "idle_before_competitor": {
+      "samples": 164,
+      "minimum_available": 4839682048,
+      "last_available": 4879126528,
+      "system_commit_min": 33236701184,
+      "system_commit_max": 33429938176,
+      "native_last": {
+        "page_fault_count": 5913795,
+        "peak_working_set_bytes": 15754518528,
+        "working_set_bytes": 15082135552,
+        "peak_paged_pool_bytes": 116522448,
+        "paged_pool_bytes": 60400640,
+        "peak_nonpaged_pool_bytes": 400408,
+        "nonpaged_pool_bytes": 132256,
+        "commit_bytes": 13986361344,
+        "peak_commit_bytes": 13986598912,
+        "private_commit_bytes": 13986361344,
+        "private_working_set_bytes": 3133698048,
+        "shared_commit_bytes": 4739072,
+        "nonprivate_working_set_bytes": 11948437504
+      },
+      "seconds": 398.50737380981445,
+      "first_available": 5014925312,
+      "maximum_available": 5014925312,
+      "available_slope_bytes_per_minute": -8079589.363554832
+    },
+    "observation_seconds": 406.62219405174255,
+    "observation_outcome": "interrupted_by_unexpected_guard_failure",
+    "engine_page_fault_delta": 5742520,
+    "system_disk_deltas": {
+      "PhysicalDrive0": {
+        "read_bytes": 22624440832,
+        "write_bytes": 303271424,
+        "read_count": 369439,
+        "write_count": 6463
+      },
+      "PhysicalDrive1": {
+        "read_bytes": 3086828544,
+        "write_bytes": 208200192,
+        "read_count": 31888,
+        "write_count": 13549
+      }
+    },
+    "participant_summed_peaks": {
+      "monitor": {
+        "max_observed_sum_working_set": 80846848,
+        "max_observed_sum_private_commit": 67792896
+      },
+      "executor-host": {
+        "max_observed_sum_working_set": 3357368320,
+        "max_observed_sum_private_commit": 955236352
+      },
+      "qualification-client-or-worker": {
+        "max_observed_sum_working_set": 145285120,
+        "max_observed_sum_private_commit": 108376064
+      }
+    },
+    "monitor": {
+      "samples": 274,
+      "median_seconds": 0.7753840000077616,
+      "max_seconds": 1.4719086999975843
+    },
+    "RSS_sums_are_not_unique_physical_memory": true,
+    "nonprivate_includes_mappings_and_shared_images": true,
+    "participant_counter_coverage": {
+      "native_and_monitor": "Full reported Windows working-set/private/commit counters captured",
+      "executor_host": "Working-set sum includes protected vmmem via available RSS; private commit sum is partial because protected process counters were unavailable",
+      "warning": "Working-set sums are not unique physical memory; missing private counters are not zero"
+    }
+  },
+  "limits": {
+    "admission_available_RAM_bytes": 6442450944,
+    "hard_available_RAM_bytes": 2147483648,
+    "sustained_available_RAM_bytes": 3221225472,
+    "sustained_seconds": 15,
+    "whole_GPU_MiB": 11776,
+    "engine_VRAM_reserve_MiB": 2048,
+    "startup_seconds": 600,
+    "request_seconds": 120,
+    "attempt_seconds": 600,
+    "context_tokens": 16384,
+    "response_tokens": 1536,
+    "steps": 8,
+    "test_seconds": 15,
+    "sandbox_MiB": 2048,
+    "sandbox_swap_MiB": 0,
+    "CPUs": 2,
+    "failed_request_retries": 0,
+    "engine_restarts": 0
+  },
+  "cleanup": {
+    "owned_processes_listener_reservations_reconciled": true,
+    "isolated_cap_restored": "absent/Medium",
+    "isolated_LAB_config_restored_byte_exact": true,
+    "active_config_settings_job_states_unchanged": true,
+    "Docker_started_for_preflight_then_stopped_after_no_running_containers": true,
+    "competing_Ollama_not_unloaded_or_stopped": true,
+    "general_Strata_enabled": false
+  },
+  "offline": {
+    "final_patch_tests_passed": 41,
+    "seconds": 35.08,
+    "fresh": true,
+    "upstream_49_checks": "prior evidence reused, not rerun in this amendment"
+  },
+  "remaining": [
+    "Safe full SDK/tool-history and native-growth memory allowance",
+    "No competing inference during a newly authorized startup",
+    "Restricted OpenHands fixture and independent acceptance",
+    "Live deliberate failure and user cancellation",
+    "Human acceptance and merge gates"
+  ]
+}

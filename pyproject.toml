@@ -4,32 +4,35 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "localagentbridge"
-version = "0.4.1"
-description = "Small local Ollama MCP bridge and Windows usage monitor"
+version = "0.5.0.dev0"
+description = "Durable local coding contributions, Codex review and a Windows companion dock"
 readme = "README.md"
 requires-python = ">=3.11"
 license = "MIT"
 license-files = ["LICENSE"]
-dependencies = ["mcp>=1.20,<2", "httpx>=0.28,<1", "opentelemetry-proto>=1.30,<2", "pathspec>=0.12,<2"]
+dependencies = ["mcp>=1.20,<2", "httpx>=0.28,<1", "opentelemetry-proto>=1.30,<2", "pathspec>=0.12,<2", "psutil>=7,<8", "pywin32>=311; sys_platform == 'win32'"]
 
 [project.optional-dependencies]
 tray = ["pystray>=0.19,<1", "Pillow>=11,<13"]
 dev = ["pytest>=8,<10", "ruff>=0.12,<1"]
-benchmark = ["psutil>=7,<8"]
 
 [project.scripts]
 localagentbridge = "localagentbridge.__main__:main"
 
 [project.urls]
-Repository = "https://github.com/nishdel/LocalAgentBridge"
-Issues = "https://github.com/nishdel/LocalAgentBridge/issues"
-Security = "https://github.com/nishdel/LocalAgentBridge/security/policy"
+Repository = "https://github.com/nishdel/OmniLAB-Local-Agent-Bridge-"
+Documentation = "https://nishdel.github.io/OmniLAB-Local-Agent-Bridge-/"
+Issues = "https://github.com/nishdel/OmniLAB-Local-Agent-Bridge-/issues"
+Security = "https://github.com/nishdel/OmniLAB-Local-Agent-Bridge-/security/policy"
 
 [project.gui-scripts]
 localagentbridge-tray = "localagentbridge.widget:main"
 
 [tool.setuptools.packages.find]
 include = ["localagentbridge*"]
+
+[tool.setuptools.package-data]
+localagentbridge = ["definitions/*/*.toml", "executor_assets/*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

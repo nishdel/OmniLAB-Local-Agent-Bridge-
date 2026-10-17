@@ -1,0 +1,618 @@
+"""Optional bounded Chat Completions transport. No runtime tools, loading or fallback."""
+import asyncio
+import hashlib
+import ipaddress
+import json
+import os
+from pathlib import Path
+from urllib.parse import urlsplit
+
+import httpx
+
+
+class ProviderError(ValueError):
+    pass
+
+
+def context_accounting(payload, limits):
+    """Conservative fallback bound, never advertised as an actual tokenizer count.
+
+    Retain the prior full UTF-8 JSON byte allowance (including serialization),
+    reserve output separately, and add the explicitly requested safety margin.
+    Actual template/token counts are provider observations after dispatch.
+    """
+    from .task_contract import digest
+    size = lambda value: len(json.dumps(value, ensure_ascii=False).encode())
+    by_role = {}
+    for message in payload.get('messages', []):
+        role = message.get('role', 'unknown')
+        by_role[role] = by_role.get(role, 0) + size(message)
+    total = size(payload)
+    required = total + limits.output_tokens + limits.context_safety_tokens
+    return {'method': 'serialized_utf8_byte_upper_bound', 'exact_tokenizer': False,
+        'serialized_bytes': total, 'message_bytes_by_role': by_role,
+        'tool_definition_bytes': size(payload.get('tools', [])),
+        'message_count': len(payload.get('messages', [])),
+        'input_token_upper_bound': total, 'reserved_output_tokens': limits.output_tokens,
+        'safety_tokens': limits.context_safety_tokens, 'required_capacity_bound': required,
+        'effective_context_tokens': limits.context_tokens, 'admitted': required <= limits.context_tokens,
+        'classification': 'admitted' if required <= limits.context_tokens else 'conservative_admission_rejection',
+        'history_compacted': False, 'actual_input_tokens': None, 'request_sha256': digest(payload)}
+
+
+def local_origin(value):
+    url = urlsplit(value)
+    if (url.scheme not in ('http', 'https') or url.username or url.password or url.query or url.fragment
+            or url.path not in ('', '/') or not url.hostname):
+        raise ProviderError('Provider must be a loopback HTTP origin')
+    host = '127.0.0.1' if url.hostname.lower() == 'localhost' else url.hostname
+    try:
+        if not ipaddress.ip_address(host).is_loopback:
+            raise ValueError()
+    except ValueError:
+        raise ProviderError('Only loopback providers are supported; use the isolated mailbox, not a public listener') from None
+    host = '[' + host + ']' if ':' in host else host
+    return f'{url.scheme}://{host}:{url.port or (443 if url.scheme == "https" else 80)}'
+
+
+def counter(value):
+    return value if type(value) is int and value >= 0 else None
+
+
+def validate_completion(raw, *, tools=(), max_bytes=65536):
+    if not isinstance(raw, dict) or len(json.dumps(raw).encode()) > max_bytes:
+        raise ProviderError('Malformed or oversized completion')
+    choices = raw.get('choices')
+    if not isinstance(choices, list) or len(choices) != 1 or not isinstance(choices[0], dict):
+        raise ProviderError('Expected exactly one completion')
+    choice = choices[0]
+    msg = choice.get('message')
+    if not isinstance(msg, dict) or choice.get('finish_reason') not in ('stop', 'tool_calls'):
+        raise ProviderError('Incomplete, overflowed or malformed completion')
+    text, reasoning = msg.get('content') or '', msg.get('reasoning_content', msg.get('reasoning')) or ''
+    if not isinstance(text, str) or not isinstance(reasoning, str):
+        raise ProviderError('Non-text content/reasoning')
+    calls = msg.get('tool_calls') or []
+    if not isinstance(calls, list) or len(calls) > 16:
+        raise ProviderError('Malformed tool calls')
+    allowed = {t['function']['name'] for t in tools}
+    ids = set()
+    for call in calls:
+        if not isinstance(call, dict) or call.get('type') != 'function' or not isinstance(call.get('id'), str) or not call['id']:
+            raise ProviderError('Malformed tool call')
+        fn = call.get('function', {})
+        if not isinstance(fn, dict) or call['id'] in ids or fn.get('name') not in allowed or not isinstance(fn.get('arguments'), str):
+            raise ProviderError('Unknown/duplicate tool or invalid arguments')
+        ids.add(call['id'])
+        try:
+            args = json.loads(fn['arguments'])
+        except (ValueError, TypeError):
+            raise ProviderError('Invalid tool arguments JSON') from None
+        if not isinstance(args, dict):
+            raise ProviderError('Tool arguments must be an object')
+    if bool(calls) != (choice['finish_reason'] == 'tool_calls') or not (text.strip() or calls):
+        raise ProviderError('Empty or inconsistent completion')
+    usage = raw.get('usage') or {}
+    if not isinstance(usage, dict) or not isinstance(usage.get('prompt_tokens_details') or {}, dict):
+        raise ProviderError('Malformed usage counters')
+    return dict(content=text, reasoning=reasoning, tool_calls=calls,
+                usage={'input_tokens': counter(usage.get('prompt_tokens')),
+                       'output_tokens': counter(usage.get('completion_tokens')),
+                       'cached_input_tokens': counter((usage.get('prompt_tokens_details') or {}).get('cached_tokens'))},
+                raw=raw)
+
+
+class ChatProvider:
+    def __init__(self, backend, settings, transport=None):
+        if backend not in ('ollama', 'strata'):
+            raise ProviderError('Unknown backend')
+        self.backend, self.settings, self.transport = backend, settings, transport
+        if not settings.get('enabled', backend == 'ollama'):
+            raise ProviderError('Provider is disabled')
+        if not settings.get('endpoint'):
+            raise ProviderError('Configure an explicit loopback provider endpoint')
+        self.origin = local_origin(settings['endpoint'])
+
+    def client(self, deadline=15):
+        # None means no inference wall-clock/read timeout, not disabled connect timeout.
+        key_env = self.settings.get('api_key_env')
+        if key_env and not os.getenv(key_env):
+            raise ProviderError('Configured provider API key environment variable is missing')
+        headers = {'Authorization': 'Bearer ' + os.environ[key_env]} if key_env else {}
+        return httpx.AsyncClient(headers=headers, transport=self.transport, trust_env=False, follow_redirects=False,
+                                 timeout=httpx.Timeout(deadline, connect=5))
+
+    async def inspect(self, model):
+        async with self.client() as client:
+            if self.backend == 'ollama':
+                tags = await client.get(self.origin + '/api/tags')
+                tags.raise_for_status()
+                inventory = tags.json()
+                rows = inventory.get('models') if isinstance(inventory, dict) else None
+                if not isinstance(rows, list) or not all(isinstance(r, dict) for r in rows):
+                    raise ProviderError('Malformed Ollama inventory')
+                row = next((r for r in rows if r.get('name') == model), None)
+                if not row:
+                    raise ProviderError('Exact Ollama model is missing')
+                show = await client.post(self.origin + '/api/show', json={'model': model})
+                show.raise_for_status()
+                data = show.json()
+                if not isinstance(data, dict) or not isinstance(data.get('model_info', {}), dict):
+                    raise ProviderError('Malformed Ollama model metadata')
+                binding = self.settings.get('runtime_binding')
+                if binding:
+                    from .runtime_profile import template_identity
+                    version = await client.get(self.origin + '/api/version')
+                    version.raise_for_status()
+                    if (row.get('digest') != binding.get('identity') or
+                            data.get('details',{}).get('quantization_level') != binding.get('quantization') or
+                            template_identity(data.get('template','')) != binding.get('template_sha256') or
+                            version.json().get('version') != binding.get('backend_version')):
+                        raise ProviderError('Qualified model/backend/template identity changed')
+                from .selection import remote_model
+                if remote_model(row, data) or model.lower().endswith(':cloud'):
+                    raise ProviderError('Cloud weights are forbidden')
+                caps = data.get('capabilities', [])
+                lengths = [v for k, v in data.get('model_info', {}).items()
+                           if k.endswith('.context_length') and type(v) is int]
+                return dict(ready='completion' in caps, identity=row.get('digest'),
+                            identity_verified=bool(row.get('digest')), context_tokens=max(lengths, default=0),
+                            tools_advertised='tools' in caps, cancellation='disconnect_unconfirmed',
+                            protocol='chat_completions', usage='optional', model=model, backend=self.backend)
+            health = await self.metadata(client, '/health')
+            if not isinstance(health, dict) or health.get('service') != 'strata':
+                raise ProviderError('Not the supported Strata health protocol')
+            inventory = await self.metadata(client, '/v1/models')
+            rows = inventory.get('data') if isinstance(inventory, dict) else None
+            if not isinstance(rows, list) or not all(isinstance(r, dict) for r in rows):
+                raise ProviderError('Malformed Strata inventory')
+            row = next((r for r in rows if r.get('id') == model), None)
+            if not row:
+                raise ProviderError('Requested Strata model/alias is not listed; no substitution')
+            props = await self.metadata(client, '/props')
+            if (not isinstance(props, dict) or not isinstance(props.get('chat_template_caps', {}), dict)
+                    or not isinstance(props.get('chat_template', ''), str)
+                    or not isinstance(props.get('default_generation_settings', {}), dict)
+                    or type(props.get('chat_template_caps', {}).get('supports_tool_calls', False)) is not bool):
+                raise ProviderError('Malformed Strata serving metadata')
+            binding = self.settings.get('binding', {})
+            verified = self.verify_binding(binding, health, props)
+            ctx = health.get('max_context')
+            if type(ctx) is not int or ctx < 1:
+                raise ProviderError('Strata context capacity unavailable')
+            return dict(ready=health.get('loaded') is True, reason=None if health.get('loaded') is True else 'Strata weights are not loaded; explicit approved startup is required', identity=binding.get('identity') if verified else None,
+                        identity_verified=verified, identity_uncertainty=None if verified else 'Names/aliases do not identify weights; verified local serving binding required',
+                        context_tokens=ctx, tools_advertised=bool(props.get('chat_template_caps', {}).get('supports_tool_calls')),
+                        cancellation='disconnect_unconfirmed', protocol='chat_completions',
+                        usage='optional', model=model, backend=self.backend, serving_model=health.get('model'),
+                        build_info=props.get('build_info'), template_sha256=hashlib.sha256(props.get('chat_template', '').encode()).hexdigest(),
+                        tools_qualified=False, streaming='advisory_text_only',
+                        effective_context_tokens=props.get('default_generation_settings', {}).get('n_ctx'))
+
+    def verify_binding(self, binding, health, props):
+        from .strata_identity import verify_binding
+        return verify_binding(binding, health, props, self.origin)
+
+    async def list_models(self):
+        if self.backend != 'strata':
+            raise ProviderError('Use Ollama installed inventory for this backend')
+        async with self.client() as client:
+            value = await self.metadata(client, '/v1/models')
+        rows = value.get('data')
+        if not isinstance(rows, list) or not all(isinstance(r, dict) and isinstance(r.get('id'), str)
+                and 0 < len(r['id']) <= 160 for r in rows):
+            raise ProviderError('Malformed Strata inventory')
+        names = [r['id'] for r in rows]
+        if len(set(names)) != len(names):
+            raise ProviderError('Duplicate Strata aliases')
+        return names
+
+    async def metadata(self, client, path):
+        try:
+            async with client.stream('GET', self.origin + path) as response:
+                response.raise_for_status()
+                raw = bytearray()
+                async for chunk in response.aiter_bytes():
+                    raw.extend(chunk)
+                    if len(raw) > 1024 * 1024:
+                        raise ProviderError('Strata metadata exceeds 1 MiB')
+            value = json.loads(raw)
+            if not isinstance(value, dict):
+                raise ValueError()
+            return value
+        except httpx.ConnectError as error:
+            raise ProviderError('Strata is unreachable at ' + self.origin +
+                '; start the approved runtime with complete compatible weights; no fallback used') from error
+        except httpx.HTTPStatusError as error:
+            status = error.response.status_code
+            hint = {401: 'check api_key_env', 403: 'check local access policy',
+                    404: 'unsupported serving API', 503: 'engine unavailable or not ready'}.get(status, 'inspect the owned service')
+            raise ProviderError(f'Strata metadata HTTP {status}: {hint}') from error
+        except (ValueError, UnicodeError) as error:
+            if isinstance(error, ProviderError):
+                raise
+            raise ProviderError('Malformed Strata metadata JSON') from error
+
+    async def chat(self, model, messages, limits, *, tools=(), stream=False):
+        for attempt in range(limits.transport_retries + 1):
+            self.request_dispatched = False
+            try:
+                async with asyncio.timeout(limits.inference_deadline_seconds or limits.attempt_seconds):
+                    return await self._chat(model, messages, limits, tools=tools, stream=stream)
+            except httpx.ConnectError as error:
+                error.termination_confirmed = True  # Connection never established.
+                if attempt >= limits.transport_retries:
+                    raise
+                await asyncio.sleep(.1)
+            except asyncio.CancelledError as error:
+                if self.settings.get('exact_accounting') and not self.request_dispatched:
+                    error.termination_confirmed = True  # Cancelled model-free admission, no inference to reconcile.
+                raise
+            except (ProviderError, httpx.HTTPError, TimeoutError) as error:
+                if not self.request_dispatched:
+                    error.termination_confirmed = True
+                raise
+        raise ProviderError('Transport retry budget exhausted')
+
+    def validate_mailbox(self, body, limits):
+        """Exact mode must not silently drop SDK features before normalization."""
+        if not self.settings.get('exact_accounting'):
+            return
+        allowed = {'model', 'messages', 'tools', 'stream', 'max_tokens', 'max_completion_tokens'}
+        if (set(body) - allowed or any(body[k] != limits.output_tokens for k in
+                                      ('max_tokens', 'max_completion_tokens') if k in body)):
+            self.last_usage = None
+            self.last_accounting = {'method': 'strata_pinned_exact_v1', 'admitted': False,
+                'classification': 'unsupported_sdk_feature', 'actual_input_tokens': None}
+            error = ProviderError('Unsupported SDK request feature/output setting for exact accounting')
+            error.termination_confirmed = True
+            raise error
+
+    async def _chat(self, model, messages, limits, *, tools=(), stream=False):
+        self.last_usage = None
+        self.last_accounting = None
+        # Caller-owned history/tools and settings cannot mutate the admitted
+        # snapshot while tokenizer/HTTP awaits yield control to another task.
+        messages, tools = json.loads(json.dumps([messages, tools], ensure_ascii=False))
+        limits = limits.model_copy(deep=True)
+        settings_identity = hashlib.sha256(json.dumps(self.settings, sort_keys=True).encode()).hexdigest()
+        strata_before = None
+        if self.backend == 'strata':
+            if self.settings.get('exact_accounting'):
+                for message in messages:
+                    content = message.get('content')
+                    if isinstance(content, list) and any(set(p) != {'type', 'text'} for p in content if isinstance(p, dict)):
+                        raise ProviderError('Unsupported exact accounting content block feature')
+            strata_before = await self.inspect(model)
+            if not strata_before['ready'] or not strata_before['identity_verified']:
+                error = ProviderError(strata_before.get('reason') or strata_before.get('identity_uncertainty') or 'Strata serving identity is unverified')
+                error.termination_confirmed = True
+                raise error
+            if limits.context_tokens > strata_before['context_tokens']:
+                raise ProviderError('Strata loaded context is smaller than the contract')
+            if tools and not strata_before['tools_advertised']:
+                raise ProviderError('Strata template does not support tool calls')
+            messages = strata_messages(messages)
+        if self.backend == 'ollama':
+            messages = json.loads(json.dumps(messages))
+            for message in messages:
+                if 'reasoning_content' in message:
+                    reasoning = message.pop('reasoning_content')
+                    if not isinstance(reasoning, str) or ('reasoning' in message and message['reasoning'] != reasoning):
+                        raise ProviderError('Conflicting reasoning context')
+                    message['reasoning'] = reasoning
+        payload = dict(model=model, messages=messages, max_tokens=limits.output_tokens,
+                       stream=stream, temperature=self.settings.get('temperature', 0))
+        if self.settings.get('reasoning_effort') is not None:
+            payload['reasoning_effort'] = self.settings['reasoning_effort']
+        if self.backend == 'strata':
+            payload['chat_template_kwargs'] = {'enable_thinking': self.settings.get('enable_thinking', False)}
+            payload['strata_mcp'] = False
+        if tools:
+            payload['tools'] = list(tools)
+            payload['tool_choice'] = 'auto'
+        native = self.backend == 'ollama' and self.settings.get('native_context', False)
+        if native:
+            # Ollama's OpenAI endpoint lacks per-request num_ctx. The native
+            # endpoint allows a scoped budget on the existing service. SDK still
+            # consumes standard Chat Completions at its isolated mailbox.
+            converted = json.loads(json.dumps(messages))
+            for message in converted:
+                content = message.get('content')
+                if isinstance(content, list):
+                    if any(not isinstance(part, dict) or part.get('type') != 'text' or not isinstance(part.get('text'), str) for part in content):
+                        raise ProviderError('Only SDK text content blocks are qualified for native Ollama')
+                    message['content'] = '\n'.join(part['text'] for part in content)
+                elif content is None:
+                    message['content'] = ''
+                elif not isinstance(content, str):
+                    raise ProviderError('Invalid SDK content for native Ollama')
+                if 'reasoning' in message:
+                    message['thinking'] = message.pop('reasoning')
+                for call in message.get('tool_calls', []):
+                    arguments = call['function']['arguments']
+                    if isinstance(arguments, str):
+                        call['function']['arguments'] = json.loads(arguments)
+            payload = {'model': model, 'messages': converted, 'stream': False,
+                'think': False, 'options': {'num_ctx': limits.context_tokens,
+                    'num_predict': limits.output_tokens, 'temperature': self.settings.get('temperature', 0)}}
+            if 'num_gpu' in self.settings:
+                payload['options']['num_gpu'] = self.settings['num_gpu']
+            if 'draft_num_predict' in self.settings:
+                payload['options']['draft_num_predict'] = self.settings['draft_num_predict']
+            if 'keep_alive_seconds' in self.settings:
+                payload['keep_alive'] = self.settings['keep_alive_seconds']
+            if self.settings.get('strict_context'):
+                payload.update(truncate=False, shift=False)
+            if tools:
+                payload['tools'] = list(tools)
+            if stream:
+                raise ProviderError('Native scoped context currently requires non-streaming')
+        if self.settings.get('runtime_binding'):
+            if not native or payload['think'] is not False:
+                raise ProviderError('Qualified profile requires native non-thinking transport')
+            binding = self.settings['runtime_binding']
+            if limits.output_tokens > binding['maximum_output_tokens']:
+                raise ProviderError('Output allowance exceeds the qualified profile')
+            await self.inspect(model)
+        self.last_effective_request = payload
+        # Strata's MCP execution is never requested. OpenHands owns tool execution.
+        accounting = context_accounting(payload, limits)
+        self.last_accounting = accounting
+        wire = json.dumps(payload, ensure_ascii=False).encode('utf-8')
+        if self.settings.get('exact_accounting'):
+            from .strata_accounting import count_request, exact_accounting, MAX_REQUEST_BYTES
+            try:
+                if self.backend != 'strata' or len(wire) > MAX_REQUEST_BYTES:
+                    raise ValueError('Unsupported provider or serialized request byte limit exceeded')
+                evidence = await count_request(self.settings['exact_accounting'], self.settings,
+                                               json.loads(wire), strata_before)
+                accounting = exact_accounting(accounting, evidence, limits, strata_before)
+                if settings_identity != hashlib.sha256(json.dumps(self.settings, sort_keys=True).encode()).hexdigest():
+                    raise ValueError('Provider settings changed during counting')
+                current = await self.inspect(model)
+                if current != strata_before:
+                    raise ValueError('Serving identity/settings changed during counting')
+                self.last_accounting = accounting
+            except Exception as failure:
+                accounting = accounting | {'admitted': False, 'classification': 'exact_counting_unavailable',
+                    'method': 'strata_pinned_exact_v1', 'rejection_reason': str(failure)}
+                self.last_accounting = accounting
+                error = ProviderError('Exact context accounting failed closed: ' + str(failure))
+                error.context_accounting = accounting
+                raise error from failure
+        if not accounting['admitted']:
+            error = ProviderError('Exact whole-prompt context admission failed' if accounting['exact_tokenizer']
+                                  else 'Conservative whole-prompt context admission failed')
+            error.context_accounting = accounting
+            error.termination_confirmed = True  # No generation dispatched for this request.
+            raise error
+        async with self.client(limits.inference_deadline_seconds) as client:
+            if not stream:
+                self.request_dispatched = True
+                async with client.stream('POST', self.origin + ('/api/chat' if native else '/v1/chat/completions'),
+                                         content=wire, headers={'Content-Type': 'application/json'}) as response:
+                    if (native or self.backend == 'strata') and response.is_error:
+                        detail = bytearray()
+                        async for chunk in response.aiter_bytes():
+                            detail.extend(chunk[:4096-len(detail)])
+                            if len(detail) >= 4096:
+                                break
+                        error = ProviderError('Provider HTTP ' + str(response.status_code) + ': ' +
+                            ({400:'invalid request/context overflow',404:'missing model or API',409:'model busy',
+                              413:'request too large',422:'unsupported request',503:'engine unavailable; inspect weights and owned service'}
+                             .get(response.status_code,'request rejected') if self.backend == 'strata' else detail.decode(errors='replace')))
+                        error.termination_confirmed = response.status_code in (400, 404, 413, 422)
+                        raise error
+                    response.raise_for_status()
+                    raw = bytearray()
+                    async for chunk in response.aiter_bytes():
+                        raw.extend(chunk)
+                        if len(raw) > limits.output_bytes:
+                            raise ProviderError('Output byte budget exceeded')
+                try:
+                    result = json.loads(raw)
+                except ValueError:
+                    raise ProviderError('Malformed completion JSON') from None
+            else:
+                # Streaming is useful for advisory text. Agent tool exchanges use non-streaming.
+                if tools:
+                    raise ProviderError('Streaming tool calls are not qualified; use non-streaming')
+                parts, reasoning, finish, usage, count, done = [], [], None, None, 0, False
+                self.request_dispatched = True
+                async with client.stream('POST', self.origin + '/v1/chat/completions', json=payload) as response:
+                    response.raise_for_status()
+                    async for line in bounded_sse_lines(response, limits.output_bytes):
+                        count += len(line.encode())
+                        if count > limits.output_bytes:
+                            raise ProviderError('Output byte budget exceeded')
+                        if not line or line.startswith(':'):
+                            continue
+                        if not line.startswith('data:'):
+                            continue
+                        value = line[5:].strip()
+                        if value == '[DONE]':
+                            done = True
+                            break
+                        try:
+                            event = json.loads(value)
+                            if not isinstance(event, dict):
+                                raise ProviderError('Invalid streaming event')
+                            if 'error' in event:
+                                raise ProviderError('Provider streaming error')
+                            usage = event.get('usage') or usage
+                            choices = event.get('choices', [])
+                            if not choices:
+                                continue
+                            if not isinstance(choices, list) or len(choices) != 1 or not isinstance(choices[0], dict):
+                                raise ProviderError('Invalid stream choices')
+                            choice = choices[0]
+                            delta = choice.get('delta', {})
+                            if not isinstance(delta, dict):
+                                raise ProviderError('Invalid stream delta')
+                            if delta.get('tool_calls'):
+                                raise ProviderError('Unexpected advisory tool call')
+                            for key, dest in (('content', parts), ('reasoning_content', reasoning)):
+                                value = delta.get(key) or ''
+                                if not isinstance(value, str):
+                                    raise ProviderError('Malformed stream text')
+                                dest.append(value)
+                            finish = choice.get('finish_reason') or finish
+                        except (ValueError, TypeError, KeyError) as error:
+                            raise ProviderError('Malformed completion stream: ' + str(error)) from None
+                if not done:
+                    raise ProviderError('Stream disconnected before completion')
+                result = {'choices': [{'message': {'content': ''.join(parts),
+                    'reasoning_content': ''.join(reasoning)}, 'finish_reason': finish}], 'usage': usage}
+        if isinstance(result, dict):
+            u = result if native else result.get('usage') or {}
+            if not isinstance(u, dict):
+                raise ProviderError('Malformed usage counters')
+            self.last_usage = {'input_tokens':counter(u.get('prompt_eval_count' if native else 'prompt_tokens')),
+                               'output_tokens':counter(u.get('eval_count' if native else 'completion_tokens')),
+                               'cached_input_tokens':None}
+        provider_timing = {k: result.get(k) for k in ('total_duration', 'load_duration', 'prompt_eval_duration', 'eval_duration')} if native and isinstance(result, dict) else None
+        if native:
+            if not isinstance(result, dict) or result.get('done') is not True or not isinstance(result.get('message'), dict):
+                raise ProviderError('Malformed or incomplete native Ollama completion')
+            message = result['message']
+            calls = message.get('tool_calls') or []
+            if not isinstance(calls, list):
+                raise ProviderError('Malformed native tool calls')
+            for index, call in enumerate(calls):
+                if not isinstance(call, dict) or not isinstance(call.get('function'), dict) or not isinstance(call['function'].get('arguments'), dict):
+                    raise ProviderError('Malformed native tool arguments')
+                call['id'] = 'call_' + hashlib.sha256(json.dumps(result, sort_keys=True).encode()).hexdigest()[:20] + '_' + str(index)
+                call['type'] = 'function'
+                call['function']['arguments'] = json.dumps(call['function']['arguments'])
+            if 'thinking' in message:
+                message['reasoning_content'] = message.pop('thinking')
+            reason = result.get('done_reason')
+            result = {'id': 'chatcmpl-local', 'object': 'chat.completion', 'created': 0, 'model': model,
+                'choices': [{'index': 0, 'message': message, 'finish_reason': 'tool_calls' if calls and reason == 'stop' else reason}],
+                'usage': {'prompt_tokens': result.get('prompt_eval_count'), 'completion_tokens': result.get('eval_count')}}
+        try:
+            answer = validate_completion(result, tools=tools, max_bytes=limits.output_bytes)
+            answer['context_accounting'] = accounting | {'actual_input_tokens': answer['usage']['input_tokens']}
+            answer['provider_timing_ns'] = provider_timing
+            if answer['usage']['output_tokens'] is not None and answer['usage']['output_tokens'] > limits.output_tokens:
+                raise ProviderError('Provider exceeded response output limit')
+            if strata_before is not None:
+                after = await self.inspect(model)
+                if not after['ready'] or not after['identity_verified'] or any(after.get(k) != strata_before.get(k)
+                        for k in ('identity', 'context_tokens', 'template_sha256', 'build_info', 'serving_model')):
+                    raise ProviderError('Strata loaded runtime changed during inference; response withheld')
+                answer['loaded_context_tokens'] = after['context_tokens']
+                answer['effective_runtime'] = {k: after[k] for k in
+                    ('backend','model','serving_model','identity','build_info','template_sha256','context_tokens')}
+                answer['effective_runtime']['request_settings'] = {k: payload[k] for k in
+                    ('max_tokens','temperature','chat_template_kwargs','strata_mcp','stream')}
+
+            if self.backend == 'ollama' and self.settings.get('verify_loaded_context'):
+                # Inspect after the completed inference, before forwarding any tool
+                # call to the SDK. Advertised maximum context is not loaded context.
+                async with self.client(5) as inspector:
+                    response = await inspector.get(self.origin + '/api/ps')
+                    response.raise_for_status()
+                    rows = response.json().get('models', [])
+                matches = [r for r in rows if r.get('name') == model]
+                if len(matches) != 1 or matches[0].get('context_length') != limits.context_tokens:
+                    raise ProviderError('Effective loaded context differs from the approved contract')
+                answer['loaded_context_tokens'] = matches[0]['context_length']
+                binding = self.settings.get('runtime_binding')
+                if binding:
+                    if matches[0].get('digest') != binding['identity']:
+                        raise ProviderError('Loaded model digest differs from qualified identity')
+                    loaded_vram = counter(matches[0].get('size_vram'))
+                    if self.settings.get('num_gpu', 0) > 0 and not loaded_vram:
+                        raise ProviderError('Qualified GPU profile has no verified loaded VRAM; CPU fallback forbidden')
+                    from .runtime_profile import runner_evidence
+                    try:
+                        runner = runner_evidence(binding, limits)
+                    except ValueError as failure:
+                        raise ProviderError(str(failure)) from failure
+                    answer['effective_runtime'] = {'backend':self.backend,
+                        'backend_version':binding['backend_version'],'identity':binding['identity'],
+                        'template_sha256':binding['template_sha256'],'runner':runner,'loaded_vram_bytes':loaded_vram,
+                        'request_options':payload['options'],'think':payload['think'],
+                        'truncate':payload.get('truncate'),'shift':payload.get('shift'),
+                        'keep_alive':payload.get('keep_alive')}
+                    if answer['usage']['output_tokens'] is not None and answer['usage']['output_tokens'] > limits.output_tokens:
+                        raise ProviderError('Provider exceeded response output limit')
+            return answer
+        except ProviderError as error:
+            error.termination_confirmed = True  # Complete HTTP response, including length stop.
+            raise
+
+
+async def bounded_sse_lines(response, maximum):
+    """Bound bytes before buffering a potentially unterminated SSE line."""
+    pending = bytearray()
+    total = 0
+    async for chunk in response.aiter_bytes():
+        total += len(chunk)
+        if total > maximum:
+            raise ProviderError('Output byte budget exceeded')
+        pending.extend(chunk)
+        while b'\n' in pending:
+            line, _, rest = pending.partition(b'\n')
+            pending = bytearray(rest)
+            try:
+                yield line.rstrip(b'\r').decode('utf-8')
+            except UnicodeError as error:
+                raise ProviderError('Invalid UTF-8 completion stream') from error
+    if pending:
+        try:
+            yield pending.decode('utf-8')
+        except UnicodeError as error:
+            raise ProviderError('Invalid UTF-8 completion stream') from error
+
+
+def strata_messages(messages):
+    """SDK text-only Chat Completions history. No images, files or runtime tools."""
+    value = json.loads(json.dumps(messages))
+    pending = set()
+    if not isinstance(value, list) or not value:
+        raise ProviderError('Strata requires a nonempty message list')
+    for message in value:
+        if not isinstance(message, dict):
+            raise ProviderError('Invalid Strata message')
+        role = message.get('role')
+        if role not in ('system', 'user', 'assistant', 'tool'):
+            raise ProviderError('Unsupported Strata message role')
+        content = message.get('content')
+        if isinstance(content, list):
+            if any(not isinstance(p, dict) or p.get('type') != 'text' or not isinstance(p.get('text'), str) for p in content):
+                raise ProviderError('Only SDK text content blocks are supported for Strata')
+            message['content'] = '\n'.join(p['text'] for p in content)
+        elif content is not None and not isinstance(content, str):
+            raise ProviderError('Invalid Strata message content')
+        if role == 'tool':
+            key = message.get('tool_call_id')
+            if key not in pending:
+                raise ProviderError('Unmatched or duplicate tool result')
+            pending.remove(key)
+        else:
+            if pending:
+                raise ProviderError('Missing tool result before the next model turn')
+            calls = message.get('tool_calls') or []
+            if calls and role != 'assistant':
+                raise ProviderError('Tool calls require an assistant message')
+            if not isinstance(calls, list):
+                raise ProviderError('Invalid tool call history')
+            for call in calls:
+                if not isinstance(call, dict) or not isinstance(call.get('function'), dict):
+                    raise ProviderError('Invalid tool call history')
+                key = call.get('id')
+                fn = call.get('function', {})
+                if not isinstance(key, str) or not key or key in pending or call.get('type') != 'function':
+                    raise ProviderError('Invalid tool call history')
+                try:
+                    if not isinstance(json.loads(fn['arguments']), dict):
+                        raise ValueError()
+                except (KeyError, ValueError, TypeError) as error:
+                    raise ProviderError('Invalid tool arguments in history') from error
+                pending.add(key)
+    if pending:
+        raise ProviderError('Missing tool result at end of history')
+    return value

@@ -19,6 +19,7 @@ class Bridge:
         self.transport = transport
         self.lock = asyncio.Lock()
         self.request_template = None  # opt-in benchmark fixture; never exposed by MCP
+        self.model_guard = None  # durable jobs revalidate exact inventory before every attempt
 
     @asynccontextmanager
     async def exclusive(self):
@@ -29,7 +30,7 @@ class Bridge:
 
     async def analyze(self, tool, content, objective="", *, role=None, with_metadata=False,
                       projection=None, max_bytes=None, group_id=None, _held=False,
-                      routing=None, _chosen_model=None, _route=None):
+                      routing=None, _chosen_model=None, _route=None, _execution=None):
         cfg = self.config
         if not content.strip():
             raise BridgeError("Supply non-empty analysis content.")
@@ -40,14 +41,17 @@ class Bridge:
             async with self.exclusive():
                 return await self.analyze(tool, content, objective, role=role, with_metadata=with_metadata,
                                           projection=projection, max_bytes=max_bytes, group_id=group_id, _held=True,
-                                          routing=routing,_chosen_model=_chosen_model,_route=_route)
+                                          routing=routing,_chosen_model=_chosen_model,_route=_route,_execution=_execution)
         if cfg.adaptive.enabled and _chosen_model is None:
             from .adaptive import AdaptiveRouter
             return await AdaptiveRouter(cfg,self.store).run(self,tool,content,objective,hints=routing,role=role,
-                projection=projection,max_bytes=max_bytes,group_id=group_id)
+                projection=projection,max_bytes=max_bytes,group_id=group_id,_execution=_execution)
         if _held:
             chosen_role, model = cfg.resolve_model(tool, role)
             model = _chosen_model or model
+            if any(p['model']==model and p['backend']=='ollama' for p in cfg.selective.get('model_profiles', [])):
+                raise BridgeError('Qualified project profiles require companion submit/contract-submit; legacy transport cannot verify their runtime settings')
+
             source_bytes = len(content.encode("utf-8"))
             record = Recorder(self.store, tool, model, input_chars, role=chosen_role,
                               source_bytes=source_bytes, group_id=group_id, **(_route or {}))
@@ -56,7 +60,7 @@ class Bridge:
             payload_budget = budget - 300 if with_metadata else budget
             schema = SCHEMAS[tool].model_json_schema()
             profile = next((p for p in cfg.model_registry if p.name == model), None)
-            body = {"model": model, "stream": True, "think": profile.thinking if profile else False,
+            body = {"model": model, "stream": True, "think": profile.thinking if profile else cfg.thinking,
                     "format": schema, "keep_alive": 0 if cfg.roles else "2m",
                     "options": {"temperature": 0, "num_predict": cfg.max_output_tokens, "num_ctx": cfg.num_ctx},
                     "messages": [
@@ -70,7 +74,15 @@ class Bridge:
                 import copy
                 body = copy.deepcopy(self.request_template) | {'model':model}
             try:
-                async with asyncio.timeout(cfg.timeout_seconds):
+                if self.model_guard:
+                    await self.model_guard(model)
+                if _execution:
+                    if self.request_template is not None:
+                        raise BridgeError('Workflow calls cannot use benchmark request overrides.')
+                    body['messages'][0]['content'] += '\n' + _execution.instructions
+                    _execution.admit(record.id, body, input_chars)
+                deadline = None if cfg.no_inference_deadline else cfg.timeout_seconds
+                async with asyncio.timeout(deadline):
                     if cfg.roles:
                         installed = await inventory(cfg, self.transport)
                         info = installed.get(canonical(model))
@@ -79,7 +91,7 @@ class Bridge:
                         if info.get("remote_host") or info.get("remote_model"):
                             raise BridgeError("The configured Ollama model is remote; only local weights are allowed.")
                     async with httpx.AsyncClient(trust_env=False, follow_redirects=False,
-                                                 timeout=httpx.Timeout(cfg.timeout_seconds, connect=5),
+                                                 timeout=httpx.Timeout(deadline, connect=5),
                                                  transport=self.transport) as client:
                         async with client.stream("POST", cfg.endpoint + "/api/chat", json=body) as response:
                             if response.status_code == 404:
@@ -152,3 +164,5 @@ class Bridge:
                 raise
             finally:
                 record.finish(final, output_bytes, status)
+                if _execution:
+                    _execution.finished(record.id, final, status, output_bytes)

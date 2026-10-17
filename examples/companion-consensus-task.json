@@ -1,0 +1,8 @@
+{
+  "task_key": "independent-opinions-1",
+  "tool": "second_opinion",
+  "objective": "Assess whether the proposal satisfies the supplied contract.",
+  "content": "The contract requires returning every input unchanged. The proposal returns abs(value), including for negative inputs.",
+  "consensus": true,
+  "roles": ["coding", "reasoning"]
+}

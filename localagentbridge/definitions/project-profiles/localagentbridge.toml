@@ -1,0 +1,6 @@
+schema_version = 1
+id = "localagentbridge"
+description = "Opt-in review of the bridge itself; preserves local advisory authority."
+workflows = ["implement_issue", "review_change"]
+authority_documents = ["CODEX_POLICY.md", "docs/ARCHITECTURE.md"]
+instruction = "Preserve the seven legacy tools, compute/resource ceilings, bounded escalation, confined evidence and metadata-only telemetry. Local model output must never execute commands or approve changes."
